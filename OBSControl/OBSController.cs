@@ -92,12 +92,21 @@ namespace OBSControl
         private const string DefaultFileFormat = "%CCYY-%MM-%DD %hh-%mm-%ss";
         public void TryStartRecording(string fileFormat = DefaultFileFormat)
         {
-            Task.Run(() =>
+            Task.Run(async () =>
             {
                 Logger.log.Debug($"TryStartRecording");
                 RecordingFolder = obs.Api.GetRecordingFolder();
-
                 obs.Api.SetFilenameFormatting(fileFormat);
+                int tries = 1;
+                string currentFormat = obs.Api.GetFilenameFormatting();
+                while (currentFormat != fileFormat && tries < 10)
+                {
+                    Logger.log.Debug($"({tries})Failed to set OBS's FilenameFormatting to {fileFormat} retrying in 50ms");
+                    tries++;
+                    await Task.Delay(50);
+                    obs.Api.SetFilenameFormatting(fileFormat);
+                    currentFormat = obs.Api.GetFilenameFormatting();
+                }
                 CurrentFileFormat = fileFormat;
                 obs.Api.StartRecording();
                 obs.Api.SetFilenameFormatting(DefaultFileFormat);
@@ -117,13 +126,13 @@ namespace OBSControl
         public void AppendLastRecordingName(string suffix)
         {
             string recordingFolder = RecordingFolder;
-            string fileName = CurrentFileFormat;
+            string fileFormat = CurrentFileFormat;
             if (string.IsNullOrEmpty(recordingFolder))
             {
                 Logger.log.Warn($"Unable to determine current recording folder, unable to rename.");
                 return;
             }
-            if (string.IsNullOrEmpty(fileName))
+            if (string.IsNullOrEmpty(fileFormat))
             {
                 Logger.log.Warn($"Recorded filename not stored, unable to rename.");
                 return;
@@ -135,25 +144,26 @@ namespace OBSControl
                 Logger.log.Warn($"Recording directory doesn't exist, unable to rename.");
                 return;
             }
-            var targetFile = directory.GetFiles(fileName + "*").FirstOrDefault();
+            var targetFile = directory.GetFiles(fileFormat + "*").OrderByDescending(f => f.CreationTimeUtc).FirstOrDefault();
             if (targetFile == null)
             {
                 Logger.log.Warn($"Couldn't find recorded file, unable to rename.");
                 return;
             }
-            fileName = targetFile.Name.Substring(0, targetFile.Name.LastIndexOf('.'));
+            string fileName = targetFile.Name.Substring(0, targetFile.Name.LastIndexOf('.'));
             var fileExtension = targetFile.Extension;
-            Logger.log.Info($"Attempting to append {suffix} to {fileName} with an extension of {fileExtension}");
-            string newFile = fileName + suffix + fileExtension;
+            Logger.log.Info($"Attempting to append {suffix} to {fileFormat} with an extension of {fileExtension}");
+            string newFile = fileFormat + suffix + fileExtension;
             int index = 2;
             while (File.Exists(Path.Combine(directory.FullName, newFile)))
             {
                 Logger.log.Debug($"File exists: {Path.Combine(directory.FullName, newFile)}");
-                newFile = fileName + suffix + $"({index})" + fileExtension;
+                newFile = fileFormat + suffix + $"({index})" + fileExtension;
+                index++;
             }
             try
             {
-                Logger.log.Debug($"Attempting to rename to {newFile}");
+                Logger.log.Debug($"Attempting to rename to '{newFile}'");
                 targetFile.MoveTo(Path.Combine(directory.FullName, newFile));
             }
             catch (Exception ex)
