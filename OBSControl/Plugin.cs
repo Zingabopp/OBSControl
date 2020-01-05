@@ -45,7 +45,7 @@ namespace OBSControl
                 }
                 config = v;
             });
-            //harmony = HarmonyInstance.Create(HarmonyId);
+            harmony = HarmonyInstance.Create(HarmonyId);
         }
         #region IDisablable
 
@@ -55,7 +55,7 @@ namespace OBSControl
         public void OnEnable()
         {
             new GameObject("OBSController").AddComponent<OBSController>();
-            //ApplyHarmonyPatches();
+            ApplyHarmonyPatches();
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace OBSControl
         /// </summary>
         public void OnDisable()
         {
-            //RemoveHarmonyPatches();
+            RemoveHarmonyPatches();
         }
         #endregion
 
