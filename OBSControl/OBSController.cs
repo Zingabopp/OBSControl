@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using OBS.WebSocket.NET;
+using System.Threading.Tasks;
 
 namespace OBSControl
 {
@@ -51,6 +52,7 @@ namespace OBSControl
             Logger.log.Info($"Strain: {(status.Strain * 100).ToString()} %");
             Logger.log.Info($"DroppedFrames: {status.DroppedFrames.ToString()} frames");
             Logger.log.Info($"TotalFrames: {status.TotalFrames.ToString()} frames");
+            
         }
 
         private void DestroyObsInstance(ObsWebSocket target)
@@ -72,6 +74,16 @@ namespace OBSControl
         private void Obs_RecordingStateChanged(ObsWebSocket sender, OBS.WebSocket.NET.Types.OutputState type)
         {
             Logger.log.Info($"Recording State Changed: {type.ToString()}");
+            Task.Run(() =>
+            {
+                //var thing = obs.Api.GetSourcesList();
+                //foreach (var item in thing)
+                //{
+                //    Logger.log.Info($"Source: {item.Name}, {item.Type}");
+                //}
+                var audioSettings = obs.Api.GetSourceSettings("Desktop Audio");
+                Logger.log.Info($"Audio Settings: {audioSettings.sourceSettings.ToString(Newtonsoft.Json.Formatting.Indented)}");
+            });
         }
 
         private IEnumerator<WaitForSeconds> RepeatTryConnect()
