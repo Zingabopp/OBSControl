@@ -1,0 +1,13 @@
+﻿{
+  "$schema": "https://raw.githubusercontent.com/nike4613/ModSaber-MetadataFileSchema/master/Schema.json",
+  "author": "Zingabopp",
+  "description": "",
+  "gameVersion": "1.6.0",
+  "id": "OBSControl",
+  "name": "OBSControl",
+  "version": "0.0.1",
+  "dependsOn": {
+
+  },
+  "features": []
+}

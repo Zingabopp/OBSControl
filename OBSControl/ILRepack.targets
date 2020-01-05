@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="ILRepacker" AfterTargets="Build" Condition="'$(NCrunch)' != '1'" >
+    <ItemGroup>
+      <InputAssemblies Include="$(OutputPath)OBSControl.dll" />
+      <InputAssemblies Include="$(OutputPath)OBS.WebSocket.NET.dll" />
+      <InputAssemblies Include="$(OutputPath)SuperSocket.ClientEngine.dll" />
+      <InputAssemblies Include="$(OutputPath)WebSocket4Net.dll" />
+    </ItemGroup>
+    <ItemGroup>
+      <LibraryPaths Include="$(BeatSaberDir)\Beat Saber_Data\Managed" />
+      <LibraryPaths Include="$(BeatSaberDir)\Libs" />
+      <LibraryPaths Include="$(BeatSaberDir)\Plugins" />
+      <!--<LibraryPaths Include="$(OutputPath)" />  For Newtonsoft -->
+    </ItemGroup>
+    <ItemGroup>
+      <!-- Must be a fully qualified name -->
+      <!-- <DoNotInternalizeAssemblies Include="System.Threading.Tasks.Dataflow.dll" /> -->
+    </ItemGroup>
+
+    <ILRepack
+        Parallel="true"
+        Internalize="false"
+        InternalizeExclude="@(DoNotInternalizeAssemblies)"
+        InputAssemblies="@(InputAssemblies)"
+        TargetKind="Dll"
+        OutputFile="$(OutputPath)Merged\$(AssemblyName).dll"
+        Verbose="true"
+        LibraryPath="@(LibraryPaths)"
+        DebugInfo="true"
+        TargetPlatformVersion="v4"
+    />
+
+  </Target>
+</Project>
+<!-- /ILRepack -->
