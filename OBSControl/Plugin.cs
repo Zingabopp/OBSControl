@@ -15,7 +15,6 @@ namespace OBSControl
 {
     public class Plugin : IBeatSaberPlugin, IDisablablePlugin
     {
-        // TODO: Change YourGitHub to the name of your GitHub account, or use the form "com.company.project.product"
         public static readonly string HarmonyId = "com.github.YourGitHub.OBSControl";
         internal static HarmonyInstance harmony;
         internal static string Name => "OBSControl";
@@ -65,6 +64,7 @@ namespace OBSControl
         public void OnDisable()
         {
             RemoveHarmonyPatches();
+            GameObject.Destroy(OBSController.instance.gameObject);
         }
         #endregion
 
