@@ -40,7 +40,8 @@ namespace OBSControl
                         // Set your default settings here.
                         RegenerateConfig = false,
                         ServerIP = "ws://127.0.0.1:4444",
-                        ServerPassword = string.Empty                        
+                        ServerPassword = string.Empty,
+                        LevelStartDelay = 2
                     });
                 }
                 config = v;

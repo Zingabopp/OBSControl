@@ -94,8 +94,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GameStatus.cs" />
-    <Compile Include="HarmonyPatches\DidPressPlay.cs" />
-    <Compile Include="HarmonyPatches\LevelListTableCellOverride.cs" />
+    <Compile Include="HarmonyPatches\LevelSelectionFlowCoordinator_StartLevel.cs" />
     <Compile Include="OBSController.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Logger.cs" />
