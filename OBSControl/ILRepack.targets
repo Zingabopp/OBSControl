@@ -11,7 +11,6 @@
       <LibraryPaths Include="$(BeatSaberDir)\Beat Saber_Data\Managed" />
       <LibraryPaths Include="$(BeatSaberDir)\Libs" />
       <LibraryPaths Include="$(BeatSaberDir)\Plugins" />
-      <!--<LibraryPaths Include="$(OutputPath)" />  For Newtonsoft -->
     </ItemGroup>
     <ItemGroup>
       <!-- Must be a fully qualified name -->

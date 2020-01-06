@@ -35,6 +35,9 @@ namespace OBSControl
         }
 
         private static float PlayerHeight;
+
+        StringBuilder appendText = new StringBuilder();
+
         private PlayerSpecificSettings _playerSettings;
         private PlayerSpecificSettings PlayerSettings
         {
@@ -227,7 +230,7 @@ namespace OBSControl
 
         private void DestroyObsInstance(ObsWebSocket target)
         {
-            Logger.log.Debug("Disconnecting from old obs instance.");
+            Logger.log.Debug("Disconnecting from obs instance.");
             if (target.IsConnected)
                 target.Disconnect();
             target.Connected -= OnConnect;
@@ -333,23 +336,6 @@ namespace OBSControl
             Logger.log.Info($"TotalFrames: {status.TotalFrames.ToString()} frames");
         }
 
-        #endregion
-
-        #region Monobehaviour Messages
-        /// <summary>
-        /// Only ever called once, mainly used to initialize variables.
-        /// </summary>
-        private void Awake()
-        {
-            if (instance != null)
-                GameObject.DestroyImmediate(this);
-            GameObject.DontDestroyOnLoad(this);
-            instance = this;
-            CreateObsInstance();
-            BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
-            BS_Utils.Plugin.LevelDidFinishEvent += OnLevelFinished;
-        }
-        StringBuilder appendText = new StringBuilder();
         private void OnLevelFinished(StandardLevelScenesTransitionSetupDataSO levelScenesTransitionSetupDataSO, LevelCompletionResults levelCompletionResults)
         {
             BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
@@ -388,6 +374,23 @@ namespace OBSControl
             recordingCurrentLevel = false;
         }
 
+        #endregion
+
+        #region Monobehaviour Messages
+        /// <summary>
+        /// Only ever called once, mainly used to initialize variables.
+        /// </summary>
+        private void Awake()
+        {
+            if (instance != null)
+                GameObject.DestroyImmediate(this);
+            GameObject.DontDestroyOnLoad(this);
+            instance = this;
+            CreateObsInstance();
+            BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
+            BS_Utils.Plugin.LevelDidFinishEvent += OnLevelFinished;
+        }
+        
         /// <summary>
         /// Only ever called once on the first frame the script is Enabled. Start is called after every other script's Awake() and before Update().
         /// </summary>
@@ -434,8 +437,7 @@ namespace OBSControl
         private void OnDestroy()
         {
             instance = null;
-            if (obs.IsConnected)
-                obs.Disconnect();
+            DestroyObsInstance(obs);
         }
         #endregion
     }
