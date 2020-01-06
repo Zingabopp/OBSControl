@@ -40,7 +40,8 @@ namespace OBSControl
                         RegenerateConfig = false,
                         ServerIP = "ws://127.0.0.1:4444",
                         ServerPassword = string.Empty,
-                        LevelStartDelay = 2
+                        LevelStartDelay = 2,
+                        RecordingStopDelay = 4
                     });
                 }
                 config = v;
@@ -129,7 +130,11 @@ namespace OBSControl
         public void OnApplicationQuit()
         {
             Logger.log.Debug("OnApplicationQuit");
-
+            if(OBSController.instance?.IsConnected ?? false)
+            {
+                OBSController.instance.TryStopRecording();
+                GameObject.Destroy(OBSController.instance);
+            }
         }
 
         /// <summary>

@@ -110,8 +110,10 @@ namespace OBSControl
                     obs.Api.SetFilenameFormatting(fileFormat);
                     currentFormat = obs.Api.GetFilenameFormatting();
                 }
+                Logger.log.Debug($"OBS reports the Filename Format as \"{currentFormat}\"");
                 CurrentFileFormat = fileFormat;
                 obs.Api.StartRecording();
+                await Task.Delay(1000).ConfigureAwait(false);
                 obs.Api.SetFilenameFormatting(DefaultFileFormat);
             });
         }
@@ -120,8 +122,11 @@ namespace OBSControl
 
         public void TryStopRecording(string renameTo = "")
         {
-            Task.Run(() =>
+            Task.Run(async () =>
             {
+                int delay = Config.RecordingStopDelay * 1000;
+                Logger.log.Debug($"Attempting to stop recording after {Config.RecordingStopDelay} sec.");
+                await Task.Delay(delay).ConfigureAwait(false);
                 obs.Api.StopRecording();
             });
         }
@@ -184,9 +189,13 @@ namespace OBSControl
             timer.Start();
             yield return new WaitUntil(() =>
             {
-                Logger.log.Debug("GetFileFormat: LevelInfo is null");
                 if (level == null)
+                {
+                    Logger.log.Debug("GetFileFormat: LevelInfo is null");
                     level = BS_Utils.Plugin.LevelData?.GameplayCoreSceneSetupData?.difficultyBeatmap?.level;
+                }
+                else
+                    Logger.log.Debug("GetFileFormat: Obtained LevelInfo");
                 return (level != null || timer.ElapsedMilliseconds > 400);
             });
             string fileFormat = DefaultFileFormat;
@@ -228,11 +237,14 @@ namespace OBSControl
             obs = newObs;
         }
 
-        private void DestroyObsInstance(ObsWebSocket target)
+        internal void DestroyObsInstance(ObsWebSocket target)
         {
             Logger.log.Debug("Disconnecting from obs instance.");
             if (target.IsConnected)
+            {
+                target.Api.SetFilenameFormatting(DefaultFileFormat);
                 target.Disconnect();
+            }
             target.Connected -= OnConnect;
             target.RecordingStateChanged -= Obs_RecordingStateChanged;
             target.StreamingStateChanged -= Obs_StreamingStateChanged;
@@ -310,10 +322,12 @@ namespace OBSControl
                 case OBS.WebSocket.NET.Types.OutputState.Starting:
                     break;
                 case OBS.WebSocket.NET.Types.OutputState.Started:
+                    Logger.log.Info("Recording started.");
                     break;
                 case OBS.WebSocket.NET.Types.OutputState.Stopping:
                     break;
                 case OBS.WebSocket.NET.Types.OutputState.Stopped:
+                    Logger.log.Info("Recording stopped.");
                     var toAppend = appendText.ToString();
                     if (!string.IsNullOrEmpty(toAppend))
                     {
