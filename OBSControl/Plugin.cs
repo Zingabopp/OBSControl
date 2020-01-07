@@ -132,7 +132,7 @@ namespace OBSControl
             Logger.log.Debug("OnApplicationQuit");
             if(OBSController.instance?.IsConnected ?? false)
             {
-                OBSController.instance.TryStopRecording();
+                OBSController.instance.TryStopRecording(false);
                 GameObject.Destroy(OBSController.instance);
             }
         }

@@ -36,7 +36,7 @@ namespace OBSControl
 
         private static float PlayerHeight;
 
-        StringBuilder appendText = new StringBuilder();
+        StringBuilder fileRenameText = new StringBuilder();
 
         private PlayerSpecificSettings _playerSettings;
         private PlayerSpecificSettings PlayerSettings
@@ -93,6 +93,12 @@ namespace OBSControl
         private PluginConfig Config => Plugin.config.Value;
 
         private const string DefaultFileFormat = "%CCYY-%MM-%DD %hh-%mm-%ss";
+
+        private string ToDateTimeFileFormat(DateTime dateTime)
+        {
+            return dateTime.ToString("yyyyMMddHHmmss");
+        }
+
         public void TryStartRecording(string fileFormat = DefaultFileFormat)
         {
             Task.Run(async () =>
@@ -120,18 +126,23 @@ namespace OBSControl
 
         private string CurrentFileFormat;
 
-        public void TryStopRecording(string renameTo = "")
+        public void TryStopRecording(bool useDelay)
         {
             Task.Run(async () =>
             {
-                int delay = Config.RecordingStopDelay * 1000;
-                Logger.log.Debug($"Attempting to stop recording after {Config.RecordingStopDelay} sec.");
-                await Task.Delay(delay).ConfigureAwait(false);
+                if (useDelay)
+                {
+                    int delay = Config.RecordingStopDelay * 1000;
+                    Logger.log.Debug($"Attempting to stop recording after {Config.RecordingStopDelay} sec.");
+                    await Task.Delay(delay).ConfigureAwait(false);
+                }
+                else
+                    Logger.log.Debug($"Attempting to stop recording immediately.");
                 obs.Api.StopRecording();
             });
         }
 
-        public void AppendLastRecordingName(string suffix)
+        public void RenameLastRecording(string newNameBase)
         {
             string recordingFolder = RecordingFolder;
             string fileFormat = CurrentFileFormat;
@@ -160,13 +171,13 @@ namespace OBSControl
             }
             string fileName = targetFile.Name.Substring(0, targetFile.Name.LastIndexOf('.'));
             var fileExtension = targetFile.Extension;
-            Logger.log.Info($"Attempting to append {suffix} to {fileFormat} with an extension of {fileExtension}");
-            string newFile = fileFormat + suffix + fileExtension;
+            Logger.log.Info($"Attempting to rename {fileName} to {newNameBase} with an extension of {fileExtension}");
+            string newFile = newNameBase + fileExtension;
             int index = 2;
             while (File.Exists(Path.Combine(directory.FullName, newFile)))
             {
                 Logger.log.Debug($"File exists: {Path.Combine(directory.FullName, newFile)}");
-                newFile = fileFormat + suffix + $"({index})" + fileExtension;
+                newFile = newNameBase + $"({index})" + fileExtension;
                 index++;
             }
             try
@@ -182,27 +193,31 @@ namespace OBSControl
         }
 
         public bool recordingCurrentLevel;
-        public IEnumerator<WaitUntil> GetFileFormat(IBeatmapLevel level = null)
+        public IEnumerator<WaitUntil> GetFileFormat(IDifficultyBeatmap diff = null)
         {
             Logger.log.Debug("Trying to get the file format information for this level");
             Stopwatch timer = new Stopwatch();
             timer.Start();
             yield return new WaitUntil(() =>
             {
-                if (level == null)
+                if (diff == null)
                 {
                     Logger.log.Debug("GetFileFormat: LevelInfo is null");
-                    level = BS_Utils.Plugin.LevelData?.GameplayCoreSceneSetupData?.difficultyBeatmap?.level;
+                    diff = BS_Utils.Plugin.LevelData?.GameplayCoreSceneSetupData?.difficultyBeatmap;
                 }
                 else
                     Logger.log.Debug("GetFileFormat: Obtained LevelInfo");
-                return (level != null || timer.ElapsedMilliseconds > 400);
+                return (diff != null || timer.ElapsedMilliseconds > 400);
             });
-            string fileFormat = DefaultFileFormat;
+            IBeatmapLevel level = diff?.level;
+            string fileFormat = ToDateTimeFileFormat(DateTime.Now);
+            CurrentFileFormat = fileFormat;
+            BaseFilename = string.Empty;
+            //string fileFormat = DefaultFileFormat;
             if (level != null)
             {
-                fileFormat = $"{level.songName}-{level.levelAuthorName}";
-                CurrentFileFormat = fileFormat;
+                BaseFilename = $"{level.songName}-{level.levelAuthorName}";
+                BaseFilename = Utilities.Utilities.GetSafeFileName(string.Join("-", level.songName, level.levelAuthorName, diff.difficulty.ToString()));
             }
             else
             {
@@ -212,7 +227,7 @@ namespace OBSControl
             Logger.log.Debug($"Starting recording, file format: {fileFormat}");
             TryStartRecording(fileFormat);
         }
-
+        private string BaseFilename;
         public IEnumerator<WaitUntil> GameStatusSetup()
         {
             // TODO: Limit wait by tries/current scene so it doesn't go forever.
@@ -328,11 +343,11 @@ namespace OBSControl
                     break;
                 case OBS.WebSocket.NET.Types.OutputState.Stopped:
                     Logger.log.Info("Recording stopped.");
-                    var toAppend = appendText.ToString();
-                    if (!string.IsNullOrEmpty(toAppend))
+                    var toRename = fileRenameText.ToString();
+                    if (!string.IsNullOrEmpty(toRename))
                     {
-                        AppendLastRecordingName(toAppend);
-                        appendText.Clear();
+                        RenameLastRecording(toRename);
+                        fileRenameText.Clear();
                     }
                     break;
                 default:
@@ -353,30 +368,40 @@ namespace OBSControl
         private void OnLevelFinished(StandardLevelScenesTransitionSetupDataSO levelScenesTransitionSetupDataSO, LevelCompletionResults levelCompletionResults)
         {
             BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
-            appendText.Clear();
+            fileRenameText.Clear();
+            bool delayRecordStop = true;
             try
             {
+                fileRenameText.Append(BaseFilename);
+                //if (level != null)
+                //{
+                //    fileFormat = $"{level.songName}-{level.levelAuthorName}";
+                //    CurrentFileFormat = fileFormat;
+                //}
                 Logger.log.Debug($"Max modified score is {GameStatus.MaxModifiedScore}");
                 float scorePercent = ((float)levelCompletionResults.rawScore / GameStatus.MaxModifiedScore) * 100f;
                 string scoreStr = scorePercent.ToString("F3");
-                appendText.Append($"-{scoreStr.Substring(0, scoreStr.Length - 1)}");
+                fileRenameText.Append($"-{scoreStr.Substring(0, scoreStr.Length - 1)}");
                 PlayerLevelStatsData stats = PlayerData.playerData.GetPlayerLevelStatsData(
                     GameStatus.LevelInfo.levelID, GameStatus.difficultyBeatmap.difficulty, GameStatus.difficultyBeatmap.parentDifficultyBeatmapSet.beatmapCharacteristic);
                 if (stats.playCount == 0)
-                    appendText.Append("-1st");
+                    fileRenameText.Append("-1st");
                 else
                     Logger.log.Debug($"PlayCount for {GameStatus.LevelInfo.levelID} is {stats.playCount}");
                 if (levelCompletionResults.fullCombo)
-                    appendText.Append("-FC");
+                    fileRenameText.Append("-FC");
 
                 if (levelCompletionResults.levelEndStateType != LevelCompletionResults.LevelEndStateType.Cleared)
                 {
 
                     if (levelCompletionResults.levelEndAction == LevelCompletionResults.LevelEndAction.Quit ||
                         levelCompletionResults.levelEndAction == LevelCompletionResults.LevelEndAction.Restart)
-                        appendText.Append("-QUIT");
+                    {
+                        fileRenameText.Append("-QUIT");
+                        delayRecordStop = false;
+                    }
                     else
-                        appendText.Append("-FAILED");
+                        fileRenameText.Append("-FAILED");
                 }
             }
             catch (Exception ex)
@@ -384,7 +409,7 @@ namespace OBSControl
                 Logger.log.Error($"Error appending file name: {ex}");
                 Logger.log.Debug(ex);
             }
-            TryStopRecording();
+            TryStopRecording(delayRecordStop);
             recordingCurrentLevel = false;
         }
 
@@ -404,7 +429,7 @@ namespace OBSControl
             BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
             BS_Utils.Plugin.LevelDidFinishEvent += OnLevelFinished;
         }
-        
+
         /// <summary>
         /// Only ever called once on the first frame the script is Enabled. Start is called after every other script's Awake() and before Update().
         /// </summary>

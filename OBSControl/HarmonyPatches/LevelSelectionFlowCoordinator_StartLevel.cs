@@ -60,7 +60,7 @@ namespace OBSControl.HarmonyPatches
                 Logger.log.Debug($"levelInfo is not null: {levelInfo.songName} by {levelInfo.levelAuthorName}");
             else
                 Logger.log.Warn($"levelInfo is null, unable to set song file format.");
-            SharedCoroutineStarter.instance.StartCoroutine(OBSController.instance.GetFileFormat(levelInfo));
+            SharedCoroutineStarter.instance.StartCoroutine(OBSController.instance.GetFileFormat(difficultyBeatmap));
             OBSController.instance.recordingCurrentLevel = true;
             yield return LevelStartDelay;
             WaitingToStart = false;
