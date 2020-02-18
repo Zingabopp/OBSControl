@@ -1,0 +1,3 @@
+[submodule "BS-Plugin-BuildTools"]
+	path = BS-Plugin-BuildTools
+	url = https://github.com/Zingabopp/BS-Plugin-BuildTools.git

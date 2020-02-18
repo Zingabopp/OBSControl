@@ -7,6 +7,7 @@ using OBS.WebSocket.NET;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.IO;
+using System.Globalization;
 
 namespace OBSControl
 {
@@ -210,6 +211,7 @@ namespace OBSControl
                 return (diff != null || timer.ElapsedMilliseconds > 400);
             });
             IBeatmapLevel level = diff?.level;
+            
             string fileFormat = ToDateTimeFileFormat(DateTime.Now);
             CurrentFileFormat = fileFormat;
             BaseFilename = string.Empty;
@@ -243,8 +245,10 @@ namespace OBSControl
 
         private void CreateObsInstance()
         {
-            var newObs = new ObsWebSocket();
-            newObs.Timeout = new TimeSpan(0, 0, 30);
+            var newObs = new ObsWebSocket
+            {
+                Timeout = new TimeSpan(0, 0, 30)
+            };
             newObs.Connected += OnConnect;
             newObs.RecordingStateChanged += Obs_RecordingStateChanged;
             newObs.StreamingStateChanged += Obs_StreamingStateChanged;
@@ -365,6 +369,203 @@ namespace OBSControl
             Logger.log.Info($"TotalFrames: {status.TotalFrames.ToString()} frames");
         }
 
+        private readonly Dictionary<string, LevelDataType> LevelDataSubstitutions = new Dictionary<string, LevelDataType>()
+        {
+            {"?BPM",  LevelDataType.BeatsPerMinute },
+            {"?d",  LevelDataType.DifficultyShortName },
+            {"?D",  LevelDataType.DifficultyName },
+            {"?M",  LevelDataType.LevelAuthorName },
+            {"?ID",  LevelDataType.LevelId },
+            {"?NJS",  LevelDataType.NoteJumpSpeed },
+            {"?SA",  LevelDataType.SongAuthorName },
+            {"?D",  LevelDataType.SongDuration },
+            {"?N",  LevelDataType.SongName },
+            {"?n",  LevelDataType.SongSubName }
+        }; 
+        
+        private readonly Dictionary<string, LevelCompletionDataType> LevelCompletionDataSubstitutions = new Dictionary<string, LevelCompletionDataType>()
+        {
+            {"?a", LevelCompletionDataType.AverageCutScore },
+            {"?b", LevelCompletionDataType.BadCutsCount },
+            {"?t", LevelCompletionDataType.EndSongTime },
+            {"?FC", LevelCompletionDataType.FullCombo },
+            {"?M", LevelCompletionDataType.Modifiers },
+            {"?G", LevelCompletionDataType.GoodCutsCount },
+            {"?E", LevelCompletionDataType.LevelEndType },
+            {"?C", LevelCompletionDataType.MaxCombo },
+            {"?m", LevelCompletionDataType.MissedCount },
+            {"?s", LevelCompletionDataType.ModifiedScore },
+            {"?R", LevelCompletionDataType.Rank },
+            {"?S", LevelCompletionDataType.RawScore },
+            {"?%", LevelCompletionDataType.ScorePercent }
+        };
+
+        public enum LevelCompletionDataType
+        {
+            None,
+            AverageCutScore,
+            BadCutsCount,
+            EndSongTime,
+            FullCombo,
+            Modifiers,
+            GoodCutsCount,
+            LevelEndType,
+            MaxCombo,
+            MissedCount,
+            ModifiedScore,
+            Rank,
+            RawScore,
+            ScorePercent
+        }
+
+        public enum LevelDataType
+        {
+            None,
+            BeatsPerMinute,
+            DifficultyShortName,
+            DifficultyName,
+            LevelAuthorName,
+            LevelId,
+            NoteJumpSpeed,
+            SongAuthorName,
+            SongDuration,
+            SongName,
+            SongSubName
+        }
+
+        public string GetLevelDataString(LevelDataType levelDataType, IDifficultyBeatmap difficultyBeatmap)
+        {
+            switch (levelDataType)
+            {
+                case LevelDataType.None:
+                    return string.Empty;
+                case LevelDataType.BeatsPerMinute:
+                    return difficultyBeatmap.level.beatsPerMinute.ToString("N2").TrimEnd('0').TrimEnd('.').TrimEnd(',');
+                case LevelDataType.DifficultyShortName:
+                    return difficultyBeatmap.difficulty.ShortName();
+                case LevelDataType.DifficultyName:
+                    return difficultyBeatmap.difficulty.Name();
+                case LevelDataType.LevelAuthorName:
+                    return difficultyBeatmap.level.levelAuthorName;
+                case LevelDataType.LevelId:
+                    return difficultyBeatmap.level.levelID;
+                case LevelDataType.NoteJumpSpeed:
+                    return difficultyBeatmap.noteJumpMovementSpeed.ToString("N2").TrimEnd('0').TrimEnd('.').TrimEnd(',');
+                case LevelDataType.SongAuthorName:
+                    return difficultyBeatmap.level.songAuthorName;
+                case LevelDataType.SongDuration:
+                    difficultyBeatmap.level.songDuration.MinutesAndSeconds(out int minutes, out int seconds);
+                    return minutes + "." + seconds;
+                case LevelDataType.SongName:
+                    return difficultyBeatmap.level.songName;
+                case LevelDataType.SongSubName:
+                    return difficultyBeatmap.level.songSubName;
+                default:
+                    return "NA";
+            }
+        }
+        
+        public string GetModifierString(GameplayModifiers modifiers, string separator = "_")
+        {
+            List<string> activeModifiers = new List<string>();
+            if (modifiers.songSpeed != GameplayModifiers.SongSpeed.Normal)
+            {
+                if (modifiers.songSpeed == GameplayModifiers.SongSpeed.Faster)
+                    activeModifiers.Add("FS");
+                else
+                    activeModifiers.Add("SS");
+            }
+            if (modifiers.disappearingArrows)
+                activeModifiers.Add("DA");
+            if (modifiers.ghostNotes)
+                activeModifiers.Add("GN");
+            if (modifiers.batteryEnergy)
+                activeModifiers.Add("BE");
+            if (modifiers.demoNoFail)
+                activeModifiers.Add("DNF");
+            if (modifiers.demoNoObstacles)
+                activeModifiers.Add("DNO");
+            if (modifiers.enabledObstacleType != GameplayModifiers.EnabledObstacleType.All)
+            {
+                if (modifiers.enabledObstacleType == GameplayModifiers.EnabledObstacleType.FullHeightOnly)
+                    activeModifiers.Add("FHO");
+                else
+                    activeModifiers.Add("NO");
+            }
+            //if (modifiers.energyType == GameplayModifiers.EnergyType.Battery)
+            //    activeModifiers.Add("BE");
+            if (modifiers.failOnSaberClash)
+                activeModifiers.Add("FSC");
+            if (modifiers.fastNotes)
+                activeModifiers.Add("FN");
+            if (modifiers.instaFail)
+                activeModifiers.Add("IF");
+            if (modifiers.noArrows)
+                activeModifiers.Add("NA");
+            if (modifiers.noBombs)
+                activeModifiers.Add("NB");
+            if (modifiers.noFail)
+                activeModifiers.Add("NF");
+            //if (modifiers.noObstacles)
+            //    activeModifiers.Add("NO");
+            if (modifiers.strictAngles)
+                activeModifiers.Add("SA");
+            return string.Join(separator, modifiers);
+        }
+
+        public string GetLevelCompletionDataString(LevelCompletionDataType levelCompletionDataType, StandardLevelScenesTransitionSetupDataSO levelData, LevelCompletionResults levelCompletionResults)
+        {
+            switch (levelCompletionDataType)
+            {
+                case LevelCompletionDataType.None:
+                    return string.Empty;
+                case LevelCompletionDataType.AverageCutScore:
+                    return levelCompletionResults.averageCutScore.ToString();
+                case LevelCompletionDataType.BadCutsCount:
+                    return levelCompletionResults.badCutsCount.ToString();
+                case LevelCompletionDataType.EndSongTime:
+                    levelCompletionResults.endSongTime.MinutesAndSeconds(out int minutes, out int seconds);
+                    return minutes + "." + seconds;
+                case LevelCompletionDataType.FullCombo:
+                    return levelCompletionResults.fullCombo ? "FC" : string.Empty;
+                case LevelCompletionDataType.Modifiers:
+                    return GetModifierString(levelCompletionResults.gameplayModifiers);
+                case LevelCompletionDataType.GoodCutsCount:
+                    return levelCompletionResults.goodCutsCount.ToString();
+                case LevelCompletionDataType.LevelEndType:
+                    if (levelCompletionResults.levelEndAction == LevelCompletionResults.LevelEndAction.Quit
+                        || levelCompletionResults.levelEndAction == LevelCompletionResults.LevelEndAction.Restart)
+                        return "Quit";
+                    switch (levelCompletionResults.levelEndStateType)
+                    {
+                        case LevelCompletionResults.LevelEndStateType.None:
+                            return "Unknown";
+                        case LevelCompletionResults.LevelEndStateType.Cleared:
+                            return "Cleared";
+                        case LevelCompletionResults.LevelEndStateType.Failed:
+                            return "Failed";
+                        default:
+                            return "Unknown";
+                    }
+                case LevelCompletionDataType.MaxCombo:
+                    return levelCompletionResults.maxCombo.ToString();
+                case LevelCompletionDataType.MissedCount:
+                    return levelCompletionResults.missedCount.ToString();
+                case LevelCompletionDataType.ModifiedScore:
+                    return levelCompletionResults.modifiedScore.ToString();
+                case LevelCompletionDataType.Rank:
+                    return levelCompletionResults.rank.ToString();
+                case LevelCompletionDataType.RawScore:
+                    return levelCompletionResults.rawScore.ToString();
+                case LevelCompletionDataType.ScorePercent:
+                    float scorePercent = ((float)levelCompletionResults.rawScore / GameStatus.MaxModifiedScore) * 100f;
+                    string scoreStr = scorePercent.ToString("F3");
+                    return scoreStr;
+                default:
+                    break;
+            }
+            return "NA";
+        }
         private void OnLevelFinished(StandardLevelScenesTransitionSetupDataSO levelScenesTransitionSetupDataSO, LevelCompletionResults levelCompletionResults)
         {
             BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
