@@ -7,6 +7,6 @@
         public string ServerPassword { get; set; }
         public int LevelStartDelay { get; set; }
         public int RecordingStopDelay { get; set; }
-
+        public string RecordingFileFormat { get; set; }
     }
 }

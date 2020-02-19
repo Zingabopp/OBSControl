@@ -21,7 +21,7 @@ namespace OBSControlTests.DataTypes
                     songAuthorName = "TestAuthor",
                     songDuration = 63f,
                     songName = "TestSong",
-                    songSubName = "Test Subname"
+                    songSubName = "TestSubname"
                 };
             }
         }
