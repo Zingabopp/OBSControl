@@ -18,7 +18,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="DataTypes\" />
+    <Reference Include="MainAssembly">
+      <HintPath>H:\SteamApps\SteamApps\common\Beat Saber\Beat Saber_Data\Managed\MainAssembly.dll</HintPath>
+      <Aliases>BeatSaber</Aliases>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>H:\SteamApps\SteamApps\common\Beat Saber\Beat Saber_Data\Managed\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>H:\SteamApps\SteamApps\common\Beat Saber\Beat Saber_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>H:\SteamApps\SteamApps\common\Beat Saber\Beat Saber_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
