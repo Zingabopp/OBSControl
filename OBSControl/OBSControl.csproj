@@ -17,6 +17,9 @@
     <BeatSaberReferences>$(SolutionDir)Refs</BeatSaberReferences>
     <BeatSaberDir>$(ProjectDir)References</BeatSaberDir>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(NCrunch)' == '1' ">
+	<DisableCopyToPlugins>True</DisableCopyToPlugins>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <Optimize>false</Optimize>
