@@ -8,6 +8,9 @@ namespace OBSControl.Wrappers
 {
     public interface ILevelCompletionResults
     {
+		int PlayCount { get; }
+		int MaxModifiedScore { get; }
+		float ScorePercent { get; }
 		GameplayModifiers gameplayModifiers { get; }
 		int modifiedScore { get; }
 		int rawScore { get; }

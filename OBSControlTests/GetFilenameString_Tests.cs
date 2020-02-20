@@ -16,10 +16,10 @@ namespace OBSControlTests
             TestLevelCompletionResults results = null;
             TestDifficultyBeatmap difficultyBeatmap = TestDifficultyBeatmap.Default;
             string baseString = "?N-?A_?%<_[?M]><-?F><-?e>";
-            Assert.ThrowsException<ArgumentNullException>(() => GetFilenameString(baseString, difficultyBeatmap, results, 500));
+            Assert.ThrowsException<ArgumentNullException>(() => GetFilenameString(baseString, difficultyBeatmap, results));
             results = TestLevelCompletionResults.DefaultCompletionResults;
             difficultyBeatmap = null;
-            Assert.ThrowsException<ArgumentNullException>(() => GetFilenameString(baseString, difficultyBeatmap, results, 500));
+            Assert.ThrowsException<ArgumentNullException>(() => GetFilenameString(baseString, difficultyBeatmap, results));
         }
 
         [TestMethod]
@@ -30,7 +30,7 @@ namespace OBSControlTests
             TestDifficultyBeatmap difficultyBeatmap = TestDifficultyBeatmap.Default;
             string baseString = "NoArguments";
             Console.WriteLine("Format: " + baseString);
-            string result = GetFilenameString(baseString, difficultyBeatmap, results, results.MaxModifiedScore);
+            string result = GetFilenameString(baseString, difficultyBeatmap, results);
             Assert.AreEqual(baseString, result);
         }
 
@@ -51,7 +51,7 @@ namespace OBSControlTests
                 baseString += "|" + LevelDataSubstitutions[ch] + ":?" + ch + "|\n";
             }
             Console.WriteLine("Format: " + baseString.Replace("\n", "") + "\n");
-            string result = GetFilenameString(baseString, difficultyBeatmap, results, results.MaxModifiedScore);
+            string result = GetFilenameString(baseString, difficultyBeatmap, results);
             Console.WriteLine(result);
         }
 
@@ -68,11 +68,11 @@ namespace OBSControlTests
             results.maxCombo = results.TotalNotes - 1;
             string baseString = "?N-?A_?%<_[?M]><-?F><-?e>";
             Console.WriteLine("Format: " + baseString);
-            string result = GetFilenameString(baseString, difficultyBeatmap, results, results.MaxModifiedScore);
+            string result = GetFilenameString(baseString, difficultyBeatmap, results);
             Console.WriteLine("  " + result + ".mkv");
             baseString = "?N-?A_?%_[?M]-?F-?e";
             Console.WriteLine("Format: " + baseString);
-            result = GetFilenameString(baseString, difficultyBeatmap, results, results.MaxModifiedScore);
+            result = GetFilenameString(baseString, difficultyBeatmap, results);
             Console.WriteLine("  " + result + ".mkv");
         }
 
@@ -95,7 +95,7 @@ namespace OBSControlTests
             sw.Start();
             for (int i = 0; i < iterations; i++)
             {
-                result = GetFilenameString(baseString, difficultyBeatmap, results, results.MaxModifiedScore);
+                result = GetFilenameString(baseString, difficultyBeatmap, results);
             }
             sw.Stop();
             Console.WriteLine($"{sw.ElapsedMilliseconds}ms for {iterations} iterations.");

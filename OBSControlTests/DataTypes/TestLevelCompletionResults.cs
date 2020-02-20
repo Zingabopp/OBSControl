@@ -22,6 +22,8 @@ namespace OBSControlTests.DataTypes
             {
                 return new TestLevelCompletionResults(500)
                 {
+                    MaxModifiedScore = 110000,
+                    PlayCount = 0,
                     gameplayModifiers = DefaultModifiers,
                     averageCutScore = 95,
                     maxCombo = 400,
@@ -33,8 +35,7 @@ namespace OBSControlTests.DataTypes
                     missedCount = 100,
                     modifiedScore = 90000,
                     rank = RankModel.Rank.S,
-                    rawScore = 100000,
-                    MaxModifiedScore = 110000
+                    rawScore = 100000
                 };
             }
         }
@@ -47,6 +48,10 @@ namespace OBSControlTests.DataTypes
         public int TotalNotes { get; set; }
 
         public int MaxModifiedScore { get; set; }
+
+        public int PlayCount { get; set; }
+
+        public float ScorePercent => ((float)modifiedScore / MaxModifiedScore) * 100;
 
         public BeatSaber.GameplayModifiers gameplayModifiers { get; set; }
 

@@ -84,13 +84,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GameStatus.cs" />
+    <Compile Include="HarmonyPatches\HarmonyManager.cs" />
+    <Compile Include="HarmonyPatches\HarmonyPatchInfo.cs" />
     <Compile Include="HarmonyPatches\LevelSelectionFlowCoordinator_StartLevel.cs" />
     <Compile Include="OBSController.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="PluginConfig.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RecordingController.cs" />
+    <Compile Include="OBSComponents\RecordingController.cs" />
     <Compile Include="Utilities\FileRenaming.cs" />
     <Compile Include="Utilities\ReflectionUtil.cs" />
     <Compile Include="Utilities\Utilities.cs" />

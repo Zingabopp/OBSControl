@@ -9,10 +9,18 @@ namespace OBSControl.Wrappers
     public class LevelCompletionResultsWrapper : ILevelCompletionResults
     {
         private LevelCompletionResults _results;
-        public LevelCompletionResultsWrapper(LevelCompletionResults results)
+        private int _playCount;
+        public LevelCompletionResultsWrapper(LevelCompletionResults results, int playCount, int maxModifiedScore)
         {
             _results = results;
+            PlayCount = playCount;
+            MaxModifiedScore = maxModifiedScore;
+            if (MaxModifiedScore != 0)
+                ScorePercent = ((float)results.rawScore / MaxModifiedScore) * 100f;
         }
+        public int PlayCount { get; private set; }
+        public int MaxModifiedScore { get; private set; }
+        public float ScorePercent { get; private set; }
 
         public GameplayModifiers gameplayModifiers => _results.gameplayModifiers;
 

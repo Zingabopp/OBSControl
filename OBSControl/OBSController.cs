@@ -36,9 +36,7 @@ namespace OBSControl
         }
 
         private static float PlayerHeight;
-
-        StringBuilder fileRenameText = new StringBuilder();
-
+        
         private PlayerSpecificSettings _playerSettings;
         private PlayerSpecificSettings PlayerSettings
         {
@@ -63,7 +61,7 @@ namespace OBSControl
         }
 
         private PlayerDataModelSO _playerData;
-        private PlayerDataModelSO PlayerData
+        public PlayerDataModelSO PlayerData
         {
             get
             {
@@ -92,18 +90,20 @@ namespace OBSControl
         public bool IsConnected => Obs?.IsConnected ?? false;
 
         private PluginConfig Config => Plugin.config.Value;
-
+        public event EventHandler DestroyingObs;
 
         #region Setup/Teardown
 
         private void CreateObsInstance()
         {
+            Logger.log.Debug("CreateObsInstance()");
             var newObs = new ObsWebSocket();
             newObs.Timeout = new TimeSpan(0, 0, 30);
             newObs.Connected += OnConnect;
             newObs.StreamingStateChanged += Obs_StreamingStateChanged;
             newObs.StreamStatus += Obs_StreamStatus;
             Obs = newObs;
+            Logger.log.Debug("CreateObsInstance finished");
         }
 
         private HashSet<EventHandler<OBS.WebSocket.NET.Types.OutputState>> _recordingStateChangedHandlers = new HashSet<EventHandler<OBS.WebSocket.NET.Types.OutputState>>();
@@ -133,14 +133,17 @@ namespace OBSControl
         }
         private void DestroyObsInstance(ObsWebSocket target)
         {
+            if (target == null)
+                return;
             Logger.log.Debug("Disconnecting from obs instance.");
+            DestroyingObs?.Invoke(this, null);
             if (target.IsConnected)
             {
                 //target.Api.SetFilenameFormatting(DefaultFileFormat);
                 target.Disconnect();
             }
             target.Connected -= OnConnect;
-            target.RecordingStateChanged += OnRecordingStateChanged;
+            target.RecordingStateChanged -= OnRecordingStateChanged;
             target.StreamingStateChanged -= Obs_StreamingStateChanged;
             target.StreamStatus -= Obs_StreamStatus;
         }
@@ -148,33 +151,38 @@ namespace OBSControl
         public void TryConnect()
         {
             Logger.log.Info($"TryConnect");
+            if(string.IsNullOrEmpty(Plugin.config.Value.ServerAddress))
+            {
+                Logger.log.Error("The ServerAddress in the config is null or empty. Unable to connect to OBS.");
+                return;
+            }
             if (!Obs.IsConnected)
             {
-                Logger.log.Info($"Attempting to connect to {Config.ServerIP}");
+                Logger.log.Info($"Attempting to connect to {Config.ServerAddress}");
                 try
                 {
-                    Obs.Connect(Config.ServerIP, Config.ServerPassword);
-                    Logger.log.Info($"Finished attempting to connect to {Config.ServerIP}");
+                    Obs.Connect(Config.ServerAddress, Config.ServerPassword);
+                    Logger.log.Info($"Finished attempting to connect to {Config.ServerAddress}");
                 }
                 catch (AuthFailureException)
                 {
-                    Logger.log.Error($"Authentication failed connecting to server {Config.ServerIP}.");
+                    Logger.log.Error($"Authentication failed connecting to server {Config.ServerAddress}.");
                     return;
                 }
                 catch (ErrorResponseException ex)
                 {
-                    Logger.log.Error($"Failed to connect to server {Config.ServerIP}: {ex.Message}.");
+                    Logger.log.Error($"Failed to connect to server {Config.ServerAddress}: {ex.Message}.");
                     Logger.log.Debug(ex);
                     return;
                 }
                 catch (Exception ex)
                 {
-                    Logger.log.Error($"Failed to connect to server {Config.ServerIP}: {ex.Message}.");
+                    Logger.log.Error($"Failed to connect to server {Config.ServerAddress}: {ex.Message}.");
                     Logger.log.Debug(ex);
                     return;
                 }
                 if (Obs.IsConnected)
-                    Logger.log.Info($"Connected to OBS @ {Config.ServerIP}");
+                    Logger.log.Info($"Connected to OBS @ {Config.ServerAddress}");
                 else
                     Logger.log.Info($"Not connected to OBS.");
             }
@@ -241,6 +249,7 @@ namespace OBSControl
         /// </summary>
         private void Awake()
         {
+            Logger.log.Debug("OBSController Awake()");
             if (instance != null)
                 GameObject.DestroyImmediate(this);
             GameObject.DontDestroyOnLoad(this);
@@ -253,6 +262,7 @@ namespace OBSControl
         /// </summary>
         private void Start()
         {
+            Logger.log.Debug("OBSController Start()");
             StartCoroutine(RepeatTryConnect());
         }
 
@@ -294,6 +304,8 @@ namespace OBSControl
         private void OnDestroy()
         {
             instance = null;
+            if (OBSComponents.RecordingController.instance != null)
+                Destroy(OBSComponents.RecordingController.instance);
             DestroyObsInstance(Obs);
         }
         #endregion

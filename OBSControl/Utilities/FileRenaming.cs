@@ -25,6 +25,7 @@ namespace OBSControl.Utilities
             {'N', LevelDataType.SongName },
             {'n', LevelDataType.SongSubName },
             //------CompletionResults----------
+            {'1', LevelDataType.FirstPlay },
             {'b', LevelDataType.BadCutsCount },
             {'T', LevelDataType.EndSongTimeLabeled },
             {'t', LevelDataType.EndSongTimeNoLabels },
@@ -55,6 +56,7 @@ namespace OBSControl.Utilities
             SongDurationLabeled,
             SongName,
             SongSubName,
+            FirstPlay,
             BadCutsCount,
             EndSongTimeNoLabels,
             EndSongTimeLabeled,
@@ -97,7 +99,8 @@ namespace OBSControl.Utilities
 #endif
         }
 
-        public static string GetLevelDataString(LevelDataType levelDataType, IDifficultyBeatmap difficultyBeatmap, ILevelCompletionResults levelCompletionResults, int maxModifiedScore)
+        public static string GetLevelDataString(LevelDataType levelDataType, IDifficultyBeatmap difficultyBeatmap, 
+            ILevelCompletionResults levelCompletionResults)
         {
             switch (levelDataType)
             {
@@ -127,6 +130,11 @@ namespace OBSControl.Utilities
                     return difficultyBeatmap.level.songName;
                 case LevelDataType.SongSubName:
                     return difficultyBeatmap.level.songSubName;
+                case LevelDataType.FirstPlay:
+                    if (levelCompletionResults.PlayCount == 0)
+                        return "1st";
+                    else
+                        return string.Empty;
                 case LevelDataType.BadCutsCount:
                     return levelCompletionResults.badCutsCount.ToString();
                 case LevelDataType.EndSongTimeNoLabels:
@@ -160,8 +168,6 @@ namespace OBSControl.Utilities
                     if (levelCompletionResults.levelEndAction == LevelCompletionResults.LevelEndAction.Quit
                         || levelCompletionResults.levelEndAction == LevelCompletionResults.LevelEndAction.Restart)
                         return "Quit";
-
-                    string submissionProlongedDisabledByMods = BS_Utils.Gameplay.ScoreSubmission.ProlongedModString;
                     switch (levelCompletionResults.levelEndStateType)
                     {
                         case LevelCompletionResults.LevelEndStateType.None:
@@ -184,8 +190,7 @@ namespace OBSControl.Utilities
                 case LevelDataType.RawScore:
                     return levelCompletionResults.rawScore.ToString();
                 case LevelDataType.ScorePercent:
-                    float scorePercent = ((float)levelCompletionResults.rawScore / maxModifiedScore) * 100f;
-                    string scoreStr = scorePercent.ToString("F3");
+                    string scoreStr = levelCompletionResults.ScorePercent.ToString("F3");
                     return scoreStr.Substring(0, scoreStr.Length - 1); // Game rounds down
                 default:
                     return "NA";
@@ -249,7 +254,7 @@ namespace OBSControl.Utilities
         /// <param name="maxModifiedScore"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="difficultyBeatmap"/> or <paramref name="levelCompletionResults"/> is null.</exception>
-        public static string GetFilenameString(string baseString, IDifficultyBeatmap difficultyBeatmap, ILevelCompletionResults levelCompletionResults, int maxModifiedScore)
+        public static string GetFilenameString(string baseString, IDifficultyBeatmap difficultyBeatmap, ILevelCompletionResults levelCompletionResults)
         {
             if (difficultyBeatmap == null)
                 throw new ArgumentNullException(nameof(difficultyBeatmap), "difficultyBeatmap cannot be null for GetFilenameString.");
@@ -288,7 +293,7 @@ namespace OBSControl.Utilities
                                 string data;
                                 try
                                 {
-                                    data = GetLevelDataString(LevelDataSubstitutions[ch], difficultyBeatmap, levelCompletionResults, maxModifiedScore);
+                                    data = GetLevelDataString(LevelDataSubstitutions[ch], difficultyBeatmap, levelCompletionResults);
                                 }
                                 catch
                                 { 
@@ -305,7 +310,7 @@ namespace OBSControl.Utilities
                                 string data;
                                 try
                                 {
-                                    stringBuilder.Append(GetLevelDataString(LevelDataSubstitutions[ch], difficultyBeatmap, levelCompletionResults, maxModifiedScore));
+                                    stringBuilder.Append(GetLevelDataString(LevelDataSubstitutions[ch], difficultyBeatmap, levelCompletionResults));
                                 }
                                 catch 
                                 { 

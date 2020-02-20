@@ -9,14 +9,14 @@ using IPA.Utilities;
 using Harmony;
 using UnityEngine.SceneManagement;
 using UnityEngine;
+using OBSControl.OBSComponents;
 using IPALogger = IPA.Logging.Logger;
 
 namespace OBSControl
 {
     public class Plugin : IBeatSaberPlugin, IDisablablePlugin
     {
-        public static readonly string HarmonyId = "com.github.YourGitHub.OBSControl";
-        internal static HarmonyInstance harmony;
+
         internal static string Name => "OBSControl";
         internal static Ref<PluginConfig> config;
         internal static IConfigProvider configProvider;
@@ -38,15 +38,16 @@ namespace OBSControl
                     {
                         // Set your default settings here.
                         RegenerateConfig = false,
-                        ServerIP = "ws://127.0.0.1:4444",
+                        ServerAddress = "ws://127.0.0.1:4444",
                         ServerPassword = string.Empty,
                         LevelStartDelay = 2,
-                        RecordingStopDelay = 4
+                        RecordingStopDelay = 4,
+                        RecordingFileFormat = "?N-?A_?%<_[?M]><-?F><-?e>"
                     });
                 }
                 config = v;
             });
-            harmony = HarmonyInstance.Create(HarmonyId);
+            HarmonyPatches.HarmonyManager.Initialize();
         }
         #region IDisablable
 
@@ -55,7 +56,10 @@ namespace OBSControl
         /// </summary>
         public void OnEnable()
         {
-            new GameObject("OBSController").AddComponent<OBSController>();
+            //config.Value.FillDefaults();
+            Logger.log.Debug("OnEnable()");
+            new GameObject("OBSControl_OBSController").AddComponent<OBSController>();
+            new GameObject("OBSControl_RecordingController").AddComponent<RecordingController>();
             ApplyHarmonyPatches();
         }
 
@@ -65,8 +69,10 @@ namespace OBSControl
         /// </summary>
         public void OnDisable()
         {
+            Logger.log.Debug("OnDisable()");
             RemoveHarmonyPatches();
             GameObject.Destroy(OBSController.instance.gameObject);
+            GameObject.Destroy(RecordingController.instance.gameObject);
         }
         #endregion
 
@@ -75,16 +81,7 @@ namespace OBSControl
         /// </summary>
         public static void ApplyHarmonyPatches()
         {
-            try
-            {
-                Logger.log.Debug("Applying Harmony patches.");
-                harmony.PatchAll(Assembly.GetExecutingAssembly());
-            }
-            catch (Exception ex)
-            {
-                Logger.log.Critical("Error applying Harmony patches: " + ex.Message);
-                Logger.log.Debug(ex);
-            }
+            HarmonyPatches.HarmonyManager.ApplyDefaultPatches();
         }
 
         /// <summary>
@@ -92,16 +89,8 @@ namespace OBSControl
         /// </summary>
         public static void RemoveHarmonyPatches()
         {
-            try
-            {
-                // Removes all patches with this HarmonyId
-                harmony.UnpatchAll(HarmonyId);
-            }
-            catch (Exception ex)
-            {
-                Logger.log.Critical("Error removing Harmony patches: " + ex.Message);
-                Logger.log.Debug(ex);
-            }
+            // Removes all patches with this HarmonyId
+            HarmonyPatches.HarmonyManager.UnpatchAll();
         }
 
         /// <summary>
@@ -122,19 +111,15 @@ namespace OBSControl
         public void OnSceneLoaded(Scene scene, LoadSceneMode sceneMode)
         {
 
-
-
         }
-
 
         public void OnApplicationQuit()
         {
             Logger.log.Debug("OnApplicationQuit");
-            if(OBSController.instance?.IsConnected ?? false)
-            {
-                OBSController.instance.TryStopRecording(false);
+            if (RecordingController.instance != null)
+                GameObject.Destroy(RecordingController.instance);
+            if (OBSController.instance != null)
                 GameObject.Destroy(OBSController.instance);
-            }
         }
 
         /// <summary>

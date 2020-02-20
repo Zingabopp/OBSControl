@@ -8,6 +8,7 @@ using UnityEngine;
 using Harmony;
 using BS_Utils;
 using static OBSControl.Utilities.ReflectionUtil;
+using OBSControl.OBSComponents;
 using System.Reflection;
 
 namespace OBSControl.HarmonyPatches
@@ -20,7 +21,12 @@ namespace OBSControl.HarmonyPatches
         })]
     internal class LevelSelectionNavigationController_StartLevel
     {
+        private static WaitForSeconds LevelStartDelay;
         public static bool DelayedStartActive { get; private set; }
+
+        /// <summary>
+        /// Coroutine to start the level is active.
+        /// </summary>
         public static bool WaitingToStart { get; private set; }
         static bool Prefix(LevelSelectionFlowCoordinator __instance, ref IDifficultyBeatmap difficultyBeatmap,
             ref Action beforeSceneSwitchCallback, ref bool practice,
@@ -48,11 +54,13 @@ namespace OBSControl.HarmonyPatches
             SharedCoroutineStarter.instance.StartCoroutine(DelayedLevelStart(__instance, difficultyBeatmap, beforeSceneSwitchCallback, practice, levelView?.playButton));
             return false;
         }
-        private static WaitForSeconds LevelStartDelay = new WaitForSeconds(Plugin.config.Value.LevelStartDelay);
+
         private static IEnumerator DelayedLevelStart(LevelSelectionFlowCoordinator coordinator,
             IDifficultyBeatmap difficultyBeatmap, Action beforeSceneSwitchCallback, bool practice,
             UnityEngine.UI.Button playButton)
         {
+            if(LevelStartDelay == null)
+                LevelStartDelay = new WaitForSeconds(Plugin.config.Value.LevelStartDelay);
             IBeatmapLevel levelInfo = difficultyBeatmap.level;
             playButton.interactable = false;
             Logger.log.Debug($"Delaying level start by {Plugin.config.Value.LevelStartDelay} seconds...");
@@ -60,13 +68,12 @@ namespace OBSControl.HarmonyPatches
                 Logger.log.Debug($"levelInfo is not null: {levelInfo.songName} by {levelInfo.levelAuthorName}");
             else
                 Logger.log.Warn($"levelInfo is null, unable to set song file format.");
-            SharedCoroutineStarter.instance.StartCoroutine(OBSController.instance.GetFileFormat(difficultyBeatmap));
-            OBSController.instance.recordingCurrentLevel = true;
+            RecordingController.instance.StartRecordingLevel(difficultyBeatmap);
             yield return LevelStartDelay;
             WaitingToStart = false;
             //playButton.interactable = true;
             StartLevel(coordinator, difficultyBeatmap, beforeSceneSwitchCallback, practice);
-            SharedCoroutineStarter.instance.StartCoroutine(OBSController.instance.GameStatusSetup());
+            SharedCoroutineStarter.instance.StartCoroutine(RecordingController.instance.GameStatusSetup());
         }
 
         private static StartLevelDelegate _startLevel;
