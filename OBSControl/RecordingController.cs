@@ -1,8 +1,11 @@
 ﻿using OBS.WebSocket.NET;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace OBSControl
@@ -13,8 +16,9 @@ namespace OBSControl
     /// </summary>
 	public class RecordingController
     {
-
+        private ObsWebSocket obs => OBSController.instance.Obs;
         private const string DefaultFileFormat = "%CCYY-%MM-%DD %hh-%mm-%ss";
+        public string RecordingFolder { get; protected set; }
         public void TryStartRecording(string fileFormat = DefaultFileFormat)
         {
             Task.Run(async () =>

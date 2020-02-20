@@ -19,10 +19,10 @@ namespace OBSControl
         : MonoBehaviour
     {
         private ObsWebSocket _obs;
-        private ObsWebSocket obs
+        public ObsWebSocket Obs
         {
             get { return _obs; }
-            set
+            protected set
             {
                 if (_obs == value)
                     return;
@@ -89,7 +89,7 @@ namespace OBSControl
         public string RecordingFolder;
 
         public static OBSController instance { get; private set; }
-        public bool IsConnected => obs?.IsConnected ?? false;
+        public bool IsConnected => Obs?.IsConnected ?? false;
 
         private PluginConfig Config => Plugin.config.Value;
 
@@ -103,7 +103,7 @@ namespace OBSControl
             newObs.Connected += OnConnect;
             newObs.StreamingStateChanged += Obs_StreamingStateChanged;
             newObs.StreamStatus += Obs_StreamStatus;
-            obs = newObs;
+            Obs = newObs;
         }
 
         private HashSet<EventHandler<OBS.WebSocket.NET.Types.OutputState>> _recordingStateChangedHandlers = new HashSet<EventHandler<OBS.WebSocket.NET.Types.OutputState>>();
@@ -148,12 +148,12 @@ namespace OBSControl
         public void TryConnect()
         {
             Logger.log.Info($"TryConnect");
-            if (!obs.IsConnected)
+            if (!Obs.IsConnected)
             {
                 Logger.log.Info($"Attempting to connect to {Config.ServerIP}");
                 try
                 {
-                    obs.Connect(Config.ServerIP, Config.ServerPassword);
+                    Obs.Connect(Config.ServerIP, Config.ServerPassword);
                     Logger.log.Info($"Finished attempting to connect to {Config.ServerIP}");
                 }
                 catch (AuthFailureException)
@@ -173,7 +173,7 @@ namespace OBSControl
                     Logger.log.Debug(ex);
                     return;
                 }
-                if (obs.IsConnected)
+                if (Obs.IsConnected)
                     Logger.log.Info($"Connected to OBS @ {Config.ServerIP}");
                 else
                     Logger.log.Info($"Not connected to OBS.");
@@ -185,15 +185,29 @@ namespace OBSControl
         private IEnumerator<WaitForSeconds> RepeatTryConnect()
         {
             var interval = new WaitForSeconds(5);
-            while (!(obs?.IsConnected ?? false))
+            while (!(Obs?.IsConnected ?? false))
             {
                 yield return interval;
                 TryConnect();
             }
-            Logger.log.Info($"OBS {obs.GetVersion().OBSStudioVersion} is connected.");
+            Logger.log.Info($"OBS {Obs.GetVersion().OBSStudioVersion} is connected.");
             Logger.log.Info($"OnConnectTriggered: {OnConnectTriggered}");
         }
 
+        #endregion
+
+        #region OBS Commands
+
+
+        public void StartRecording()
+        {
+            _obs.Api.StartRecording();
+        }
+
+        public void StopRecording()
+        {
+            _obs.Api.StopRecording();
+        }
         #endregion
 
         #region Event Handlers
@@ -280,7 +294,7 @@ namespace OBSControl
         private void OnDestroy()
         {
             instance = null;
-            DestroyObsInstance(obs);
+            DestroyObsInstance(Obs);
         }
         #endregion
     }
