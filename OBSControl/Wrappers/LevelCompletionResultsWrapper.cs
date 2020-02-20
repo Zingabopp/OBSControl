@@ -9,7 +9,6 @@ namespace OBSControl.Wrappers
     public class LevelCompletionResultsWrapper : ILevelCompletionResults
     {
         private LevelCompletionResults _results;
-        private int _playCount;
         public LevelCompletionResultsWrapper(LevelCompletionResults results, int playCount, int maxModifiedScore)
         {
             _results = results;
