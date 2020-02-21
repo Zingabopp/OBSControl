@@ -1,15 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Target Name="ILRepacker" AfterTargets="Build" Condition="'$(NCrunch)' != '1'" >
+  <Target Name="ILRepack" AfterTargets="Build" Condition="'$(NCrunch)' != '1'" >
+    <PropertyGroup>
+      <WorkingDirectory>$(OutputPath)</WorkingDirectory>
+    </PropertyGroup>
     <ItemGroup>
-      <InputAssemblies Include="$(OutputPath)OBSControl.dll" />
-      <InputAssemblies Include="$(OutputPath)OBS.WebSocket.NET.dll" />
-      <InputAssemblies Include="$(OutputPath)SuperSocket.ClientEngine.dll" />
-      <InputAssemblies Include="$(OutputPath)WebSocket4Net.dll" />
-    </ItemGroup>
-    <ItemGroup>
-      <LibraryPaths Include="$(BeatSaberReferences)" />
-      <LibraryPaths Include="$(OutputPath)" />
+      <!--<InputAssemblies Include="$(OutputPath)OBSControl.dll" />-->
+      <InputAssemblies Include="obs-websocket-dotnet.dll" />
+      <InputAssemblies Include="websocket-sharp.dll" />
     </ItemGroup>
     <ItemGroup>
       <!-- Must be a fully qualified name -->
@@ -19,16 +17,18 @@
     <ILRepack
         Parallel="true"
         Internalize="false"
-        InternalizeExclude="@(DoNotInternalizeAssemblies)"
+        InternalizeExcludeAssemblies="@(DoNotInternalizeAssemblies)"
+        MainAssembly="$(AssemblyName).dll"
+        OutputAssembly="$(AssemblyName)-merged.dll"
         InputAssemblies="@(InputAssemblies)"
-        TargetKind="Dll"
-        OutputFile="$(OutputPath)Merged\$(AssemblyName).dll"
+        OutputType="Dll"
         Verbose="true"
-        LibraryPath="@(LibraryPaths)"
         DebugInfo="true"
         TargetPlatformVersion="v4"
+        WorkingDirectory="$(WorkingDirectory)"
     />
-
+    <Move SourceFiles="$(OutputPath)$(AssemblyName)-merged.dll" DestinationFiles="$(OutputPath)Merged\$(AssemblyName).dll" />
+    <Move SourceFiles="$(OutputPath)$(AssemblyName)-merged.pdb" DestinationFiles="$(OutputPath)Merged\$(AssemblyName).pdb" />
   </Target>
 </Project>
 <!-- /ILRepack -->
