@@ -1,4 +1,5 @@
-﻿using OBS.WebSocket.NET;
+﻿using OBSWebsocketDotNet;
+using OBSWebsocketDotNet.Types;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,7 +18,7 @@ namespace OBSControl.OBSComponents
 	public class RecordingController : MonoBehaviour
     {
         public static RecordingController instance { get; private set; }
-        private ObsWebSocket obs => OBSController.instance.Obs;
+        private OBSWebsocket obs => OBSController.instance.Obs;
         private const string DefaultFileFormat = "%CCYY-%MM-%DD %hh-%mm-%ss";
 
         private string ToDateTimeFileFormat(DateTime dateTime)
@@ -31,20 +32,20 @@ namespace OBSControl.OBSComponents
             Task.Run(async () =>
             {
                 Logger.log.Debug($"TryStartRecording");
-                RecordingFolder = obs.Api.GetRecordingFolder();
-                obs.Api.SetFilenameFormatting(fileFormat);
+                RecordingFolder = obs.GetRecordingFolder();
+                obs.SetFilenameFormatting(fileFormat);
                 int tries = 1;
-                string currentFormat = obs.Api.GetFilenameFormatting();
+                string currentFormat = obs.GetFilenameFormatting();
                 while (currentFormat != fileFormat && tries < 10)
                 {
                     Logger.log.Debug($"({tries})Failed to set OBS's FilenameFormatting to {fileFormat} retrying in 50ms");
                     tries++;
                     await Task.Delay(50);
-                    obs.Api.SetFilenameFormatting(fileFormat);
-                    currentFormat = obs.Api.GetFilenameFormatting();
+                    obs.SetFilenameFormatting(fileFormat);
+                    currentFormat = obs.GetFilenameFormatting();
                 }
                 CurrentFileFormat = fileFormat;
-                obs.Api.StartRecording();
+                obs.StartRecording();
             });
         }
 
@@ -54,7 +55,7 @@ namespace OBSControl.OBSComponents
         {
             Task.Run(() =>
             {
-                obs.Api.StopRecording();
+                obs.StopRecording();
                 RenameString = renameTo;
                 recordingCurrentLevel = false;
             });
@@ -160,21 +161,21 @@ namespace OBSControl.OBSComponents
 
         #region OBS Event Handlers
 
-        private void Obs_RecordingStateChanged(object sender, OBS.WebSocket.NET.Types.OutputState type)
+        private void Obs_RecordingStateChanged(object sender, OutputState type)
         {
             Logger.log.Info($"Recording State Changed: {type.ToString()}");
             switch (type)
             {
-                case OBS.WebSocket.NET.Types.OutputState.Starting:
+                case OutputState.Starting:
                     break;
-                case OBS.WebSocket.NET.Types.OutputState.Started:
+                case OutputState.Started:
                     recordingCurrentLevel = true;
-                    Task.Run(() => obs.Api.SetFilenameFormatting(DefaultFileFormat));
+                    Task.Run(() => obs.SetFilenameFormatting(DefaultFileFormat));
                     break;
-                case OBS.WebSocket.NET.Types.OutputState.Stopping:
+                case OutputState.Stopping:
                     recordingCurrentLevel = false;
                     break;
-                case OBS.WebSocket.NET.Types.OutputState.Stopped:
+                case OutputState.Stopped:
                     recordingCurrentLevel = false;
                     RenameLastRecording(RenameString);
                     RenameString = null;

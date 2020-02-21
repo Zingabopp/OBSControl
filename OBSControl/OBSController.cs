@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
-using OBS.WebSocket.NET;
+using OBSWebsocketDotNet;
+using OBSWebsocketDotNet.Types;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.IO;
@@ -18,8 +19,8 @@ namespace OBSControl
 	public class OBSController
         : MonoBehaviour
     {
-        private ObsWebSocket _obs;
-        public ObsWebSocket Obs
+        private OBSWebsocket _obs;
+        public OBSWebsocket Obs
         {
             get { return _obs; }
             protected set
@@ -97,8 +98,8 @@ namespace OBSControl
         private void CreateObsInstance()
         {
             Logger.log.Debug("CreateObsInstance()");
-            var newObs = new ObsWebSocket();
-            newObs.Timeout = new TimeSpan(0, 0, 30);
+            var newObs = new OBSWebsocket();
+            newObs.WSTimeout = new TimeSpan(0, 0, 30);
             newObs.Connected += OnConnect;
             newObs.StreamingStateChanged += Obs_StreamingStateChanged;
             newObs.StreamStatus += Obs_StreamStatus;
@@ -106,8 +107,8 @@ namespace OBSControl
             Logger.log.Debug("CreateObsInstance finished");
         }
 
-        private HashSet<EventHandler<OBS.WebSocket.NET.Types.OutputState>> _recordingStateChangedHandlers = new HashSet<EventHandler<OBS.WebSocket.NET.Types.OutputState>>();
-        public event EventHandler<OBS.WebSocket.NET.Types.OutputState> RecordingStateChanged
+        private HashSet<EventHandler<OutputState>> _recordingStateChangedHandlers = new HashSet<EventHandler<OutputState>>();
+        public event EventHandler<OutputState> RecordingStateChanged
         {
             add
             {
@@ -124,14 +125,14 @@ namespace OBSControl
             }
         }
 
-        protected void OnRecordingStateChanged(ObsWebSocket sender, OBS.WebSocket.NET.Types.OutputState outputState)
+        protected void OnRecordingStateChanged(OBSWebsocket sender, OutputState outputState)
         {
             foreach (var handler in _recordingStateChangedHandlers)
             {
                 handler.Invoke(this, outputState);
             }
         }
-        private void DestroyObsInstance(ObsWebSocket target)
+        private void DestroyObsInstance(OBSWebsocket target)
         {
             if (target == null)
                 return;
@@ -209,12 +210,12 @@ namespace OBSControl
 
         public void StartRecording()
         {
-            _obs.Api.StartRecording();
+            _obs.StartRecording();
         }
 
         public void StopRecording()
         {
-            _obs.Api.StopRecording();
+            _obs.StopRecording();
         }
         #endregion
 
@@ -225,13 +226,13 @@ namespace OBSControl
             Logger.log.Info($"OnConnect: Connected to OBS.");
         }
 
-        private void Obs_StreamingStateChanged(ObsWebSocket sender, OBS.WebSocket.NET.Types.OutputState type)
+        private void Obs_StreamingStateChanged(OBSWebsocket sender, OutputState type)
         {
             Logger.log.Info($"Streaming State Changed: {type.ToString()}");
         }
 
 
-        private void Obs_StreamStatus(ObsWebSocket sender, OBS.WebSocket.NET.Types.StreamStatus status)
+        private void Obs_StreamStatus(OBSWebsocket sender, StreamStatus status)
         {
             Logger.log.Info($"Stream Time: {status.TotalStreamTime.ToString()} sec");
             Logger.log.Info($"Bitrate: {(status.KbitsPerSec / 1024f).ToString("N2")} Mbps");
