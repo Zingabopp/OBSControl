@@ -199,8 +199,12 @@ namespace OBSControl
                 yield return interval;
                 TryConnect();
             }
-            Logger.log.Info($"OBS {Obs.GetVersion().OBSStudioVersion} is connected.");
-            Logger.log.Info($"OnConnectTriggered: {OnConnectTriggered}");
+            Task.Run(async () =>
+            {
+                Logger.log.Info($"OBS {(await Obs.GetVersion().ConfigureAwait(false)).OBSStudioVersion} is connected.");
+                Logger.log.Info($"OnConnectTriggered: {OnConnectTriggered}");
+            });
+            
         }
 
         #endregion

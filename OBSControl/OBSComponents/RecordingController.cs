@@ -32,20 +32,20 @@ namespace OBSControl.OBSComponents
             Task.Run(async () =>
             {
                 Logger.log.Debug($"TryStartRecording");
-                RecordingFolder = obs.GetRecordingFolder();
-                obs.SetFilenameFormatting(fileFormat);
+                RecordingFolder = await obs.GetRecordingFolder().ConfigureAwait(false);
+                await obs.SetFilenameFormatting(fileFormat).ConfigureAwait(false);
                 int tries = 1;
-                string currentFormat = obs.GetFilenameFormatting();
+                string currentFormat = await obs.GetFilenameFormatting().ConfigureAwait(false);
                 while (currentFormat != fileFormat && tries < 10)
                 {
                     Logger.log.Debug($"({tries})Failed to set OBS's FilenameFormatting to {fileFormat} retrying in 50ms");
                     tries++;
                     await Task.Delay(50);
-                    obs.SetFilenameFormatting(fileFormat);
-                    currentFormat = obs.GetFilenameFormatting();
+                    await obs.SetFilenameFormatting(fileFormat).ConfigureAwait(false);
+                    currentFormat = await obs.GetFilenameFormatting().ConfigureAwait(false);
                 }
                 CurrentFileFormat = fileFormat;
-                obs.StartRecording();
+                await obs.StartRecording().ConfigureAwait(false);
             });
         }
 
