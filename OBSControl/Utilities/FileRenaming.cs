@@ -307,7 +307,6 @@ namespace OBSControl.Utilities
                             }
                             else
                             {
-                                string data;
                                 try
                                 {
                                     stringBuilder.Append(GetLevelDataString(LevelDataSubstitutions[ch], difficultyBeatmap, levelCompletionResults));

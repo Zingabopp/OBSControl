@@ -27,39 +27,70 @@ namespace OBSControl.OBSComponents
         }
 
         public string RecordingFolder { get; protected set; }
-        public void TryStartRecording(string fileFormat = DefaultFileFormat)
+        public async Task TryStartRecording(string fileFormat = DefaultFileFormat)
         {
-            Task.Run(async () =>
+            Logger.log.Debug($"TryStartRecording"); 
+            try
             {
-                Logger.log.Debug($"TryStartRecording");
                 RecordingFolder = await obs.GetRecordingFolder().ConfigureAwait(false);
-                await obs.SetFilenameFormatting(fileFormat).ConfigureAwait(false);
-                int tries = 1;
-                string currentFormat = await obs.GetFilenameFormatting().ConfigureAwait(false);
-                while (currentFormat != fileFormat && tries < 10)
+            }
+            catch (Exception ex)
+            {
+                Logger.log?.Error($"Error getting recording folder from OBS: {ex.Message}");
+                Logger.log?.Debug(ex);
+                return;
+            }
+            
+            int tries = 0;
+            string currentFormat = null;
+            do
+            {
+                if (tries > 0)
                 {
-                    Logger.log.Debug($"({tries})Failed to set OBS's FilenameFormatting to {fileFormat} retrying in 50ms");
-                    tries++;
+                    Logger.log.Debug($"({tries}) Failed to set OBS's FilenameFormatting to {fileFormat} retrying in 50ms");
                     await Task.Delay(50);
+                }
+                tries++;
+                try
+                {
                     await obs.SetFilenameFormatting(fileFormat).ConfigureAwait(false);
                     currentFormat = await obs.GetFilenameFormatting().ConfigureAwait(false);
                 }
-                CurrentFileFormat = fileFormat;
+                catch (Exception ex)
+                {
+                    Logger.log?.Error($"Error getting current filename format from OBS: {ex.Message}");
+                    Logger.log?.Debug(ex);
+                }
+            } while (currentFormat != fileFormat && tries < 10);
+            CurrentFileFormat = fileFormat;
+            try
+            {
                 await obs.StartRecording().ConfigureAwait(false);
-            });
+            }
+            catch (Exception ex)
+            {
+                Logger.log?.Error($"Error starting recording in OBS: {ex.Message}");
+                Logger.log?.Debug(ex);
+            }
         }
 
         private string CurrentFileFormat { get; set; }
 
-        public void TryStopRecording(string renameTo = "")
+        public async Task TryStopRecording(string renameTo = "")
         {
-            Task.Run(() =>
+            try
             {
-                obs.StopRecording();
                 RenameString = renameTo;
+                await obs.StopRecording().ConfigureAwait(false);
                 recordingCurrentLevel = false;
-            });
+            }
+            catch (Exception ex)
+            {
+                Logger.log?.Error($"Error trying to stop recording: {ex.Message}");
+                Logger.log?.Debug(ex);
+            }
         }
+
         private string RenameString;
         public void RenameLastRecording(string newName)
         {
@@ -118,12 +149,14 @@ namespace OBSControl.OBSComponents
         }
 
         public bool recordingCurrentLevel;
+
         public void StartRecordingLevel(IDifficultyBeatmap level = null)
         {
             string fileFormat = ToDateTimeFileFormat(DateTime.Now);
             Logger.log.Debug($"Starting recording, file format: {fileFormat}");
             TryStartRecording(fileFormat);
         }
+
         public IEnumerator<WaitUntil> GameStatusSetup()
         {
             // TODO: Limit wait by tries/current scene so it doesn't go forever.

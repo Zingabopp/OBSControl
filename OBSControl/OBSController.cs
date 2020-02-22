@@ -37,7 +37,7 @@ namespace OBSControl
         }
 
         private static float PlayerHeight;
-        
+
         private PlayerSpecificSettings _playerSettings;
         private PlayerSpecificSettings PlayerSettings
         {
@@ -149,38 +149,38 @@ namespace OBSControl
             target.StreamStatus -= Obs_StreamStatus;
         }
 
-        public void TryConnect()
+        public async Task<bool> TryConnect()
         {
             Logger.log.Info($"TryConnect");
-            if(string.IsNullOrEmpty(Plugin.config.Value.ServerAddress))
+            if (string.IsNullOrEmpty(Plugin.config.Value.ServerAddress))
             {
                 Logger.log.Error("The ServerAddress in the config is null or empty. Unable to connect to OBS.");
-                return;
+                return false;
             }
             if (!Obs.IsConnected)
             {
                 Logger.log.Info($"Attempting to connect to {Config.ServerAddress}");
                 try
                 {
-                    Obs.Connect(Config.ServerAddress, Config.ServerPassword);
+                    await Obs.Connect(Config.ServerAddress, Config.ServerPassword).ConfigureAwait(false);
                     Logger.log.Info($"Finished attempting to connect to {Config.ServerAddress}");
                 }
                 catch (AuthFailureException)
                 {
                     Logger.log.Error($"Authentication failed connecting to server {Config.ServerAddress}.");
-                    return;
+                    return false;
                 }
                 catch (ErrorResponseException ex)
                 {
                     Logger.log.Error($"Failed to connect to server {Config.ServerAddress}: {ex.Message}.");
                     Logger.log.Debug(ex);
-                    return;
+                    return false;
                 }
                 catch (Exception ex)
                 {
                     Logger.log.Error($"Failed to connect to server {Config.ServerAddress}: {ex.Message}.");
                     Logger.log.Debug(ex);
-                    return;
+                    return false;
                 }
                 if (Obs.IsConnected)
                     Logger.log.Info($"Connected to OBS @ {Config.ServerAddress}");
@@ -189,22 +189,20 @@ namespace OBSControl
             }
             else
                 Logger.log.Info("TryConnect: OBS is already connected.");
+            return Obs.IsConnected;
         }
 
-        private IEnumerator<WaitForSeconds> RepeatTryConnect()
+        private async Task RepeatTryConnect()
         {
-            var interval = new WaitForSeconds(5);
-            while (!(Obs?.IsConnected ?? false))
+
+            while (!(await TryConnect().ConfigureAwait(false)))
             {
-                yield return interval;
-                TryConnect();
+                await Task.Delay(5000).ConfigureAwait(false);
             }
-            Task.Run(async () =>
-            {
-                Logger.log.Info($"OBS {(await Obs.GetVersion().ConfigureAwait(false)).OBSStudioVersion} is connected.");
-                Logger.log.Info($"OnConnectTriggered: {OnConnectTriggered}");
-            });
-            
+
+            Logger.log.Info($"OBS {(await Obs.GetVersion().ConfigureAwait(false)).OBSStudioVersion} is connected.");
+            Logger.log.Info($"OnConnectTriggered: {OnConnectTriggered}");
+
         }
 
         #endregion
@@ -212,14 +210,14 @@ namespace OBSControl
         #region OBS Commands
 
 
-        public void StartRecording()
+        public Task StartRecording()
         {
-            _obs.StartRecording();
+            return _obs.StartRecording();
         }
 
-        public void StopRecording()
+        public Task StopRecording()
         {
-            _obs.StopRecording();
+            return _obs.StopRecording();
         }
         #endregion
 
@@ -265,10 +263,10 @@ namespace OBSControl
         /// <summary>
         /// Only ever called once on the first frame the script is Enabled. Start is called after every other script's Awake() and before Update().
         /// </summary>
-        private void Start()
+        private async void Start()
         {
             Logger.log.Debug("OBSController Start()");
-            StartCoroutine(RepeatTryConnect());
+            await RepeatTryConnect();
         }
 
         /// <summary>
