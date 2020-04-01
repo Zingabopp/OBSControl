@@ -88,9 +88,15 @@ namespace OBSControl.OBSComponents
                 await obs.StopRecording().ConfigureAwait(false);
                 recordingCurrentLevel = false;
             }
-            catch (Exception ex)
+            catch (ErrorResponseException ex)
             {
                 Logger.log?.Error($"Error trying to stop recording: {ex.Message}");
+                if (ex.Message != "recording not active")
+                    Logger.log?.Debug(ex);
+            }
+            catch (Exception ex)
+            {
+                Logger.log?.Error($"Unexpected exception trying to stop recording: {ex.Message}");
                 Logger.log?.Debug(ex);
             }
             finally
@@ -209,6 +215,7 @@ namespace OBSControl.OBSComponents
             switch (type)
             {
                 case OutputState.Starting:
+                    recordingCurrentLevel = true;
                     break;
                 case OutputState.Started:
                     recordingCurrentLevel = true;
@@ -283,7 +290,8 @@ namespace OBSControl.OBSComponents
         /// </summary>
         private void OnDisable()
         {
-            StopRecordingTask = TryStopRecordingAsync(string.Empty, true);
+            if (recordingCurrentLevel)
+                StopRecordingTask = TryStopRecordingAsync(string.Empty, true);
             BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
             if (LevelDelayPatch.IsApplied)
                 LevelDelayPatch.RemovePatch();
