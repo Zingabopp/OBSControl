@@ -4,19 +4,19 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using Harmony;
+using HarmonyLib;
 
 namespace OBSControl.HarmonyPatches
 {
     public class HarmonyPatchInfo
     {
-        public HarmonyInstance HarmonyInstance { get; set; }
+        public Harmony HarmonyInstance { get; set; }
         public MethodInfo OriginalMethod { get; protected set; }
         public HarmonyMethod PrefixMethod { get; protected set; }
         public HarmonyMethod PostfixMethod { get; protected set; }
         public bool IsApplied { get; protected set; }
 
-        public HarmonyPatchInfo(HarmonyInstance harmony, MethodInfo original, HarmonyMethod prefix, HarmonyMethod postfix)
+        public HarmonyPatchInfo(Harmony harmony, MethodInfo original, HarmonyMethod prefix, HarmonyMethod postfix)
         {
             HarmonyInstance = harmony;
             OriginalMethod = original ?? throw new ArgumentNullException(nameof(original), $"{nameof(original)} cannot be null when creating a HarmonyPatchInfo.");
@@ -26,7 +26,7 @@ namespace OBSControl.HarmonyPatches
             PostfixMethod = postfix;
         }
 
-        public bool ApplyPatch(HarmonyInstance harmony = null)
+        public bool ApplyPatch(Harmony harmony = null)
         {
             if (harmony == null)
                 harmony = HarmonyInstance ?? throw new ArgumentNullException(nameof(harmony), $"Must have a non-null HarmonyInstance for ApplyPatch()");
@@ -52,7 +52,7 @@ namespace OBSControl.HarmonyPatches
             }
         }
 
-        public bool RemovePatch(HarmonyInstance harmony = null)
+        public bool RemovePatch(Harmony harmony = null)
         {
             if (harmony == null)
                 harmony = HarmonyInstance ?? throw new ArgumentNullException(nameof(harmony), $"Must have a non-null HarmonyInstance for ApplyPatch()");

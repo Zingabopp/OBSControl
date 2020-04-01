@@ -2,20 +2,27 @@
 {
     internal class PluginConfig
     {
-        public bool RegenerateConfig = true;
-        public string ServerAddress { get; set; }
-        public string ServerPassword { get; set; }
-        public int LevelStartDelay { get; set; }
-        public int RecordingStopDelay { get; set; }
-        public string RecordingFileFormat { get; set; }
 
-        public void FillDefaults()
+        public virtual string ServerAddress { get; set; } = "ws://127.0.0.1:4444";
+        public virtual string ServerPassword { get; set; } = string.Empty;
+        public virtual int LevelStartDelay { get; set; } = 2;
+        public virtual int RecordingStopDelay { get; set; } = 4;
+        public virtual string RecordingFileFormat { get; set; } = "?N-?A_?%<_[?M]><-?F><-?e>";
+
+        /// <summary>
+        /// This is called whenever BSIPA reads the config from disk (including when file changes are detected).
+        /// </summary>
+        public virtual void OnReload()
         {
-            RegenerateConfig = false;
-            if (string.IsNullOrEmpty(ServerAddress))
-                ServerAddress = "ws://127.0.0.1:4444";
-            if (string.IsNullOrEmpty(RecordingFileFormat))
-                RecordingFileFormat = "?N-?A_?%<_[?M]><-?F><-?e>";
+            // Do stuff after config is read from disk.
+        }
+
+        /// <summary>
+        /// Call this to force BSIPA to update the config file. This is also called by BSIPA if it detects the file was modified.
+        /// </summary>
+        public virtual void Changed()
+        {
+            // Do stuff when the config is changed.
         }
     }
 }

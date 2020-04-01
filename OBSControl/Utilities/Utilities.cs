@@ -3,7 +3,7 @@ using System.Text;
 
 namespace OBSControl.Utilities
 {
-    public class Utilities
+    public static class Utilities
     {
         public static string GetSafeFileName(string fileName)
         {
@@ -14,6 +14,12 @@ namespace OBSControl.Utilities
             }
             retStr.Replace(" ", "_");
             return retStr.ToString();
+        }
+
+        public static void MinutesAndSeconds(this float totalSeconds, out int minutes, out int seconds)
+        {
+            minutes = (int)totalSeconds / 60;
+            seconds = (int)(totalSeconds % 60f);
         }
     }
 }

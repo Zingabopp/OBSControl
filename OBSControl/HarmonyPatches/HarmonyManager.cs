@@ -1,4 +1,4 @@
-﻿using Harmony;
+﻿using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,14 +11,14 @@ namespace OBSControl.HarmonyPatches
     public static class HarmonyManager
     {
         public static readonly string HarmonyId = "com.github.Zingabopp.OBSControl";
-        internal static HarmonyInstance harmony;
+        internal static Harmony harmony;
         private static readonly BindingFlags allBindingFlags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
         private static HarmonyPatchInfo LevelDelayPatch;
         internal readonly static HashSet<HarmonyPatchInfo> AppliedPatches = new HashSet<HarmonyPatchInfo>();
 
         public static void Initialize()
         {
-            harmony = HarmonyInstance.Create(HarmonyId);
+            harmony = new Harmony(HarmonyId);
         }
 
         public static bool ApplyPatch(HarmonyPatchInfo patchInfo)
@@ -31,7 +31,7 @@ namespace OBSControl.HarmonyPatches
             return patchInfo.RemovePatch(harmony);
         }
 
-        public static bool ApplyPatch(HarmonyInstance harmony, MethodInfo original, HarmonyMethod prefix = null, HarmonyMethod postfix = null)
+        public static bool ApplyPatch(Harmony harmony, MethodInfo original, HarmonyMethod prefix = null, HarmonyMethod postfix = null)
         {
             try
             {

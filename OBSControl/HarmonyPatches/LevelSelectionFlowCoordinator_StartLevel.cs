@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
-using Harmony;
+using HarmonyLib;
 using BS_Utils;
 using static OBSControl.Utilities.ReflectionUtil;
 using OBSControl.OBSComponents;
@@ -60,10 +60,10 @@ namespace OBSControl.HarmonyPatches
             UnityEngine.UI.Button playButton)
         {
             if(LevelStartDelay == null)
-                LevelStartDelay = new WaitForSeconds(Plugin.config.Value.LevelStartDelay);
+                LevelStartDelay = new WaitForSeconds(Plugin.config.LevelStartDelay);
             IBeatmapLevel levelInfo = difficultyBeatmap.level;
             playButton.interactable = false;
-            Logger.log.Debug($"Delaying level start by {Plugin.config.Value.LevelStartDelay} seconds...");
+            Logger.log.Debug($"Delaying level start by {Plugin.config.LevelStartDelay} seconds...");
             if (levelInfo != null)
                 Logger.log.Debug($"levelInfo is not null: {levelInfo.songName} by {levelInfo.levelAuthorName}");
             else

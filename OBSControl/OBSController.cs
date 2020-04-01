@@ -61,14 +61,14 @@ namespace OBSControl
             }
         }
 
-        private PlayerDataModelSO _playerData;
-        public PlayerDataModelSO PlayerData
+        private PlayerDataModel _playerData;
+        public PlayerDataModel PlayerData
         {
             get
             {
                 if (_playerData == null)
                 {
-                    _playerData = Resources.FindObjectsOfTypeAll<PlayerDataModelSO>().FirstOrDefault();
+                    _playerData = Resources.FindObjectsOfTypeAll<PlayerDataModel>().FirstOrDefault();
                     if (_playerSettings != null)
                     {
                         Logger.log.Debug("Found PlayerData");
@@ -90,7 +90,7 @@ namespace OBSControl
         public static OBSController instance { get; private set; }
         public bool IsConnected => Obs?.IsConnected ?? false;
 
-        private PluginConfig Config => Plugin.config.Value;
+        private PluginConfig Config => Plugin.config;
         public event EventHandler DestroyingObs;
 
         #region Setup/Teardown
@@ -152,7 +152,7 @@ namespace OBSControl
         public async Task<bool> TryConnect()
         {
             Logger.log.Info($"TryConnect");
-            if (string.IsNullOrEmpty(Plugin.config.Value.ServerAddress))
+            if (string.IsNullOrEmpty(Plugin.config.ServerAddress))
             {
                 Logger.log.Error("The ServerAddress in the config is null or empty. Unable to connect to OBS.");
                 return false;
