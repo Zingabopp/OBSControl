@@ -5,8 +5,9 @@ using System.Linq;
 using System.Reflection;
 using IPA;
 using IPA.Config;
+using IPA.Config.Stores;
 using IPA.Utilities;
-using Harmony;
+using HarmonyLib;
 using UnityEngine.SceneManagement;
 using UnityEngine;
 using OBSControl.OBSComponents;
@@ -14,39 +15,19 @@ using IPALogger = IPA.Logging.Logger;
 
 namespace OBSControl
 {
-    public class Plugin : IBeatSaberPlugin, IDisablablePlugin
+    [Plugin(RuntimeOptions.DynamicInit)]
+    public class Plugin
     {
 
         internal static string Name => "OBSControl";
-        internal static Ref<PluginConfig> config;
-        internal static IConfigProvider configProvider;
+        internal static PluginConfig config;
 
-        public void Init(IPALogger logger, [Config.Prefer("json")] IConfigProvider cfgProvider)
+        [Init]
+        public void Init(IPALogger logger, Config conf)
         {
             Logger.log = logger;
-            Logger.log.Debug("Logger initialised.");
-
-            configProvider = cfgProvider;
-
-            config = configProvider.MakeLink<PluginConfig>((p, v) =>
-            {
-                // Build new config file if it doesn't exist or RegenerateConfig is true
-                if (v.Value == null || v.Value.RegenerateConfig)
-                {
-                    Logger.log.Debug("Regenerating PluginConfig");
-                    p.Store(v.Value = new PluginConfig()
-                    {
-                        // Set your default settings here.
-                        RegenerateConfig = false,
-                        ServerAddress = "ws://127.0.0.1:4444",
-                        ServerPassword = string.Empty,
-                        LevelStartDelay = 2,
-                        RecordingStopDelay = 4,
-                        RecordingFileFormat = "?N-?A_?%<_[?M]><-?F><-?e>"
-                    });
-                }
-                config = v;
-            });
+            Logger.log.Debug("Logger initialized.");
+            config = conf.Generated<PluginConfig>();
             HarmonyPatches.HarmonyManager.Initialize();
         }
         #region IDisablable
@@ -54,6 +35,7 @@ namespace OBSControl
         /// <summary>
         /// Called when the plugin is enabled (including when the game starts if the plugin is enabled).
         /// </summary>
+        [OnEnable]
         public void OnEnable()
         {
             //config.Value.FillDefaults();
@@ -67,6 +49,7 @@ namespace OBSControl
         /// Called when the plugin is disabled. It is important to clean up any Harmony patches, GameObjects, and Monobehaviours here.
         /// The game should be left in a state as if the plugin was never started.
         /// </summary>
+        [OnDisable]
         public void OnDisable()
         {
             Logger.log.Debug("OnDisable()");
@@ -93,26 +76,7 @@ namespace OBSControl
             HarmonyPatches.HarmonyManager.UnpatchAll();
         }
 
-        /// <summary>
-        /// Called when the active scene is changed.
-        /// </summary>
-        /// <param name="prevScene">The scene you are transitioning from.</param>
-        /// <param name="nextScene">The scene you are transitioning to.</param>
-        public void OnActiveSceneChanged(Scene prevScene, Scene nextScene)
-        {
-
-        }
-
-        /// <summary>
-        /// Called when the a scene's assets are loaded.
-        /// </summary>
-        /// <param name="scene"></param>
-        /// <param name="sceneMode"></param>
-        public void OnSceneLoaded(Scene scene, LoadSceneMode sceneMode)
-        {
-
-        }
-
+        [OnExit]
         public void OnApplicationQuit()
         {
             Logger.log.Debug("OnApplicationQuit");
@@ -121,35 +85,5 @@ namespace OBSControl
             if (OBSController.instance != null)
                 GameObject.Destroy(OBSController.instance);
         }
-
-        /// <summary>
-        /// Runs at a fixed intervalue, generally used for physics calculations. 
-        /// </summary>
-        public void OnFixedUpdate()
-        {
-
-        }
-
-        /// <summary>
-        /// This is called every frame.
-        /// </summary>
-        public void OnUpdate()
-        {
-
-        }
-
-
-        public void OnSceneUnloaded(Scene scene)
-        {
-
-        }
-
-
-        /// <summary>
-        /// This should not be used with an IDisablable plugin. 
-        /// It will not be called if the plugin starts disabled and is enabled while the game is running.
-        /// </summary>
-        public void OnApplicationStart()
-        { }
     }
 }

@@ -64,8 +64,8 @@
     <Reference Include="System.Xml">
       <Private>True</Private>
     </Reference>
-    <Reference Include="MainAssembly">
-      <HintPath>$(BeatSaberReferences)\MainAssembly.dll</HintPath>
+    <Reference Include="Main">
+      <HintPath>$(BeatSaberReferences)\Main.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="HMUI">
@@ -76,8 +76,8 @@
       <HintPath>$(BeatSaberReferences)\IPA.Loader.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="0Harmony.1.2.0.1">
-      <HintPath>$(BeatSaberReferences)\0Harmony.1.2.0.1.dll</HintPath>
+    <Reference Include="0Harmony">
+      <HintPath>$(BeatSaberReferences)\0Harmony.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Unity.TextMeshPro">

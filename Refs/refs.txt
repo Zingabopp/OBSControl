@@ -3,7 +3,7 @@
 ""Managed/
 """HMLib.dll?virt
 """HMUI.dll?virt
-"""MainAssembly.dll?virt
+"""Main.dll?virt
 """IPA.
 """"Loader.dll
 """Unity.TextMeshPro.dll
@@ -14,8 +14,8 @@
 """"UI
 """"".dll
 "Libs/
-""0Harmony.1.2.0.1.dll
-""Newtonsoft.Json.12.0.0.0.dll
+""0Harmony.dll
+""Newtonsoft.Json.dll
 "Plugins/
 ""BS_Utils.dll
 ""BSML.dll
