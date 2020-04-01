@@ -2,10 +2,8 @@
 using OBSWebsocketDotNet.Types;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -27,9 +25,9 @@ namespace OBSControl.OBSComponents
         }
 
         public string RecordingFolder { get; protected set; }
-        public async Task TryStartRecording(string fileFormat = DefaultFileFormat)
+        public async Task TryStartRecordingAsync(string fileFormat = DefaultFileFormat)
         {
-            Logger.log.Debug($"TryStartRecording"); 
+            Logger.log.Debug($"TryStartRecording");
             try
             {
                 RecordingFolder = await obs.GetRecordingFolder().ConfigureAwait(false);
@@ -40,7 +38,7 @@ namespace OBSControl.OBSComponents
                 Logger.log?.Debug(ex);
                 return;
             }
-            
+
             int tries = 0;
             string currentFormat = null;
             do
@@ -76,11 +74,14 @@ namespace OBSControl.OBSComponents
 
         private string CurrentFileFormat { get; set; }
 
-        public async Task TryStopRecording(string renameTo = "")
+        public async Task TryStopRecordingAsync(string renameTo, bool stopImmediate = false)
         {
             try
             {
                 RenameString = renameTo;
+                int delay = Plugin.config.RecordingStopDelay;
+                if (!stopImmediate && delay > 0)
+                    await Task.Delay(delay).ConfigureAwait(false);
                 await obs.StopRecording().ConfigureAwait(false);
                 recordingCurrentLevel = false;
             }
@@ -119,14 +120,14 @@ namespace OBSControl.OBSComponents
                 Logger.log.Warn($"Recording directory doesn't exist, unable to rename.");
                 return;
             }
-            var targetFile = directory.GetFiles(fileFormat + "*").OrderByDescending(f => f.CreationTimeUtc).FirstOrDefault();
+            FileInfo targetFile = directory.GetFiles(fileFormat + "*").OrderByDescending(f => f.CreationTimeUtc).FirstOrDefault();
             if (targetFile == null)
             {
                 Logger.log.Warn($"Couldn't find recorded file, unable to rename.");
                 return;
             }
             string fileName = targetFile.Name.Substring(0, targetFile.Name.LastIndexOf('.'));
-            var fileExtension = targetFile.Extension;
+            string fileExtension = targetFile.Extension;
             Logger.log.Info($"Attempting to rename {fileFormat}.{fileExtension} to {newName} with an extension of {fileExtension}");
             string newFile = newName + fileExtension;
             int index = 2;
@@ -154,7 +155,7 @@ namespace OBSControl.OBSComponents
         {
             string fileFormat = ToDateTimeFileFormat(DateTime.Now);
             Logger.log.Debug($"Starting recording, file format: {fileFormat}");
-            TryStartRecording(fileFormat);
+            TryStartRecordingAsync(fileFormat);
         }
 
         public IEnumerator<WaitUntil> GameStatusSetup()
@@ -189,7 +190,7 @@ namespace OBSControl.OBSComponents
                 Logger.log.Error($"Error generating new file name: {ex}");
                 Logger.log.Debug(ex);
             }
-            TryStopRecording(newFileName);
+            TryStopRecordingAsync(newFileName, false);
         }
 
         #region OBS Event Handlers
@@ -275,7 +276,7 @@ namespace OBSControl.OBSComponents
         /// </summary>
         private void OnDisable()
         {
-            TryStopRecording();
+            TryStopRecordingAsync(string.Empty, true);
             BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
             if (LevelDelayPatch.IsApplied)
                 LevelDelayPatch.RemovePatch();

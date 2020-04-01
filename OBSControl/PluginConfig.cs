@@ -1,4 +1,8 @@
-﻿namespace OBSControl
+﻿using System.Runtime.CompilerServices;
+using IPA.Config.Stores;
+
+[assembly: InternalsVisibleTo(GeneratedStore.AssemblyVisibilityTarget)]
+namespace OBSControl
 {
     internal class PluginConfig
     {
