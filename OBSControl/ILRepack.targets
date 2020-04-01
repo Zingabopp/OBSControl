@@ -22,7 +22,7 @@
         OutputAssembly="$(AssemblyName)-merged.dll"
         InputAssemblies="@(InputAssemblies)"
         OutputType="Dll"
-        Verbose="true"
+        Verbose="false"
         DebugInfo="true"
         TargetPlatformVersion="v4"
         WorkingDirectory="$(WorkingDirectory)"
