@@ -16,7 +16,7 @@
 
     <ILRepack
         Parallel="true"
-        Internalize="false"
+        Internalize="true"
         InternalizeExcludeAssemblies="@(DoNotInternalizeAssemblies)"
         MainAssembly="$(AssemblyName).dll"
         OutputAssembly="$(AssemblyName)-merged.dll"
