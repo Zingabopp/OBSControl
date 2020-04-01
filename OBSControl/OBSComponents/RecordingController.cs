@@ -17,8 +17,10 @@ namespace OBSControl.OBSComponents
     {
         public static RecordingController instance { get; private set; }
         private OBSWebsocket obs => OBSController.instance.Obs;
+        HarmonyPatches.HarmonyPatchInfo LevelDelayPatch;
         private const string DefaultFileFormat = "%CCYY-%MM-%DD %hh-%mm-%ss";
-
+        public bool WaitingToStop { get; private set; }
+        public Task StopRecordingTask { get; private set; }
         private string ToDateTimeFileFormat(DateTime dateTime)
         {
             return dateTime.ToString("yyyyMMddHHmmss");
@@ -78,6 +80,7 @@ namespace OBSControl.OBSComponents
         {
             try
             {
+                WaitingToStop = true;
                 RenameString = renameTo;
                 int delay = Plugin.config.RecordingStopDelay;
                 if (!stopImmediate && delay > 0)
@@ -89,6 +92,11 @@ namespace OBSControl.OBSComponents
             {
                 Logger.log?.Error($"Error trying to stop recording: {ex.Message}");
                 Logger.log?.Debug(ex);
+            }
+            finally
+            {
+                WaitingToStop = false;
+                StopRecordingTask = null;
             }
         }
 
@@ -190,7 +198,7 @@ namespace OBSControl.OBSComponents
                 Logger.log.Error($"Error generating new file name: {ex}");
                 Logger.log.Debug(ex);
             }
-            TryStopRecordingAsync(newFileName, false);
+            StopRecordingTask = TryStopRecordingAsync(newFileName, false);
         }
 
         #region OBS Event Handlers
@@ -259,7 +267,6 @@ namespace OBSControl.OBSComponents
 
         }
 
-        HarmonyPatches.HarmonyPatchInfo LevelDelayPatch;
         /// <summary>
         /// Called when the script becomes enabled and active
         /// </summary>
@@ -276,7 +283,7 @@ namespace OBSControl.OBSComponents
         /// </summary>
         private void OnDisable()
         {
-            TryStopRecordingAsync(string.Empty, true);
+            StopRecordingTask = TryStopRecordingAsync(string.Empty, true);
             BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
             if (LevelDelayPatch.IsApplied)
                 LevelDelayPatch.RemovePatch();
