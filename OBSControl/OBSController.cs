@@ -149,43 +149,57 @@ namespace OBSControl
             target.StreamStatus -= Obs_StreamStatus;
         }
 
+        public string lastTryConnectMessage;
         public async Task<bool> TryConnect()
         {
-            Logger.log.Info($"TryConnect");
-            if (string.IsNullOrEmpty(Plugin.config.ServerAddress))
-            {
-                Logger.log.Error("The ServerAddress in the config is null or empty. Unable to connect to OBS.");
-                return false;
-            }
+            string message;
+            
             if (!Obs.IsConnected)
             {
-                Logger.log.Info($"Attempting to connect to {Config.ServerAddress}");
                 try
                 {
                     await Obs.Connect(Config.ServerAddress, Config.ServerPassword).ConfigureAwait(false);
-                    Logger.log.Info($"Finished attempting to connect to {Config.ServerAddress}");
+                    message = $"Finished attempting to connect to {Config.ServerAddress}";
+                    if (message != lastTryConnectMessage)
+                    {
+                        Logger.log.Info(message);
+                        lastTryConnectMessage = message;
+                    }
                 }
                 catch (AuthFailureException)
                 {
-                    Logger.log.Error($"Authentication failed connecting to server {Config.ServerAddress}.");
+                    message = $"Authentication failed connecting to server {Config.ServerAddress}.";
+                    if (message != lastTryConnectMessage)
+                    {
+                        Logger.log.Info(message);
+                        lastTryConnectMessage = message;
+                    }
                     return false;
                 }
                 catch (ErrorResponseException ex)
                 {
-                    Logger.log.Error($"Failed to connect to server {Config.ServerAddress}: {ex.Message}.");
+                    message = $"Failed to connect to server {Config.ServerAddress}: {ex.Message}.";
+                    if (message != lastTryConnectMessage)
+                    {
+                        Logger.log.Info(message);
+                        lastTryConnectMessage = message;
+                    }
                     Logger.log.Debug(ex);
                     return false;
                 }
                 catch (Exception ex)
                 {
-                    Logger.log.Error($"Failed to connect to server {Config.ServerAddress}: {ex.Message}.");
-                    Logger.log.Debug(ex);
+                    message = $"Failed to connect to server {Config.ServerAddress}: {ex.Message}.";
+                    if (message != lastTryConnectMessage)
+                    {
+                        Logger.log.Info(message);
+                        Logger.log.Debug(ex);
+                        lastTryConnectMessage = message;
+                    }
                     return false;
                 }
                 if (Obs.IsConnected)
                     Logger.log.Info($"Connected to OBS @ {Config.ServerAddress}");
-                else
-                    Logger.log.Info($"Not connected to OBS.");
             }
             else
                 Logger.log.Info("TryConnect: OBS is already connected.");
@@ -194,7 +208,12 @@ namespace OBSControl
 
         private async Task RepeatTryConnect()
         {
-
+            if (string.IsNullOrEmpty(Plugin.config.ServerAddress))
+            {
+                Logger.log.Error("The ServerAddress in the config is null or empty. Unable to connect to OBS.");
+                return;
+            }
+            Logger.log.Info($"Attempting to connect to {Config.ServerAddress}");
             while (!(await TryConnect().ConfigureAwait(false)))
             {
                 await Task.Delay(5000).ConfigureAwait(false);

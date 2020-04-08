@@ -29,6 +29,7 @@ namespace OBSControl
             Logger.log.Debug("Logger initialized.");
             config = conf.Generated<PluginConfig>();
             HarmonyPatches.HarmonyManager.Initialize();
+            OBSWebsocketDotNet.OBSLogger.SetLogger(new OBSLogger());
         }
         #region IDisablable
 
