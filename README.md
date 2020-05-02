@@ -3,7 +3,7 @@ A Beat Saber mod to automatically start/stop recording in OBS when you play a so
 
 ## Installation
 * OBS
-  * **Requires the [obs-websocket-Remote-control](https://obsproject.com/forum/resources/obs-websocket-remote-control-obs-studio-from-websockets.466/) OBS plugin.**
+  * **Requires the [OBS-Websocket](https://github.com/Palakis/obs-websocket/releases) OBS plugin.**
 * Beat Saber
   * Extract the release zip to your Beat Saber folder. `OBSControl.dll` should end up in your `Beat Saber\Plugins` folder.
   
