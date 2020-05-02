@@ -3,6 +3,7 @@ name: Build
 on:
   push:
     branches: [ master ]
+    paths: 'OBSControl/**'
   pull_request:
     branches: [ master ]
     paths: 'OBSControl/**'
