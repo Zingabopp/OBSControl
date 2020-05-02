@@ -342,7 +342,10 @@ namespace OBSControl.OBSComponents
         private void Awake()
         {
             if (instance != null)
+            {
                 GameObject.DestroyImmediate(this);
+                return;
+            }
             GameObject.DontDestroyOnLoad(this);
             instance = this;
             LevelDelayPatch = HarmonyPatches.HarmonyManager.GetLevelDelayPatch();
@@ -391,7 +394,7 @@ namespace OBSControl.OBSComponents
             if (recordingCurrentLevel)
                 StopRecordingTask = TryStopRecordingAsync(string.Empty, true);
             BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
-            if (LevelDelayPatch.IsApplied)
+            if (LevelDelayPatch?.IsApplied ?? false)
                 LevelDelayPatch.RemovePatch();
         }
 
@@ -400,7 +403,7 @@ namespace OBSControl.OBSComponents
         /// </summary>
         private void OnDestroy()
         {
-
+            instance = null;
         }
         #endregion
     }

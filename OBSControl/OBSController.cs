@@ -318,7 +318,10 @@ namespace OBSControl
         {
             Logger.log.Debug("OBSController Awake()");
             if (instance != null)
+            {
                 GameObject.DestroyImmediate(this);
+                return;
+            }
             GameObject.DontDestroyOnLoad(this);
             instance = this;
             CreateObsInstance();
@@ -338,7 +341,7 @@ namespace OBSControl
         /// </summary>
         private void OnEnable()
         {
-
+            OBSComponents.RecordingController.instance?.gameObject.SetActive(true);
         }
 
         /// <summary>
@@ -346,7 +349,7 @@ namespace OBSControl
         /// </summary>
         private void OnDisable()
         {
-
+            OBSComponents.RecordingController.instance?.gameObject.SetActive(false);
         }
 
         /// <summary>
@@ -356,7 +359,9 @@ namespace OBSControl
         {
             instance = null;
             if (OBSComponents.RecordingController.instance != null)
+            {
                 Destroy(OBSComponents.RecordingController.instance);
+            }
             DestroyObsInstance(Obs);
         }
         #endregion

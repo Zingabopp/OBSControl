@@ -19,18 +19,21 @@ namespace OBSControl
     [Plugin(RuntimeOptions.DynamicInit)]
     public class Plugin
     {
-
+        internal static Plugin instance;
         internal static string Name => "OBSControl";
         internal static PluginConfig config;
+        internal static bool Enabled;
 
         [Init]
         public void Init(IPALogger logger, Config conf)
         {
+            instance = this;
             Logger.log = logger;
             Logger.log.Debug("Logger initialized.");
             config = conf.Generated<PluginConfig>();
             HarmonyPatches.HarmonyManager.Initialize();
             OBSWebsocketDotNet.OBSLogger.SetLogger(new OBSLogger());
+            BSMLSettings.instance.AddSettingsMenu("OBSControl", "OBSControl.UI.SettingsView.bsml", config);
         }
         #region IDisablable
 
@@ -44,8 +47,8 @@ namespace OBSControl
             Logger.log.Debug("OnEnable()");
             new GameObject("OBSControl_OBSController").AddComponent<OBSController>();
             new GameObject("OBSControl_RecordingController").AddComponent<RecordingController>();
-            BSMLSettings.instance.AddSettingsMenu("OBSControl", "OBSControl.UI.SettingsView.bsml", config);
             ApplyHarmonyPatches();
+            Enabled = true;
         }
 
         /// <summary>
@@ -59,6 +62,7 @@ namespace OBSControl
             RemoveHarmonyPatches();
             GameObject.Destroy(OBSController.instance.gameObject);
             GameObject.Destroy(RecordingController.instance.gameObject);
+            Enabled = false;
         }
         #endregion
 

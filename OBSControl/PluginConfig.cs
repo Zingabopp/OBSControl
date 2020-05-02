@@ -89,6 +89,7 @@ namespace OBSControl
             TryAddCurrentNames(StartSceneName, GameSceneName, EndSceneName);
             Logger.log.Warn($"SceneOptions: {string.Join(", ", SceneSelectOptions)}");
             RefreshDropdowns();
+            OBSController.instance?.gameObject.SetActive(Enabled);
         }
 
         public void UpdateSceneOptions(IEnumerable<string> newOptions)
