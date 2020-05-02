@@ -25,15 +25,5 @@ namespace OBSControlTests
                 }
             }
         }
-
-        [TestMethod]
-        public async Task VersionCheckTest()
-        {
-            Uri releaseUri = new Uri("https://api.github.com/repos/andruzzzhka/BeatSaberMultiplayer/releases");
-            var version = await OBSControl.Utilities.VersionCheck.GetLatestVersionAsync(releaseUri);
-            Console.WriteLine($"Current Version: {string.Join(".", version.GetVersionArray())} released on {version.ReleaseDate}");
-        }
-
-
     }
 }
