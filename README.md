@@ -1,4 +1,4 @@
-# OBSControl
+# OBSControl [![Build](https://github.com/Zingabopp/OBSControl/workflows/Build/badge.svg?event=push)](https://github.com/Zingabopp/OBSControl/actions)
 A Beat Saber mod to automatically start/stop recording in OBS when you play a song.
 
 ## Installation
