@@ -20,7 +20,7 @@
 
   <ItemGroup>
     <Reference Include="Main">
-      <HintPath>H:\SteamApps\SteamApps\common\Beat Saber\Beat Saber_Data\Managed\Main.dll</HintPath>
+      <HintPath>$(SolutionDir)Refs\Main.dll</HintPath>
       <Aliases>BeatSaber</Aliases>
     </Reference>
     <Reference Include="UnityEngine">
