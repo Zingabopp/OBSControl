@@ -16,6 +16,7 @@
     <DebugType>portable</DebugType>
     <BeatSaberReferences>$(SolutionDir)Refs</BeatSaberReferences>
     <BeatSaberDir>$(ProjectDir)References</BeatSaberDir>
+    <RuntimeIdentifiers>win</RuntimeIdentifiers>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(NCrunch)' == '1' ">
     <DisableCopyToPlugins>True</DisableCopyToPlugins>
@@ -132,11 +133,18 @@
     <EmbeddedResource Include="UI\SettingsView.bsml" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="BSMTTasks">
+      <Version>1.0.16</Version>
+      <IncludeAssets>build</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="ILRepack.MSBuild.Task">
       <Version>2.0.13</Version>
+      <IncludeAssets>build</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
-      <Version>12.0.2</Version>
+      <Version>12.0.3</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>

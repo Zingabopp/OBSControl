@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <UsingTask TaskName="ILRepack" AssemblyFile="ILRepack.MSBuild.Task.dll"/>
   <Target Name="ILRepack" AfterTargets="Build" Condition="'$(NCrunch)' != '1'" >
     <PropertyGroup>
       <WorkingDirectory>$(OutputPath)</WorkingDirectory>
@@ -24,7 +25,6 @@
         OutputType="Dll"
         Verbose="false"
         DebugInfo="true"
-        TargetPlatformVersion="v4"
         WorkingDirectory="$(WorkingDirectory)"
     />
     <Move SourceFiles="$(OutputPath)$(AssemblyName)-merged.dll" DestinationFiles="$(OutputPath)Merged\$(AssemblyName).dll" />
