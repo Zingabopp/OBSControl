@@ -127,7 +127,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="BuildTargets.targets" />
-    <None Include="CreateJunctions.bat" />
     <None Include=".gitignore" />
     <None Include="ILRepack.targets" />
     <EmbeddedResource Include="UI\SettingsView.bsml" />
