@@ -18,7 +18,7 @@
     <BeatSaberDir>$(ProjectDir)References</BeatSaberDir>
     <RuntimeIdentifiers>win</RuntimeIdentifiers>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(NCrunch)' == '1' ">
+  <PropertyGroup Condition=" $(DefineConstants.Contains('CIBuild')) OR '$(NCrunch)' == '1' ">
     <DisableCopyToPlugins>True</DisableCopyToPlugins>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
