@@ -10,6 +10,7 @@
 """UnityEngine.
 """"dll
 """"CoreModule.dll
+""""AudioModule.dll
 """"UI
 """"".dll
 "Libs/
