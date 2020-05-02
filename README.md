@@ -20,7 +20,7 @@ Settings can be found in-game in the `Mod Settings > OBSControl` menu.
   * StartSceneDuration: Amount of time in seconds to show the Start Scene before switching to the Game Scene.
   * EndSceneName: Name of the OBS scene to use as an outro for your videos. This scene is shown **after** RecordingStopDelay has finished. **You must have a valid GameSceneName set to use this option.**
   * EndSceneDuration: Amount of time in seconds to show the End Scene before stopping the recording.
-* Advanced (Available only by editing `OBSControl.json` in your `Beat Saber\UserData` folder.
+* Advanced (Available only by editing `OBSControl.json` in your `Beat Saber\UserData` folder)
   * RecordingFileFormat: Defines how the file will be renamed after the recording stops.
     * Substitution characters are prefixed with `?`
     * Optional groups are bounded by `<` `>`
