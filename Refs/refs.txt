@@ -10,7 +10,6 @@
 """UnityEngine.
 """"dll
 """"CoreModule.dll
-""""AudioModule.dll
 """"UI
 """"".dll
 "Libs/
@@ -19,4 +18,3 @@
 "Plugins/
 ""BS_Utils.dll
 ""BSML.dll
-""SongCore.dll

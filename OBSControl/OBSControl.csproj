@@ -39,7 +39,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="BSML">
-      <HintPath>$(BeatSaberDir)\Plugins\BSML.dll</HintPath>
+      <HintPath>$(BeatSaberReferences)\BSML.dll</HintPath>
       <Private>True</Private>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
