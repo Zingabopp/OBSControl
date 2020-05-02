@@ -21,7 +21,6 @@ namespace OBSControl.HarmonyPatches
         })]
     internal class LevelSelectionNavigationController_StartLevel
     {
-        private static WaitForSeconds LevelStartDelay;
         public static bool DelayedStartActive { get; private set; }
 
         /// <summary>
@@ -35,11 +34,13 @@ namespace OBSControl.HarmonyPatches
             if (!OBSController.instance.IsConnected)
             {
                 Logger.log.Warn($"Not connected to OBS, skipping StartLevel override.");
-                return true; 
+                return true;
             }
+            if (Plugin.config.LevelStartDelay == 0)
+                return true;
             if (DelayedStartActive && WaitingToStart)
                 return false; // Ignore this call to StartLevel
-            if(!WaitingToStart && DelayedStartActive) // Done waiting, start the level
+            if (!WaitingToStart && DelayedStartActive) // Done waiting, start the level
             {
                 DelayedStartActive = false;
                 return true;
@@ -59,8 +60,6 @@ namespace OBSControl.HarmonyPatches
             IDifficultyBeatmap difficultyBeatmap, Action beforeSceneSwitchCallback, bool practice,
             UnityEngine.UI.Button playButton)
         {
-            if(LevelStartDelay == null)
-                LevelStartDelay = new WaitForSeconds(Plugin.config.LevelStartDelay);
             IBeatmapLevel levelInfo = difficultyBeatmap.level;
             playButton.interactable = false;
             Logger.log.Debug($"Delaying level start by {Plugin.config.LevelStartDelay} seconds...");
@@ -69,7 +68,7 @@ namespace OBSControl.HarmonyPatches
             else
                 Logger.log.Warn($"levelInfo is null, unable to set song file format.");
             RecordingController.instance.StartRecordingLevel(difficultyBeatmap);
-            yield return LevelStartDelay;
+            yield return new WaitForSeconds(Plugin.config.LevelStartDelay); ;
             WaitingToStart = false;
             //playButton.interactable = true;
             StartLevel(coordinator, difficultyBeatmap, beforeSceneSwitchCallback, practice);

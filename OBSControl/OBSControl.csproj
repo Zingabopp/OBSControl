@@ -38,6 +38,11 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BSML">
+      <HintPath>$(BeatSaberDir)\Plugins\BSML.dll</HintPath>
+      <Private>True</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="BS_Utils">
       <HintPath>$(BeatSaberReferences)\BS_Utils.dll</HintPath>
       <Private>True</Private>
@@ -124,6 +129,7 @@
     <None Include="CreateJunctions.bat" />
     <None Include=".gitignore" />
     <None Include="ILRepack.targets" />
+    <EmbeddedResource Include="UI\SettingsView.bsml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ILRepack.MSBuild.Task">

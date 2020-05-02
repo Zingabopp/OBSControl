@@ -23,10 +23,19 @@
     <ZipDir DirectoryName="$(IntermediateOutputPath)zip" ZipFileName="$(OutDir)zip\$(AssemblyName)-$(PluginVersion)-bs$(GameVersion)-$(CommitShortHash).zip" />
   </Target>
   <Target Name="CopyToPlugins" AfterTargets="ILRepack" Condition="'$(DisableCopyToPlugins)' != 'True'">
+    <IsProcessRunning ProcessName="Beat Saber">
+      <Output TaskParameter="IsRunning" PropertyName="IsRunning" />
+    </IsProcessRunning>
+    <PropertyGroup Condition="'$(IsRunning)' == 'True'">
+      <PluginDir>$(BeatSaberDir)\IPA\Pending\Plugins</PluginDir>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(IsRunning)' == 'False'">
+      <PluginDir>$(BeatSaberDir)\Plugins</PluginDir>
+    </PropertyGroup>
     <Error Text="Unable to copy assembly to game folder. BeatSaberDir doesn't exist: $(BeatSaberDir)" Condition="!Exists($(BeatSaberDir))"/>
-    <Message Text="Copying $(OutputPath)Merged\$(AssemblyName).dll to IPA\Pending\Plugins folder" Importance="high" />
-    <Copy SourceFiles="$(OutputPath)Merged\$(AssemblyName).dll" DestinationFiles="$(BeatSaberDir)\IPA\Pending\Plugins\$(AssemblyName).dll" />
-    <Copy SourceFiles="$(OutputPath)Merged\$(AssemblyName).pdb" DestinationFiles="$(BeatSaberDir)\IPA\Pending\Plugins\$(AssemblyName).pdb" />
+    <Message Text="Copying $(OutputPath)Merged\$(AssemblyName).dll to $(PluginDir) folder" Importance="high" />
+    <Copy SourceFiles="$(OutputPath)Merged\$(AssemblyName).dll" DestinationFiles="$(PluginDir)\$(AssemblyName).dll" />
+    <Copy SourceFiles="$(OutputPath)Merged\$(AssemblyName).pdb" DestinationFiles="$(PluginDir)\$(AssemblyName).pdb" />
   </Target>
   <!--Build Tasks-->
   <UsingTask TaskName="GetManifestInfo" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v12.0.dll">
@@ -295,6 +304,31 @@
                     Log.LogMessage(MessageImportance.High, "   Unable to retrieve current commit hash.");
             }
             return true;
+      ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+  <UsingTask TaskName="IsProcessRunning" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v12.0.dll">
+    <ParameterGroup>
+      <ProcessName ParameterType="System.String" Required="true" />
+      <IsRunning ParameterType="System.Boolean" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.Diagnostics" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+            if (string.IsNullOrEmpty(ProcessName))
+            {
+                return false;
+            }
+            foreach (Process proc in Process.GetProcesses())
+            {
+                if (proc.ProcessName.Contains(ProcessName))
+                {
+                    IsRunning = true;
+                    break;
+                }
+            }
       ]]>
       </Code>
     </Task>

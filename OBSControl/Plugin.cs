@@ -12,6 +12,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine;
 using OBSControl.OBSComponents;
 using IPALogger = IPA.Logging.Logger;
+using BeatSaberMarkupLanguage.Settings;
 
 namespace OBSControl
 {
@@ -43,6 +44,7 @@ namespace OBSControl
             Logger.log.Debug("OnEnable()");
             new GameObject("OBSControl_OBSController").AddComponent<OBSController>();
             new GameObject("OBSControl_RecordingController").AddComponent<RecordingController>();
+            BSMLSettings.instance.AddSettingsMenu("OBSControl", "OBSControl.UI.SettingsView.bsml", config);
             ApplyHarmonyPatches();
         }
 

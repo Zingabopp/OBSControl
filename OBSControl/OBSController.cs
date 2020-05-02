@@ -101,10 +101,16 @@ namespace OBSControl
             var newObs = new OBSWebsocket();
             newObs.WSTimeout = new TimeSpan(0, 0, 30);
             newObs.Connected += OnConnect;
+            newObs.Disconnected += OnDisconnect;
             newObs.StreamingStateChanged += Obs_StreamingStateChanged;
             newObs.StreamStatus += Obs_StreamStatus;
+            newObs.SceneListChanged += OnObsSceneListChanged;
             Obs = newObs;
             Logger.log.Debug("CreateObsInstance finished");
+        }
+
+        private void OnDisconnect(object sender, EventArgs e)
+        {
         }
 
         private HashSet<EventHandler<OutputState>> _recordingStateChangedHandlers = new HashSet<EventHandler<OutputState>>();
@@ -147,13 +153,14 @@ namespace OBSControl
             target.RecordingStateChanged -= OnRecordingStateChanged;
             target.StreamingStateChanged -= Obs_StreamingStateChanged;
             target.StreamStatus -= Obs_StreamStatus;
+            target.SceneListChanged -= OnObsSceneListChanged;
         }
 
         public string lastTryConnectMessage;
         public async Task<bool> TryConnect()
         {
             string message;
-            
+
             if (!Obs.IsConnected)
             {
                 try
@@ -208,20 +215,27 @@ namespace OBSControl
 
         private async Task RepeatTryConnect()
         {
-            if (string.IsNullOrEmpty(Plugin.config.ServerAddress))
+            try
             {
-                Logger.log.Error("The ServerAddress in the config is null or empty. Unable to connect to OBS.");
-                return;
+                if (string.IsNullOrEmpty(Plugin.config.ServerAddress))
+                {
+                    Logger.log.Error("The ServerAddress in the config is null or empty. Unable to connect to OBS.");
+                    return;
+                }
+                Logger.log.Info($"Attempting to connect to {Config.ServerAddress}");
+                while (!(await TryConnect().ConfigureAwait(false)))
+                {
+                    await Task.Delay(5000).ConfigureAwait(false);
+                }
+
+                Logger.log.Info($"OBS {(await Obs.GetVersion().ConfigureAwait(false)).OBSStudioVersion} is connected.");
+                Logger.log.Info($"OnConnectTriggered: {OnConnectTriggered}");
             }
-            Logger.log.Info($"Attempting to connect to {Config.ServerAddress}");
-            while (!(await TryConnect().ConfigureAwait(false)))
+            catch (Exception ex)
             {
-                await Task.Delay(5000).ConfigureAwait(false);
+                Logger.log.Error($"Error in RepeatTryConnect: {ex.Message}");
+                Logger.log.Debug(ex);
             }
-
-            Logger.log.Info($"OBS {(await Obs.GetVersion().ConfigureAwait(false)).OBSStudioVersion} is connected.");
-            Logger.log.Info($"OnConnectTriggered: {OnConnectTriggered}");
-
         }
 
         #endregion
@@ -241,10 +255,41 @@ namespace OBSControl
         #endregion
 
         #region Event Handlers
-        private void OnConnect(object sender, EventArgs e)
+        private async void OnConnect(object sender, EventArgs e)
         {
             OnConnectTriggered = true;
             Logger.log.Info($"OnConnect: Connected to OBS.");
+            try
+            {
+                string[] availableScenes = (await _obs.GetSceneList().ConfigureAwait(false)).Scenes.Select(s => s.Name).ToArray();
+                HMMainThreadDispatcher.instance.Enqueue(() =>
+                {
+                    Plugin.config.UpdateSceneOptions(availableScenes);
+                });
+            }
+            catch (Exception ex)
+            {
+                Logger.log.Error($"Error getting scene list: {ex.Message}");
+                Logger.log.Debug(ex);
+            }
+        }
+
+        private async void OnObsSceneListChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                string[] availableScenes = (await _obs.GetSceneList().ConfigureAwait(false)).Scenes.Select(s => s.Name).ToArray();
+                Logger.log.Info($"OBS scene list changed: {string.Join(", ", availableScenes)}");
+                HMMainThreadDispatcher.instance.Enqueue(() =>
+                {
+                    Plugin.config.UpdateSceneOptions(availableScenes);
+                });
+            }
+            catch (Exception ex)
+            {
+                Logger.log.Error($"Error getting scene list: {ex.Message}");
+                Logger.log.Debug(ex);
+            }
         }
 
         private void Obs_StreamingStateChanged(OBSWebsocket sender, OutputState type)
@@ -282,26 +327,10 @@ namespace OBSControl
         /// <summary>
         /// Only ever called once on the first frame the script is Enabled. Start is called after every other script's Awake() and before Update().
         /// </summary>
-        private async void Start()
+        private void Start()
         {
             Logger.log.Debug("OBSController Start()");
-            await RepeatTryConnect();
-        }
-
-        /// <summary>
-        /// Called every frame if the script is enabled.
-        /// </summary>
-        private void Update()
-        {
-
-        }
-
-        /// <summary>
-        /// Called every frame after every other enabled script's Update().
-        /// </summary>
-        private void LateUpdate()
-        {
-
+            RepeatTryConnect();
         }
 
         /// <summary>

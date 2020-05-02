@@ -63,9 +63,35 @@ namespace OBSControl.OBSComponents
                 }
             } while (currentFormat != fileFormat && tries < 10);
             CurrentFileFormat = fileFormat;
+            string startScene = Plugin.config.StartSceneName;
+            string gameScene = Plugin.config.GameSceneName;
+            string[] availableScenes = await GetAvailableScenes().ConfigureAwait(false);
+            if (!availableScenes.Contains(startScene))
+                startScene = string.Empty;
+            if (!availableScenes.Contains(gameScene))
+                gameScene = string.Empty;
+            bool validIntro = ValidateScenes(availableScenes, startScene, gameScene);
             try
             {
-                await obs.StartRecording().ConfigureAwait(false);
+                if (validIntro)
+                {
+                    int transitionDuration = await obs.GetTransitionDuration().ConfigureAwait(false);
+                    await obs.SetTransitionDuration(0).ConfigureAwait(false);
+                    Logger.log.Info($"Setting intro OBS scene to '{startScene}'");
+                    await obs.SetCurrentScene(startScene).ConfigureAwait(false);
+                    await obs.SetTransitionDuration(transitionDuration).ConfigureAwait(false);
+                    await obs.StartRecording().ConfigureAwait(false);
+                    await Task.Delay(TimeSpan.FromSeconds(Plugin.config.StartSceneDuration)).ConfigureAwait(false);
+                    Logger.log.Info($"Setting game OBS scene to '{gameScene}'");
+                    await obs.SetCurrentScene(gameScene).ConfigureAwait(false);
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(gameScene))
+                        await obs.SetCurrentScene(gameScene).ConfigureAwait(false);
+                    await obs.StartRecording().ConfigureAwait(false);
+                }
+
             }
             catch (Exception ex)
             {
@@ -74,18 +100,90 @@ namespace OBSControl.OBSComponents
             }
         }
 
+        public async Task AudioFun()
+        {
+            float volume = (await obs.GetVolume("Desktop")).Volume;
+            float volumeFade = 0f;
+            while(volumeFade < volume)
+            {
+                await obs.SetVolume("Desktop", volumeFade);
+                volumeFade += 0.05f;
+            }
+        }
+
+
+        public async Task<string[]> GetAvailableScenes()
+        {
+            try
+            {
+                return (await obs.GetSceneList().ConfigureAwait(false)).Scenes.Select(s => s.Name).ToArray();
+            }
+            catch (Exception ex)
+            {
+                Logger.log.Error($"Error validating scenes: {ex.Message}");
+                Logger.log.Debug(ex);
+                return Array.Empty<string>();
+            }
+        }
+
+        public bool ValidateScenes(IEnumerable<string> availableScenes, params string[] scenes)
+        {
+            if (availableScenes == null || scenes == null || scenes.Length == 0)
+                return false;
+            return scenes.All(s => !string.IsNullOrEmpty(s) && availableScenes.Contains(s));
+        }
+
+        public async Task<bool> ValidateScenesAsync(params string[] scenes)
+        {
+            try
+            {
+                string[] availableScenes = (await obs.GetSceneList().ConfigureAwait(false)).Scenes.Select(s => s.Name).ToArray();
+                Logger.log.Debug($"Available scenes: {string.Join(", ", availableScenes)}");
+                return scenes.All(s => availableScenes.Contains(s));
+            }
+            catch (Exception ex)
+            {
+                Logger.log.Error($"Error validating scenes: {ex.Message}");
+                Logger.log.Debug(ex);
+                return false;
+            }
+        }
+
         private string CurrentFileFormat { get; set; }
 
         public async Task TryStopRecordingAsync(string renameTo, bool stopImmediate = false)
         {
+            string endScene = Plugin.config.EndSceneName;
+            string gameScene = Plugin.config.GameSceneName;
+            string[] availableScenes = await GetAvailableScenes().ConfigureAwait(false);
+            if (!availableScenes.Contains(endScene))
+                endScene = string.Empty;
+            if (!availableScenes.Contains(gameScene))
+                gameScene = string.Empty;
+            bool validOutro = ValidateScenes(availableScenes, endScene, gameScene);
             try
             {
                 WaitingToStop = true;
                 RenameString = renameTo;
-                int delay = Plugin.config.RecordingStopDelay;
-                if (!stopImmediate && delay > 0)
-                    await Task.Delay(delay).ConfigureAwait(false);
+                float delay = Plugin.config.RecordingStopDelay;
+                if (!stopImmediate)
+                {
+                    if (delay > 0)
+                        await Task.Delay(TimeSpan.FromSeconds(delay)).ConfigureAwait(false);
+
+                    if (validOutro)
+                    {
+                        Logger.log.Info($"Setting outro OBS scene to '{endScene}'");
+                        await obs.SetCurrentScene(endScene);
+                        await Task.Delay(TimeSpan.FromSeconds(Plugin.config.EndSceneDuration));
+                    }
+                }
                 await obs.StopRecording().ConfigureAwait(false);
+                if(!stopImmediate && validOutro)
+                {
+                    Logger.log.Info($"Setting game OBS scene to '{gameScene}'");
+                    await obs.SetCurrentScene(gameScene).ConfigureAwait(false);
+                }
                 recordingCurrentLevel = false;
             }
             catch (ErrorResponseException ex)
@@ -142,7 +240,7 @@ namespace OBSControl.OBSComponents
             }
             string fileName = targetFile.Name.Substring(0, targetFile.Name.LastIndexOf('.'));
             string fileExtension = targetFile.Extension;
-            Logger.log.Info($"Attempting to rename {fileFormat}.{fileExtension} to {newName} with an extension of {fileExtension}");
+            Logger.log.Info($"Attempting to rename {fileFormat}{fileExtension} to {newName} with an extension of {fileExtension}");
             string newFile = newName + fileExtension;
             int index = 2;
             while (File.Exists(Path.Combine(directory.FullName, newFile)))
