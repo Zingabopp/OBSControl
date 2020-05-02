@@ -37,7 +37,11 @@ namespace OBSControl.HarmonyPatches
                 return true;
             }
             if (Plugin.config.LevelStartDelay == 0)
+            {
+                RecordingController.instance.StartRecordingLevel(difficultyBeatmap);
+                SharedCoroutineStarter.instance.StartCoroutine(RecordingController.instance.GameStatusSetup());
                 return true;
+            }
             if (DelayedStartActive && WaitingToStart)
                 return false; // Ignore this call to StartLevel
             if (!WaitingToStart && DelayedStartActive) // Done waiting, start the level
