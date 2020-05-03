@@ -25,6 +25,7 @@ namespace OBSControl.Utilities
             {'l', LevelDataType.SongDurationNoLabels },
             {'N', LevelDataType.SongName },
             {'n', LevelDataType.SongSubName },
+            {'@', LevelDataType.Date },
             //------CompletionResults----------
             {'1', LevelDataType.FirstPlay },
             {'b', LevelDataType.BadCutsCount },
@@ -57,6 +58,7 @@ namespace OBSControl.Utilities
             SongDurationLabeled,
             SongName,
             SongSubName,
+            Date,
             FirstPlay,
             BadCutsCount,
             EndSongTimeNoLabels,
