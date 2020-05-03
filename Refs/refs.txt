@@ -19,3 +19,13 @@
 "Plugins/
 ""BS_Utils.dll
 ""BSML.dll
+
+::startopt
+"::resolveInHere Libs/
+""SemVer.dll
+""Newtonsoft.Json.dll
+
+::startopt
+"::resolveInHere Beat Saber_Data/Managed/
+""IPA.
+"""Loader.dll
