@@ -76,7 +76,7 @@ namespace OBSControl.Utilities
             ScorePercent
         }
 
-        public static string GetDifficultyName(BeatmapDifficulty difficulty, bool shortName = false)
+        public static string GetDifficultyName(Difficulty difficulty, bool shortName = false)
         {
             // Can't use difficulty name extensions outside the game.
 #if DEBUG
@@ -84,15 +84,15 @@ namespace OBSControl.Utilities
                 return difficulty.ToString();
             switch (difficulty)
             {
-                case BeatmapDifficulty.Easy:
+                case Difficulty.Easy:
                     return "E";
-                case BeatmapDifficulty.Normal:
+                case Difficulty.Normal:
                     return "N";
-                case BeatmapDifficulty.Hard:
+                case Difficulty.Hard:
                     return "H";
-                case BeatmapDifficulty.Expert:
+                case Difficulty.Expert:
                     return "E";
-                case BeatmapDifficulty.ExpertPlus:
+                case Difficulty.ExpertPlus:
                     return "E+";
                 default:
                     return "NA";
@@ -102,7 +102,7 @@ namespace OBSControl.Utilities
 #endif
         }
 
-        public static string GetLevelDataString(LevelDataType levelDataType, IDifficultyBeatmap difficultyBeatmap, 
+        public static string GetLevelDataString(LevelDataType levelDataType, ILevelData difficultyBeatmap, 
             ILevelCompletionResults levelCompletionResults)
         {
             switch (levelDataType)
@@ -110,29 +110,29 @@ namespace OBSControl.Utilities
                 case LevelDataType.None:
                     return string.Empty;
                 case LevelDataType.BeatsPerMinute:
-                    return difficultyBeatmap.level.beatsPerMinute.ToString("N2").TrimEnd('0').TrimEnd('.').TrimEnd(',');
+                    return difficultyBeatmap.beatsPerMinute.ToString("N2").TrimEnd('0').TrimEnd('.').TrimEnd(',');
                 case LevelDataType.DifficultyShortName:
                     return GetDifficultyName(difficultyBeatmap.difficulty, true);
                 case LevelDataType.DifficultyName:
                     return GetDifficultyName(difficultyBeatmap.difficulty, false);
                 case LevelDataType.LevelAuthorName:
-                    return difficultyBeatmap.level.levelAuthorName;
+                    return difficultyBeatmap.levelAuthorName;
                 case LevelDataType.LevelId:
-                    return difficultyBeatmap.level.levelID;
+                    return difficultyBeatmap.levelID;
                 case LevelDataType.NoteJumpSpeed:
                     return difficultyBeatmap.noteJumpMovementSpeed.ToString("N2").TrimEnd('0').TrimEnd('.').TrimEnd(',');
                 case LevelDataType.SongAuthorName:
-                    return difficultyBeatmap.level.songAuthorName;
+                    return difficultyBeatmap.songAuthorName;
                 case LevelDataType.SongDurationNoLabels:
-                    difficultyBeatmap.level.songDuration.MinutesAndSeconds(out int durMin, out int durSec);
+                    difficultyBeatmap.songDuration.MinutesAndSeconds(out int durMin, out int durSec);
                     return durMin + "." + durSec.ToString("00");
                 case LevelDataType.SongDurationLabeled:
-                    difficultyBeatmap.level.songDuration.MinutesAndSeconds(out int durMinL, out int durSecL);
+                    difficultyBeatmap.songDuration.MinutesAndSeconds(out int durMinL, out int durSecL);
                     return durMinL + "m." + durSecL.ToString("00") + "s";
                 case LevelDataType.SongName:
-                    return difficultyBeatmap.level.songName;
+                    return difficultyBeatmap.songName;
                 case LevelDataType.SongSubName:
-                    return difficultyBeatmap.level.songSubName;
+                    return difficultyBeatmap.songSubName;
                 case LevelDataType.FirstPlay:
                     if (levelCompletionResults.PlayCount == 0)
                         return "1st";
@@ -263,7 +263,7 @@ namespace OBSControl.Utilities
                 throw new ArgumentNullException(nameof(difficultyBeatmap), "difficultyBeatmap cannot be null for GetFilenameString.");
             if (levelCompletionResults == null)
                 throw new ArgumentNullException(nameof(levelCompletionResults), "levelCompletionResults cannot be null for GetFilenameString.");
-
+            BeatmapLevelWrapper levelData = new BeatmapLevelWrapper(difficultyBeatmap);
             if (!baseString.Contains("?"))
                 return baseString;
             StringBuilder stringBuilder = new StringBuilder(baseString.Length);
@@ -296,7 +296,7 @@ namespace OBSControl.Utilities
                                 string data;
                                 try
                                 {
-                                    data = GetLevelDataString(LevelDataSubstitutions[ch], difficultyBeatmap, levelCompletionResults);
+                                    data = GetLevelDataString(LevelDataSubstitutions[ch], levelData, levelCompletionResults);
                                 }
                                 catch
                                 { 
@@ -312,7 +312,7 @@ namespace OBSControl.Utilities
                             {
                                 try
                                 {
-                                    stringBuilder.Append(GetLevelDataString(LevelDataSubstitutions[ch], difficultyBeatmap, levelCompletionResults));
+                                    stringBuilder.Append(GetLevelDataString(LevelDataSubstitutions[ch], levelData, levelCompletionResults));
                                 }
                                 catch 
                                 { 

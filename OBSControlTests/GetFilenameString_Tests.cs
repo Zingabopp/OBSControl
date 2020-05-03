@@ -76,6 +76,27 @@ namespace OBSControlTests
             Console.WriteLine("  " + result + ".mkv");
         }
 
+        [TestMethod]
+        public void InvalidFilenameCharacters()
+        {
+            TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
+            TestDifficultyBeatmap difficultyBeatmap = TestDifficultyBeatmap.Default;
+            difficultyBeatmap.TestBeatmapLevel.songName = "<?Test?S%ongName>";
+            results.gameplayModifiers.disappearingArrows = true;
+            results.gameplayModifiers.fastNotes = true;
+            results.gameplayModifiers.songSpeed = BeatSaber.GameplayModifiers.SongSpeed.Slower;
+            results.levelEndStateType = BeatSaber.LevelCompletionResults.LevelEndStateType.Failed;
+            results.maxCombo = results.TotalNotes - 1;
+            string baseString = "?N-?A_?%<_[?M]><-?F><-?e>";
+            Console.WriteLine("Format: " + baseString);
+            string result = GetFilenameString(baseString, difficultyBeatmap, results);
+            Console.WriteLine("  " + result + ".mkv");
+            baseString = "?N-?A_?%_[?M]-?F-?e";
+            Console.WriteLine("Format: " + baseString);
+            result = GetFilenameString(baseString, difficultyBeatmap, results);
+            Console.WriteLine("  " + result + ".mkv");
+        }
+
 
         [TestMethod]
         public void PerformanceTest()
