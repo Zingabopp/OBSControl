@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using HarmonyLib;
-using BS_Utils;
-using static OBSControl.Utilities.ReflectionUtil;
+﻿using HarmonyLib;
+using IPA.Utilities;
 using OBSControl.OBSComponents;
+using System;
+using System.Collections;
 using System.Reflection;
+using UnityEngine;
 
 namespace OBSControl.HarmonyPatches
 {
@@ -21,6 +16,10 @@ namespace OBSControl.HarmonyPatches
         })]
     internal class LevelSelectionNavigationController_StartLevel
     {
+        internal static FieldAccessor<LevelSelectionNavigationController, StandardLevelDetailViewController>.Accessor AccessDetailViewController =
+            FieldAccessor<LevelSelectionNavigationController, StandardLevelDetailViewController>.GetAccessor("_levelDetailViewController");
+        internal static FieldAccessor<StandardLevelDetailViewController, StandardLevelDetailView>.Accessor AccessDetailView =
+            FieldAccessor<StandardLevelDetailViewController, StandardLevelDetailView>.GetAccessor("_standardLevelDetailView");
         public static bool DelayedStartActive { get; private set; }
 
         /// <summary>
@@ -52,8 +51,8 @@ namespace OBSControl.HarmonyPatches
             DelayedStartActive = true;
             WaitingToStart = true;
             Logger.log.Debug("LevelSelectionNavigationController_StartLevel");
-            var detailViewController = ____levelSelectionNavigationController.GetPrivateField<StandardLevelDetailViewController>("_levelDetailViewController");
-            var levelView = detailViewController.GetPrivateField<StandardLevelDetailView>("_standardLevelDetailView");
+            StandardLevelDetailViewController detailViewController = AccessDetailViewController(ref ____levelSelectionNavigationController);
+            StandardLevelDetailView levelView = AccessDetailView(ref detailViewController);
             if (levelView != null)
                 levelView.playButton.interactable = false;
             SharedCoroutineStarter.instance.StartCoroutine(DelayedLevelStart(__instance, difficultyBeatmap, beforeSceneSwitchCallback, practice, levelView?.playButton));
@@ -86,7 +85,7 @@ namespace OBSControl.HarmonyPatches
             {
                 if (_startLevel == null)
                 {
-                    var presentMethod = typeof(LevelSelectionFlowCoordinator).GetMethod("StartLevel", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    MethodInfo presentMethod = typeof(LevelSelectionFlowCoordinator).GetMethod("StartLevel", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                     _startLevel = (StartLevelDelegate)Delegate.CreateDelegate(typeof(StartLevelDelegate), presentMethod);
                 }
                 return _startLevel;

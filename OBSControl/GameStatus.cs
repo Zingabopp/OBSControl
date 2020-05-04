@@ -14,18 +14,6 @@ namespace OBSControl
         public static int MaxScore;
         public static int MaxModifiedScore;
 
-        /*
-        private static GameplayCoreSceneSetup gameplayCoreSceneSetup
-        {
-            get
-            {
-                if (_gameplayCoreSceneSetup == null)
-                    _gameplayCoreSceneSetup = GameObject.FindObjectsOfType<GameplayCoreSceneSetup>().FirstOrDefault();
-                return _gameplayCoreSceneSetup;
-            }
-        }
-        */
-
         public static GameplayCoreSceneSetupData gameSetupData
         {
             get
@@ -36,7 +24,7 @@ namespace OBSControl
             }
         }
 
-        public static IDifficultyBeatmap difficultyBeatmap
+        public static IDifficultyBeatmap DifficultyBeatmap
         {
             get { return gameSetupData?.difficultyBeatmap; }
         }
@@ -45,7 +33,7 @@ namespace OBSControl
         {
             get
             {
-                return difficultyBeatmap?.level;
+                return DifficultyBeatmap?.level;
             }
         }
 
@@ -72,7 +60,7 @@ namespace OBSControl
         {
             try
             {
-                MaxScore = ScoreModel.MaxRawScoreForNumberOfNotes(difficultyBeatmap.beatmapData.notesCount);
+                MaxScore = ScoreModel.MaxRawScoreForNumberOfNotes(DifficultyBeatmap.beatmapData.notesCount);
                 Logger.log.Debug($"MaxScore: {MaxScore}");
                 MaxModifiedScore = GameStatus.GpModSO.GetModifiedScoreForGameplayModifiers(GameStatus.MaxScore, gameSetupData.gameplayModifiers);
                 Logger.log.Debug($"MaxModifiedScore: {MaxModifiedScore}");
