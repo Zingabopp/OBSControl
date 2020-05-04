@@ -78,32 +78,21 @@ namespace OBSControl.Utilities
 
         public static string GetDifficultyName(Difficulty difficulty, bool shortName = false)
         {
-            // Can't use difficulty name extensions outside the game.
-#if DEBUG
             if (!shortName)
                 return difficulty.ToString();
-            switch (difficulty)
+            return difficulty switch
             {
-                case Difficulty.Easy:
-                    return "E";
-                case Difficulty.Normal:
-                    return "N";
-                case Difficulty.Hard:
-                    return "H";
-                case Difficulty.Expert:
-                    return "E";
-                case Difficulty.ExpertPlus:
-                    return "E+";
-                default:
-                    return "NA";
-            }
-#else
-            return shortName ? difficulty.ShortName() : difficulty.Name();
-#endif
+                Difficulty.Easy => "E",
+                Difficulty.Normal => "N",
+                Difficulty.Hard => "H",
+                Difficulty.Expert => "E",
+                Difficulty.ExpertPlus => "E+",
+                _ => "NA",
+            };
         }
 
         public static string GetLevelDataString(LevelDataType levelDataType, ILevelData levelData, 
-            ILevelCompletionResults levelCompletionResults)
+            ILevelCompletionResults levelCompletionResults, string? data = null)
         {
             switch (levelDataType)
             {
@@ -133,6 +122,8 @@ namespace OBSControl.Utilities
                     return levelData.SongName;
                 case LevelDataType.SongSubName:
                     return levelData.SongSubName;
+                case LevelDataType.Date:
+                    return DateTime.Now.ToString(data ?? "yyyyMMddHHmm");
                 case LevelDataType.FirstPlay:
                     if (levelCompletionResults.PlayCount == 0)
                         return "1st";
@@ -156,32 +147,24 @@ namespace OBSControl.Utilities
                     if (levelCompletionResults.LevelEndAction == SongEndAction.Quit
                         || levelCompletionResults.LevelEndAction == SongEndAction.Restart)
                         return "Quit";
-                    switch (levelCompletionResults.LevelEndStateType)
+                    return levelCompletionResults.LevelEndStateType switch
                     {
-                        case LevelEndState.None:
-                            return "Unknown";
-                        case LevelEndState.Cleared:
-                            return "Cleared";
-                        case LevelEndState.Failed:
-                            return "Failed";
-                        default:
-                            return "Unknown";
-                    }
+                        LevelEndState.None => "Unknown",
+                        LevelEndState.Cleared => "Cleared",
+                        LevelEndState.Failed => "Failed",
+                        _ => "Unknown",
+                    };
                 case LevelDataType.LevelIncompleteType:
                     if (levelCompletionResults.LevelEndAction == SongEndAction.Quit
                         || levelCompletionResults.LevelEndAction == SongEndAction.Restart)
                         return "Quit";
-                    switch (levelCompletionResults.LevelEndStateType)
+                    return levelCompletionResults.LevelEndStateType switch
                     {
-                        case LevelEndState.None:
-                            return "Unknown";
-                        case LevelEndState.Cleared:
-                            return string.Empty;
-                        case LevelEndState.Failed:
-                            return "Failed";
-                        default:
-                            return string.Empty;
-                    }
+                        LevelEndState.None => "Unknown",
+                        LevelEndState.Cleared => string.Empty,
+                        LevelEndState.Failed => "Failed",
+                        _ => string.Empty,
+                    };
                 case LevelDataType.MaxCombo:
                     return levelCompletionResults.MaxCombo.ToString();
                 case LevelDataType.MissedCount:

@@ -293,11 +293,11 @@ namespace OBSControl.OBSComponents
             {
 
                 PlayerLevelStatsData stats = OBSController.instance.PlayerData.playerData.GetPlayerLevelStatsData(
-                    GameStatus.LevelInfo.levelID, GameStatus.difficultyBeatmap.difficulty, GameStatus.difficultyBeatmap.parentDifficultyBeatmapSet.beatmapCharacteristic);
+                    GameStatus.LevelInfo.levelID, GameStatus.DifficultyBeatmap.difficulty, GameStatus.DifficultyBeatmap.parentDifficultyBeatmapSet.beatmapCharacteristic);
 
                 Wrappers.LevelCompletionResultsWrapper resultsWrapper = new Wrappers.LevelCompletionResultsWrapper(levelCompletionResults, stats.playCount, GameStatus.MaxModifiedScore);
                 newFileName = Utilities.FileRenaming.GetFilenameString(Plugin.config.RecordingFileFormat,
-                    new BeatmapLevelWrapper(GameStatus.difficultyBeatmap), resultsWrapper);
+                    new BeatmapLevelWrapper(GameStatus.DifficultyBeatmap), resultsWrapper);
             }
             catch (Exception ex)
             {
