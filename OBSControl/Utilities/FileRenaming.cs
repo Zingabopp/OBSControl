@@ -7,11 +7,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Collections.ObjectModel;
-
+#nullable enable
 namespace OBSControl.Utilities
 {
     public static class FileRenaming
     {
+        public static string GetDefaultFilename() => DateTime.Now.ToString("yyyyMMddHHmmss");
         public static readonly ReadOnlyDictionary<char, LevelDataType> LevelDataSubstitutions = new ReadOnlyDictionary<char, LevelDataType>(new Dictionary<char, LevelDataType>()
         {
             {'B', LevelDataType.BeatsPerMinute },
@@ -235,17 +236,18 @@ namespace OBSControl.Utilities
         /// Creates a file name string from a base string substituting characters prefixed by '?' with data from the game.
         /// </summary>
         /// <param name="baseString"></param>
-        /// <param name="difficultyBeatmap"></param>
+        /// <param name="levelData"></param>
         /// <param name="levelCompletionResults"></param>
-        /// <param name="maxModifiedScore"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="difficultyBeatmap"/> or <paramref name="levelCompletionResults"/> is null.</exception>
-        public static string GetFilenameString(string baseString, ILevelData levelData, ILevelCompletionResults levelCompletionResults)
+        public static string GetFilenameString(string? baseString, ILevelData levelData, ILevelCompletionResults levelCompletionResults)
         {
             if (levelData == null)
                 throw new ArgumentNullException(nameof(levelData), "difficultyBeatmap cannot be null for GetFilenameString.");
             if (levelCompletionResults == null)
                 throw new ArgumentNullException(nameof(levelCompletionResults), "levelCompletionResults cannot be null for GetFilenameString.");
+            if(baseString == null)
+                return GetDefaultFilename();
             if (!baseString.Contains("?"))
                 return baseString;
             StringBuilder stringBuilder = new StringBuilder(baseString.Length);

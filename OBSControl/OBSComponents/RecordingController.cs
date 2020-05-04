@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
-
+#nullable enable
 namespace OBSControl.OBSComponents
 {
     /// <summary>
@@ -16,39 +16,47 @@ namespace OBSControl.OBSComponents
     /// </summary>
 	public class RecordingController : MonoBehaviour
     {
-        public static RecordingController instance { get; private set; }
-        private OBSWebsocket obs => OBSController.instance.Obs;
-        HarmonyPatches.HarmonyPatchInfo LevelDelayPatch;
+        public static RecordingController? instance { get; private set; }
+        private OBSWebsocket? _obs => OBSController.instance?.Obs;
+        internal readonly HarmonyPatches.HarmonyPatchInfo LevelDelayPatch = HarmonyPatches.HarmonyManager.GetLevelDelayPatch();
         private const string DefaultFileFormat = "%CCYY-%MM-%DD %hh-%mm-%ss";
         public bool WaitingToStop { get; private set; }
-        public Task StopRecordingTask { get; private set; }
+        public Task? StopRecordingTask { get; private set; }
         private string ToDateTimeFileFormat(DateTime dateTime)
         {
             return dateTime.ToString("yyyyMMddHHmmss");
         }
 
-        public string RecordingFolder { get; protected set; }
+        public string? RecordingFolder { get; protected set; }
         public async Task TryStartRecordingAsync(string fileFormat = DefaultFileFormat)
         {
-            Logger.log.Debug($"TryStartRecording");
+            OBSWebsocket? obs = _obs;
+            Logger.log?.Debug($"TryStartRecording");
+            if (obs == null)
+            {
+                Logger.log?.Error($"Unable to start recording, obs instance not found.");
+                return;
+            }
             try
             {
                 RecordingFolder = await obs.GetRecordingFolder().ConfigureAwait(false);
             }
+#pragma warning disable CA1031 // Do not catch general exception types
             catch (Exception ex)
             {
                 Logger.log?.Error($"Error getting recording folder from OBS: {ex.Message}");
                 Logger.log?.Debug(ex);
                 return;
             }
+#pragma warning restore CA1031 // Do not catch general exception types
 
             int tries = 0;
-            string currentFormat = null;
+            string? currentFormat = null;
             do
             {
                 if (tries > 0)
                 {
-                    Logger.log.Debug($"({tries}) Failed to set OBS's FilenameFormatting to {fileFormat} retrying in 50ms");
+                    Logger.log?.Debug($"({tries}) Failed to set OBS's FilenameFormatting to {fileFormat} retrying in 50ms");
                     await Task.Delay(50);
                 }
                 tries++;
@@ -64,8 +72,8 @@ namespace OBSControl.OBSComponents
                 }
             } while (currentFormat != fileFormat && tries < 10);
             CurrentFileFormat = fileFormat;
-            string startScene = Plugin.config.StartSceneName;
-            string gameScene = Plugin.config.GameSceneName;
+            string? startScene = Plugin.config.StartSceneName;
+            string? gameScene = Plugin.config.GameSceneName;
             string[] availableScenes = await GetAvailableScenes().ConfigureAwait(false);
             if (!availableScenes.Contains(startScene))
                 startScene = string.Empty;
@@ -78,12 +86,12 @@ namespace OBSControl.OBSComponents
                 {
                     int transitionDuration = await obs.GetTransitionDuration().ConfigureAwait(false);
                     await obs.SetTransitionDuration(0).ConfigureAwait(false);
-                    Logger.log.Info($"Setting intro OBS scene to '{startScene}'");
+                    Logger.log?.Info($"Setting intro OBS scene to '{startScene}'");
                     await obs.SetCurrentScene(startScene).ConfigureAwait(false);
                     await obs.SetTransitionDuration(transitionDuration).ConfigureAwait(false);
                     await obs.StartRecording().ConfigureAwait(false);
                     await Task.Delay(TimeSpan.FromSeconds(Plugin.config.StartSceneDuration)).ConfigureAwait(false);
-                    Logger.log.Info($"Setting game OBS scene to '{gameScene}'");
+                    Logger.log?.Info($"Setting game OBS scene to '{gameScene}'");
                     await obs.SetCurrentScene(gameScene).ConfigureAwait(false);
                 }
                 else
@@ -101,28 +109,22 @@ namespace OBSControl.OBSComponents
             }
         }
 
-        public async Task AudioFun()
-        {
-            float volume = (await obs.GetVolume("Desktop")).Volume;
-            float volumeFade = 0f;
-            while(volumeFade < volume)
-            {
-                await obs.SetVolume("Desktop", volumeFade);
-                volumeFade += 0.05f;
-            }
-        }
-
-
         public async Task<string[]> GetAvailableScenes()
         {
+            OBSWebsocket? obs = _obs;
+            if (obs == null)
+            {
+                Logger.log?.Error($"Unable to get scenes, obs instance is null.");
+                return Array.Empty<string>();
+            }
             try
             {
                 return (await obs.GetSceneList().ConfigureAwait(false)).Scenes.Select(s => s.Name).ToArray();
             }
             catch (Exception ex)
             {
-                Logger.log.Error($"Error validating scenes: {ex.Message}");
-                Logger.log.Debug(ex);
+                Logger.log?.Error($"Error validating scenes: {ex.Message}");
+                Logger.log?.Debug(ex);
                 return Array.Empty<string>();
             }
         }
@@ -138,24 +140,32 @@ namespace OBSControl.OBSComponents
         {
             try
             {
-                string[] availableScenes = (await obs.GetSceneList().ConfigureAwait(false)).Scenes.Select(s => s.Name).ToArray();
-                Logger.log.Debug($"Available scenes: {string.Join(", ", availableScenes)}");
+                string[] availableScenes = await GetAvailableScenes().ConfigureAwait(false);
+                Logger.log?.Debug($"Available scenes: {string.Join(", ", availableScenes)}");
                 return scenes.All(s => availableScenes.Contains(s));
             }
+#pragma warning disable CA1031 // Do not catch general exception types
             catch (Exception ex)
             {
-                Logger.log.Error($"Error validating scenes: {ex.Message}");
-                Logger.log.Debug(ex);
+                Logger.log?.Error($"Error validating scenes: {ex.Message}");
+                Logger.log?.Debug(ex);
                 return false;
             }
+#pragma warning restore CA1031 // Do not catch general exception types
         }
 
-        private string CurrentFileFormat { get; set; }
+        private string? CurrentFileFormat { get; set; }
 
-        public async Task TryStopRecordingAsync(string renameTo, bool stopImmediate = false)
+        public async Task TryStopRecordingAsync(string? renameTo, bool stopImmediate = false)
         {
-            string endScene = Plugin.config.EndSceneName;
-            string gameScene = Plugin.config.GameSceneName;
+            OBSWebsocket? obs = _obs;
+            if (obs == null)
+            {
+                Logger.log?.Error($"Unable to stop recording, obs instance is null.");
+                return;
+            }
+            string endScene = Plugin.config.EndSceneName ?? string.Empty;
+            string gameScene = Plugin.config.GameSceneName ?? string.Empty;
             string[] availableScenes = await GetAvailableScenes().ConfigureAwait(false);
             if (!availableScenes.Contains(endScene))
                 endScene = string.Empty;
@@ -174,15 +184,15 @@ namespace OBSControl.OBSComponents
 
                     if (validOutro)
                     {
-                        Logger.log.Info($"Setting outro OBS scene to '{endScene}'");
+                        Logger.log?.Info($"Setting outro OBS scene to '{endScene}'");
                         await obs.SetCurrentScene(endScene);
                         await Task.Delay(TimeSpan.FromSeconds(Plugin.config.EndSceneDuration));
                     }
                 }
                 await obs.StopRecording().ConfigureAwait(false);
-                if(!stopImmediate && validOutro)
+                if (!stopImmediate && validOutro)
                 {
-                    Logger.log.Info($"Setting game OBS scene to '{gameScene}'");
+                    Logger.log?.Info($"Setting game OBS scene to '{gameScene}'");
                     await obs.SetCurrentScene(gameScene).ConfigureAwait(false);
                 }
                 recordingCurrentLevel = false;
@@ -205,70 +215,72 @@ namespace OBSControl.OBSComponents
             }
         }
 
-        private string RenameString;
-        public void RenameLastRecording(string newName)
+        private string? RenameString;
+        public void RenameLastRecording(string? newName)
         {
             if (string.IsNullOrEmpty(newName))
             {
-                Logger.log.Warn($"Unable to rename last recording, provided new name is null or empty.");
+                Logger.log?.Warn($"Unable to rename last recording, provided new name is null or empty.");
                 return;
             }
-            string recordingFolder = RecordingFolder;
-            string fileFormat = CurrentFileFormat;
+            string? recordingFolder = RecordingFolder;
+            string? fileFormat = CurrentFileFormat;
             CurrentFileFormat = null;
             if (string.IsNullOrEmpty(recordingFolder))
             {
-                Logger.log.Warn($"Unable to determine current recording folder, unable to rename.");
+                Logger.log?.Warn($"Unable to determine current recording folder, unable to rename.");
                 return;
             }
             if (string.IsNullOrEmpty(fileFormat))
             {
-                Logger.log.Warn($"Last recorded filename not stored, unable to rename.");
+                Logger.log?.Warn($"Last recorded filename not stored, unable to rename.");
                 return;
             }
 
             DirectoryInfo directory = new DirectoryInfo(recordingFolder);
             if (!directory.Exists)
             {
-                Logger.log.Warn($"Recording directory doesn't exist, unable to rename.");
+                Logger.log?.Warn($"Recording directory doesn't exist, unable to rename.");
                 return;
             }
             FileInfo targetFile = directory.GetFiles(fileFormat + "*").OrderByDescending(f => f.CreationTimeUtc).FirstOrDefault();
             if (targetFile == null)
             {
-                Logger.log.Warn($"Couldn't find recorded file, unable to rename.");
+                Logger.log?.Warn($"Couldn't find recorded file, unable to rename.");
                 return;
             }
             string fileName = targetFile.Name.Substring(0, targetFile.Name.LastIndexOf('.'));
             string fileExtension = targetFile.Extension;
-            Logger.log.Info($"Attempting to rename {fileFormat}{fileExtension} to {newName} with an extension of {fileExtension}");
+            Logger.log?.Info($"Attempting to rename {fileFormat}{fileExtension} to {newName} with an extension of {fileExtension}");
             string newFile = newName + fileExtension;
             int index = 2;
             while (File.Exists(Path.Combine(directory.FullName, newFile)))
             {
-                Logger.log.Debug($"File exists: {Path.Combine(directory.FullName, newFile)}");
+                Logger.log?.Debug($"File exists: {Path.Combine(directory.FullName, newFile)}");
                 newFile = newName + $"({index})" + fileExtension;
                 index++;
             }
             try
             {
-                Logger.log.Debug($"Attempting to rename to '{newFile}'");
+                Logger.log?.Debug($"Attempting to rename to '{newFile}'");
                 targetFile.MoveTo(Path.Combine(directory.FullName, newFile));
             }
             catch (Exception ex)
             {
-                Logger.log.Error($"Unable to rename {targetFile.Name} to {newFile}: {ex.Message}");
-                Logger.log.Debug(ex);
+                Logger.log?.Error($"Unable to rename {targetFile.Name} to {newFile}: {ex.Message}");
+                Logger.log?.Debug(ex);
             }
         }
 
         public bool recordingCurrentLevel;
 
-        public void StartRecordingLevel(IDifficultyBeatmap level = null)
+        public void StartRecordingLevel()
         {
             string fileFormat = ToDateTimeFileFormat(DateTime.Now);
-            Logger.log.Debug($"Starting recording, file format: {fileFormat}");
+            Logger.log?.Debug($"Starting recording, file format: {fileFormat}");
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
             TryStartRecordingAsync(fileFormat);
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         }
 
         public IEnumerator<WaitUntil> GameStatusSetup()
@@ -288,22 +300,27 @@ namespace OBSControl.OBSComponents
         private void OnLevelFinished(StandardLevelScenesTransitionSetupDataSO levelScenesTransitionSetupDataSO, LevelCompletionResults levelCompletionResults)
         {
             BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
-            string newFileName = null;
+            string? newFileName = null;
             try
             {
+                PlayerLevelStatsData? stats = null;
+                if (OBSController.instance?.PlayerData != null && GameStatus.LevelInfo != null && GameStatus.DifficultyBeatmap != null)
+                {
+                    stats = OBSController.instance.PlayerData.playerData.GetPlayerLevelStatsData(
+                        GameStatus.LevelInfo.levelID, GameStatus.DifficultyBeatmap.difficulty, GameStatus.DifficultyBeatmap.parentDifficultyBeatmapSet.beatmapCharacteristic);
+                }
 
-                PlayerLevelStatsData stats = OBSController.instance.PlayerData.playerData.GetPlayerLevelStatsData(
-                    GameStatus.LevelInfo.levelID, GameStatus.DifficultyBeatmap.difficulty, GameStatus.DifficultyBeatmap.parentDifficultyBeatmapSet.beatmapCharacteristic);
-
-                Wrappers.LevelCompletionResultsWrapper resultsWrapper = new Wrappers.LevelCompletionResultsWrapper(levelCompletionResults, stats.playCount, GameStatus.MaxModifiedScore);
+                Wrappers.LevelCompletionResultsWrapper resultsWrapper = new Wrappers.LevelCompletionResultsWrapper(levelCompletionResults, stats?.playCount ?? 0, GameStatus.MaxModifiedScore);
                 newFileName = Utilities.FileRenaming.GetFilenameString(Plugin.config.RecordingFileFormat,
                     new BeatmapLevelWrapper(GameStatus.DifficultyBeatmap), resultsWrapper);
             }
+#pragma warning disable CA1031 // Do not catch general exception types
             catch (Exception ex)
             {
-                Logger.log.Error($"Error generating new file name: {ex}");
-                Logger.log.Debug(ex);
+                Logger.log?.Error($"Error generating new file name: {ex}");
+                Logger.log?.Debug(ex);
             }
+#pragma warning restore CA1031 // Do not catch general exception types
             StopRecordingTask = TryStopRecordingAsync(newFileName, false);
         }
 
@@ -311,7 +328,7 @@ namespace OBSControl.OBSComponents
 
         private void Obs_RecordingStateChanged(object sender, OutputState type)
         {
-            Logger.log.Info($"Recording State Changed: {type.ToString()}");
+            Logger.log?.Info($"Recording State Changed: {type.ToString()}");
             switch (type)
             {
                 case OutputState.Starting:
@@ -319,7 +336,7 @@ namespace OBSControl.OBSComponents
                     break;
                 case OutputState.Started:
                     recordingCurrentLevel = true;
-                    Task.Run(() => obs.SetFilenameFormatting(DefaultFileFormat));
+                    Task.Run(() => _obs?.SetFilenameFormatting(DefaultFileFormat));
                     break;
                 case OutputState.Stopping:
                     recordingCurrentLevel = false;
@@ -350,31 +367,8 @@ namespace OBSControl.OBSComponents
             }
             GameObject.DontDestroyOnLoad(this);
             instance = this;
-            LevelDelayPatch = HarmonyPatches.HarmonyManager.GetLevelDelayPatch();
-            OBSController.instance.RecordingStateChanged += Obs_RecordingStateChanged;
-        }
-        /// <summary>
-        /// Only ever called once on the first frame the script is Enabled. Start is called after every other script's Awake() and before Update().
-        /// </summary>
-        private void Start()
-        {
-
-        }
-
-        /// <summary>
-        /// Called every frame if the script is enabled.
-        /// </summary>
-        private void Update()
-        {
-
-        }
-
-        /// <summary>
-        /// Called every frame after every other enabled script's Update().
-        /// </summary>
-        private void LateUpdate()
-        {
-
+            if (OBSController.instance != null)
+                OBSController.instance.RecordingStateChanged += Obs_RecordingStateChanged;
         }
 
         /// <summary>

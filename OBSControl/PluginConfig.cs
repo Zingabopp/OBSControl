@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using BeatSaberMarkupLanguage.Attributes;
+﻿using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components.Settings;
 using IPA.Config.Stores;
 using IPA.Config.Stores.Attributes;
-
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using UnityEngine.SceneManagement;
+#nullable enable
 [assembly: InternalsVisibleTo(GeneratedStore.AssemblyVisibilityTarget)]
 namespace OBSControl
 {
@@ -14,12 +15,12 @@ namespace OBSControl
         [UIValue(nameof(Enabled))]
         public virtual bool Enabled { get; set; } = true;
         [UIValue(nameof(ServerAddress))]
-        public virtual string ServerAddress { get; set; } = "ws://127.0.0.1:4444";
+        public virtual string? ServerAddress { get; set; } = "ws://127.0.0.1:4444";
         [UIValue(nameof(ServerPassword))]
-        public virtual string ServerPassword { get; set; } = string.Empty;
+        public virtual string? ServerPassword { get; set; } = string.Empty;
         [UIValue(nameof(LevelStartDelay))]
-        public virtual float LevelStartDelay 
-        { 
+        public virtual float LevelStartDelay
+        {
             get => _levelStartDelay;
             set
             {
@@ -40,7 +41,7 @@ namespace OBSControl
             }
         }
         [UIValue(nameof(RecordingFileFormat))]
-        public virtual string RecordingFileFormat { get; set; } = "?N-?A_?%<_[?M]><-?F><-?e>";
+        public virtual string? RecordingFileFormat { get; set; } = "?N-?A_?%<_[?M]><-?F><-?e>";
 
         [UIValue(nameof(StartSceneDuration))]
         public virtual float StartSceneDuration
@@ -65,10 +66,13 @@ namespace OBSControl
                 _endSceneDuration = (float)Math.Round(value, 1);
             }
         }
+        [NonNullable]
         [UIValue(nameof(StartSceneName))]
         public virtual string StartSceneName { get; set; } = string.Empty;
+        [NonNullable]
         [UIValue(nameof(GameSceneName))]
         public virtual string GameSceneName { get; set; } = string.Empty;
+        [NonNullable]
         [UIValue(nameof(EndSceneName))]
         public virtual string EndSceneName { get; set; } = string.Empty;
 
@@ -87,7 +91,7 @@ namespace OBSControl
         {
             // Do stuff when the config is changed.
             TryAddCurrentNames(StartSceneName, GameSceneName, EndSceneName);
-            Logger.log.Warn($"SceneOptions: {string.Join(", ", SceneSelectOptions)}");
+            Logger.log?.Warn($"SceneOptions: {string.Join(", ", SceneSelectOptions)}");
             RefreshDropdowns();
             OBSController.instance?.gameObject.SetActive(Enabled);
         }
@@ -101,9 +105,10 @@ namespace OBSControl
             RefreshDropdowns();
         }
 
-        private void TryAddCurrentNames(params string[] sceneNames)
+        private void TryAddCurrentNames(params string[]? sceneNames)
         {
-            foreach (var name in sceneNames)
+            if (sceneNames == null) return;
+            foreach (string name in sceneNames)
             {
                 if (!SceneSelectOptions.Contains(name))
                     SceneSelectOptions.Add(name);
@@ -112,8 +117,10 @@ namespace OBSControl
 
         public void RefreshDropdowns()
         {
-            var dropDowns = new DropDownListSetting[] { StartSceneDropDown, GameSceneDropdown, EndSceneDropdown };
-            foreach (var dropDown in dropDowns)
+#pragma warning disable CS8601 // Possible null reference assignment.
+            DropDownListSetting[]? dropDowns = new DropDownListSetting[] { StartSceneDropDown, GameSceneDropdown, EndSceneDropdown };
+#pragma warning restore CS8601 // Possible null reference assignment.
+            foreach (DropDownListSetting dropDown in dropDowns)
             {
                 if (dropDown != null)
                 {
@@ -133,13 +140,13 @@ namespace OBSControl
 
         [Ignore]
         [UIComponent("StartSceneDropdown")]
-        public DropDownListSetting StartSceneDropDown;
+        public DropDownListSetting? StartSceneDropDown;
         [Ignore]
         [UIComponent("GameSceneDropdown")]
-        public DropDownListSetting GameSceneDropdown;
+        public DropDownListSetting? GameSceneDropdown;
         [Ignore]
         [UIComponent("EndSceneDropdown")]
-        public DropDownListSetting EndSceneDropdown;
+        public DropDownListSetting? EndSceneDropdown;
 
         #region Backing Fields
         private float _levelStartDelay = 3f;

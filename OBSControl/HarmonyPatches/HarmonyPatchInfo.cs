@@ -38,7 +38,7 @@ namespace OBSControl.HarmonyPatches
                     patchTypeName = PrefixMethod.method.DeclaringType?.Name;
                 else if (PostfixMethod != null)
                     patchTypeName = PostfixMethod.method.DeclaringType?.Name;
-                Logger.log.Debug($"Harmony patching '{OriginalMethod.Name}' with '{patchTypeName}'");
+                Logger.log?.Debug($"Harmony patching '{OriginalMethod.Name}' with '{patchTypeName}'");
                 harmony.Patch(OriginalMethod, PrefixMethod, PostfixMethod);
                 IsApplied = true;
                 HarmonyManager.AppliedPatches.Add(this);
@@ -46,8 +46,8 @@ namespace OBSControl.HarmonyPatches
             }
             catch (Exception e)
             {
-                Logger.log.Error($"Unable to patch method {OriginalMethod.Name}: {e.Message}");
-                Logger.log.Debug(e);
+                Logger.log?.Error($"Unable to patch method {OriginalMethod.Name}: {e.Message}");
+                Logger.log?.Debug(e);
                 return false;
             }
         }
@@ -61,7 +61,7 @@ namespace OBSControl.HarmonyPatches
                 patchTypeName = PrefixMethod.method.DeclaringType?.Name;
             else if (PostfixMethod != null)
                 patchTypeName = PostfixMethod.method.DeclaringType?.Name;
-            Logger.log.Debug($"Removing Harmony patch '{patchTypeName}' from '{OriginalMethod.Name}'");
+            Logger.log?.Debug($"Removing Harmony patch '{patchTypeName}' from '{OriginalMethod.Name}'");
             if (PrefixMethod != null)
                 harmony.Unpatch(OriginalMethod, PrefixMethod.method);
             if (PostfixMethod != null)
