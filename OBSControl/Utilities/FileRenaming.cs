@@ -333,10 +333,9 @@ namespace OBSControl.Utilities
                 }
             }
             char[] invalidChars = Path.GetInvalidFileNameChars();
-            string retStr = stringBuilder.ToString();
             for(int i = 0; i < invalidChars.Length; i++)
-                retStr.Replace(invalidChars[i], '_');
-            return retStr;
+                stringBuilder.Replace(invalidChars[i], '_');
+            return stringBuilder.ToString();
         }
     }
 }
