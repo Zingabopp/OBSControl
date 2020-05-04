@@ -17,6 +17,8 @@
     <BeatSaberReferences>$(SolutionDir)Refs</BeatSaberReferences>
     <BeatSaberDir>$(ProjectDir)References</BeatSaberDir>
     <RuntimeIdentifiers>win</RuntimeIdentifiers>
+    <LangVersion>8.0</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <PropertyGroup Condition=" $(DefineConstants.Contains('CIBuild')) OR '$(NCrunch)' == '1' ">
     <DisableCopyToPlugins>True</DisableCopyToPlugins>
@@ -120,6 +122,8 @@
     <Compile Include="OBSComponents\RecordingController.cs" />
     <Compile Include="Utilities\FileRenaming.cs" />
     <Compile Include="Wrappers\BeatmapLevelWrapper.cs" />
+    <Compile Include="Wrappers\ConversionExtensions.cs" />
+    <Compile Include="Wrappers\GameplayModifiersWrapper.cs" />
     <Compile Include="Wrappers\IGameplayModifiers.cs" />
     <Compile Include="Wrappers\ILevelData.cs" />
     <Compile Include="Utilities\ReflectionUtil.cs" />

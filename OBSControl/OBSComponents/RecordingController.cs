@@ -1,4 +1,5 @@
-﻿using OBSWebsocketDotNet;
+﻿using OBSControl.Wrappers;
+using OBSWebsocketDotNet;
 using OBSWebsocketDotNet.Types;
 using System;
 using System.Collections.Generic;
@@ -295,7 +296,8 @@ namespace OBSControl.OBSComponents
                     GameStatus.LevelInfo.levelID, GameStatus.difficultyBeatmap.difficulty, GameStatus.difficultyBeatmap.parentDifficultyBeatmapSet.beatmapCharacteristic);
 
                 Wrappers.LevelCompletionResultsWrapper resultsWrapper = new Wrappers.LevelCompletionResultsWrapper(levelCompletionResults, stats.playCount, GameStatus.MaxModifiedScore);
-                newFileName = Utilities.FileRenaming.GetFilenameString(Plugin.config.RecordingFileFormat, GameStatus.difficultyBeatmap, resultsWrapper);
+                newFileName = Utilities.FileRenaming.GetFilenameString(Plugin.config.RecordingFileFormat,
+                    new BeatmapLevelWrapper(GameStatus.difficultyBeatmap), resultsWrapper);
             }
             catch (Exception ex)
             {

@@ -1,4 +1,3 @@
-extern alias BeatSaber;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using OBSControlTests.DataTypes;

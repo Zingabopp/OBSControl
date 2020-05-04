@@ -8,176 +8,44 @@ namespace OBSControl.Wrappers
 {
     public interface IGameplayModifiers
     {
-		GameplayModifiers.EnergyType energyType { get; }
-
-		
-		
-		
-		bool batteryEnergy { get; }
-
-		
-		
-		
-		bool noFail { get; }
-
-		
-		
-		
-		bool demoNoFail { get; }
-
-		
-		
-		
-		bool instaFail { get; }
-
-		
-		
-		
-		bool failOnSaberClash { get; }
-
-		
-		
-		
-		GameplayModifiers.EnabledObstacleType enabledObstacleType { get; }
-
-		
-		
-		
-		bool noObstacles { get; }
-
-		
-		
-		
-		bool demoNoObstacles { get; }
-
-		
-		
-		
-		bool fastNotes { get; }
-
-		
-		
-		
-		bool strictAngles { get; }
-
-		
-		
-		
-		bool disappearingArrows { get; }
-
-		
-		
-		
-		bool ghostNotes { get; }
-
-		
-		
-		
-		bool noBombs { get; }
-
-		
-		
-		
-		GameplayModifiers.SongSpeed songSpeed { get; }
-
-		
-		
-		float songSpeedMul { get; }
-
-		
-		
-		
-		bool noArrows { get; }
-
-		
-		
-		static GameplayModifiers defaultModifiers { get; }
-		
-		protected GameplayModifiers.EnergyType _energyType;
-
-		
-		
-		protected bool _noFail;
-
-		
-		
-		protected bool _demoNoFail;
-
-		
-		
-		protected bool _instaFail;
-
-		
-		
-		protected bool _failOnSaberClash;
-
-		
-		
-		protected GameplayModifiers.EnabledObstacleType _enabledObstacleType;
-
-		
-		
-		protected bool _demoNoObstacles;
-
-		
-		
-		protected bool _noBombs;
-
-		
-		
-		protected bool _fastNotes;
-
-		
-		
-		protected bool _strictAngles;
-
-		
-		
-		protected bool _disappearingArrows;
-
-		
-		
-		protected bool _ghostNotes;
-
-		
-		
-		protected GameplayModifiers.SongSpeed _songSpeed;
-
-		
-		
-		protected bool _noArrows;
-
-		
-		
+		EnergyType EnergyType { get; }
+		bool BatteryEnergy { get; }
+		bool NoFail { get; }
+		bool DemoNoFail { get; }
+		bool InstaFail { get; }
+		bool FailOnSaberClash { get; }
+		EnabledObstacleType EnabledObstacleType { get; }
+		bool NoObstacles { get; }
+		bool DemoNoObstacles { get; }
+		bool FastNotes { get; }
+		bool StrictAngles { get; }
+		bool DisappearingArrows { get; }
+		bool GhostNotes { get; }
+		bool NoBombs { get; }
+		SongSpeed SongSpeed { get; }
+		float SongSpeedMul { get; }
+		bool NoArrows { get; }		
 	}
 
-	enum EnabledObstacleType
+	public enum EnabledObstacleType
 	{
-		
 		All,
-		
 		FullHeightOnly,
-		
 		NoObstacles
 	}
 
 	
-	enum EnergyType
+	public enum EnergyType
 	{
-		
 		Bar,
-		
 		Battery
 	}
 
 	
-	enum SongSpeed
+	public enum SongSpeed
 	{
-		
 		Normal,
-		
 		Faster,
-		
 		Slower
 	}
 }

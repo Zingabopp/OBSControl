@@ -1,9 +1,9 @@
-extern alias BeatSaber;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using OBSControlTests.DataTypes;
 using System.Diagnostics;
 using static OBSControl.Utilities.FileRenaming;
+using OBSControl.Wrappers;
 
 namespace OBSControlTests
 {
@@ -39,12 +39,14 @@ namespace OBSControlTests
         {
 
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
+            TestGameplayModifiers modifiers = new TestGameplayModifiers();
+            results.GameplayModifiers = modifiers;
             TestDifficultyBeatmap difficultyBeatmap = TestDifficultyBeatmap.Default;
-            results.gameplayModifiers.disappearingArrows = true;
-            results.gameplayModifiers.fastNotes = true;
-            results.gameplayModifiers.songSpeed = BeatSaber.GameplayModifiers.SongSpeed.Slower;
-            results.levelEndStateType = BeatSaber.LevelCompletionResults.LevelEndStateType.Failed;
-            results.maxCombo = results.TotalNotes;
+            modifiers.DisappearingArrows = true;
+            modifiers.FastNotes = true;
+            modifiers.SongSpeed = SongSpeed.Slower;
+            results.LevelEndStateType = LevelEndState.Failed;
+            results.MaxCombo = results.TotalNotes;
             string baseString = string.Empty;
             foreach (var ch in LevelDataSubstitutions.Keys)
             {
@@ -59,13 +61,15 @@ namespace OBSControlTests
         public void GroupDemo()
         {
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
+            TestGameplayModifiers modifiers = new TestGameplayModifiers();
             TestDifficultyBeatmap difficultyBeatmap = TestDifficultyBeatmap.Default;
-            difficultyBeatmap.TestBeatmapLevel.songName = "<TestSongName>";
-            results.gameplayModifiers.disappearingArrows = true;
-            results.gameplayModifiers.fastNotes = true;
-            results.gameplayModifiers.songSpeed = BeatSaber.GameplayModifiers.SongSpeed.Slower;
-            results.levelEndStateType = BeatSaber.LevelCompletionResults.LevelEndStateType.Failed;
-            results.maxCombo = results.TotalNotes - 1;
+            results.GameplayModifiers = modifiers;
+            difficultyBeatmap.SongName = "<TestSongName>";
+            modifiers.DisappearingArrows = true;
+            modifiers.FastNotes = true;
+            modifiers.SongSpeed = SongSpeed.Slower;
+            results.LevelEndStateType = LevelEndState.Failed;
+            results.MaxCombo = results.TotalNotes - 1;
             string baseString = "?N-?A_?%<_[?M]><-?F><-?e>";
             Console.WriteLine("Format: " + baseString);
             string result = GetFilenameString(baseString, difficultyBeatmap, results);
@@ -80,13 +84,15 @@ namespace OBSControlTests
         public void InvalidFilenameCharacters()
         {
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
+            TestGameplayModifiers modifiers = new TestGameplayModifiers();
             TestDifficultyBeatmap difficultyBeatmap = TestDifficultyBeatmap.Default;
-            difficultyBeatmap.TestBeatmapLevel.songName = "<?Test?S%ongName>";
-            results.gameplayModifiers.disappearingArrows = true;
-            results.gameplayModifiers.fastNotes = true;
-            results.gameplayModifiers.songSpeed = BeatSaber.GameplayModifiers.SongSpeed.Slower;
-            results.levelEndStateType = BeatSaber.LevelCompletionResults.LevelEndStateType.Failed;
-            results.maxCombo = results.TotalNotes - 1;
+            results.GameplayModifiers = modifiers;
+            difficultyBeatmap.SongName = "<?Test?S%ongName>";
+            modifiers.DisappearingArrows = true;
+            modifiers.FastNotes = true;
+            modifiers.SongSpeed = SongSpeed.Slower;
+            results.LevelEndStateType = LevelEndState.Failed;
+            results.MaxCombo = results.TotalNotes - 1;
             string baseString = "?N-?A_?%<_[?M]><-?F><-?e>";
             Console.WriteLine("Format: " + baseString);
             string result = GetFilenameString(baseString, difficultyBeatmap, results);
@@ -102,13 +108,15 @@ namespace OBSControlTests
         public void PerformanceTest()
         {
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
+            TestGameplayModifiers modifiers = new TestGameplayModifiers();
             TestDifficultyBeatmap difficultyBeatmap = TestDifficultyBeatmap.Default;
-            difficultyBeatmap.TestBeatmapLevel.songName = "<TestSongName>";
-            results.gameplayModifiers.disappearingArrows = true;
-            results.gameplayModifiers.fastNotes = true;
-            results.gameplayModifiers.songSpeed = BeatSaber.GameplayModifiers.SongSpeed.Slower;
-            results.levelEndStateType = BeatSaber.LevelCompletionResults.LevelEndStateType.Failed;
-            results.maxCombo = results.TotalNotes - 1;
+            results.GameplayModifiers = modifiers;
+            difficultyBeatmap.SongName = "<TestSongName>";
+            modifiers.DisappearingArrows = true;
+            modifiers.FastNotes = true;
+            modifiers.SongSpeed = SongSpeed.Slower;
+            results.LevelEndStateType = LevelEndState.Failed;
+            results.MaxCombo = results.TotalNotes - 1;
             string result = null;
             string baseString = "?N-?A_?%<_[?M]><-?F><-?e>";
             int iterations = 1;

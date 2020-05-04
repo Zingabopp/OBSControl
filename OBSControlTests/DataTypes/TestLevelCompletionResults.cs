@@ -1,5 +1,4 @@
-﻿extern alias BeatSaber;
-using BeatSaber;
+﻿using OBSControl.Wrappers;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,11 +7,11 @@ namespace OBSControlTests.DataTypes
 {
     public class TestLevelCompletionResults : OBSControl.Wrappers.ILevelCompletionResults
     {
-        public static BeatSaber.GameplayModifiers DefaultModifiers
+        public static IGameplayModifiers DefaultModifiers
         {
             get
             {
-                return new BeatSaber.GameplayModifiers();
+                return new TestGameplayModifiers();
             }
         }
 
@@ -24,18 +23,18 @@ namespace OBSControlTests.DataTypes
                 {
                     MaxModifiedScore = 110000,
                     PlayCount = 0,
-                    gameplayModifiers = DefaultModifiers,
-                    averageCutScore = 95,
-                    maxCombo = 400,
-                    badCutsCount = 100,
-                    endSongTime = 65f,
-                    goodCutsCount = 400,
-                    levelEndAction = LevelCompletionResults.LevelEndAction.None,
-                    levelEndStateType = LevelCompletionResults.LevelEndStateType.Cleared,
-                    missedCount = 100,
-                    modifiedScore = 90000,
-                    rank = RankModel.Rank.S,
-                    rawScore = 100000
+                    GameplayModifiers = DefaultModifiers,
+                    AverageCutScore = 95,
+                    MaxCombo = 400,
+                    BadCutsCount = 100,
+                    EndSongTime = 65f,
+                    GoodCutsCount = 400,
+                    LevelEndAction = SongEndAction.None,
+                    LevelEndStateType = LevelEndState.Cleared,
+                    MissedCount = 100,
+                    ModifiedScore = 90000,
+                    Rank = ScoreRank.S,
+                    RawScore = 100000
                 };
             }
         }
@@ -51,32 +50,32 @@ namespace OBSControlTests.DataTypes
 
         public int PlayCount { get; set; }
 
-        public float ScorePercent => ((float)modifiedScore / MaxModifiedScore) * 100;
+        public float ScorePercent => ((float)ModifiedScore / MaxModifiedScore) * 100;
 
-        public BeatSaber.GameplayModifiers gameplayModifiers { get; set; }
+        public IGameplayModifiers GameplayModifiers { get; set; }
 
-        public int modifiedScore { get; set; }
+        public int ModifiedScore { get; set; }
 
-        public int rawScore { get; set; }
+        public int RawScore { get; set; }
 
-        public BeatSaber.RankModel.Rank rank { get; set; }
+        public ScoreRank Rank { get; set; }
 
-        public bool fullCombo => maxCombo == TotalNotes;
+        public bool FullCombo => MaxCombo == TotalNotes;
 
-        public BeatSaber.LevelCompletionResults.LevelEndStateType levelEndStateType { get; set; }
+        public LevelEndState LevelEndStateType { get; set; }
 
-        public BeatSaber.LevelCompletionResults.LevelEndAction levelEndAction { get; set; }
+        public SongEndAction LevelEndAction { get; set; }
 
-        public int averageCutScore { get; set; }
+        public int AverageCutScore { get; set; }
 
-        public int goodCutsCount { get; set; }
+        public int GoodCutsCount { get; set; }
 
-        public int badCutsCount { get; set; }
+        public int BadCutsCount { get; set; }
 
-        public int missedCount { get; set; }
+        public int MissedCount { get; set; }
 
-        public int maxCombo { get; set; }
+        public int MaxCombo { get; set; }
 
-        public float endSongTime { get; set; }
+        public float EndSongTime { get; set; }
     }
 }
