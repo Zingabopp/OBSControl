@@ -62,21 +62,24 @@ namespace OBSControlTests
         {
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
             TestGameplayModifiers modifiers = new TestGameplayModifiers();
-            TestDifficultyBeatmap difficultyBeatmap = TestDifficultyBeatmap.Default;
+            TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
             results.GameplayModifiers = modifiers;
-            difficultyBeatmap.SongName = "<TestSongName>";
+            b.SongName = "<TestSongName>";
             modifiers.DisappearingArrows = true;
             modifiers.FastNotes = true;
             modifiers.SongSpeed = SongSpeed.Slower;
             results.LevelEndStateType = LevelEndState.Failed;
             results.MaxCombo = results.TotalNotes - 1;
-            string baseString = "?N-?A_?%<_[?M]><-?F><-?e>";
+            string baseString = "?N-?A<_[?M]><-?F><-?e>";
+            string expectedModifierString = GetModifierString(modifiers);
+            string expectedResult = OBSControl.Utilities.Utilities.GetSafeFilename($"{b.SongName}-{b.LevelAuthorName}_[{expectedModifierString}]-Failed");
             Console.WriteLine("Format: " + baseString);
-            string result = GetFilenameString(baseString, difficultyBeatmap, results);
+            string result = GetFilenameString(baseString, b, results);
+            Assert.AreEqual(expectedResult, result);
             Console.WriteLine("  " + result + ".mkv");
             baseString = "?N-?A_?%_[?M]-?F-?e";
             Console.WriteLine("Format: " + baseString);
-            result = GetFilenameString(baseString, difficultyBeatmap, results);
+            result = GetFilenameString(baseString, b, results);
             Console.WriteLine("  " + result + ".mkv");
         }
 

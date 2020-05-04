@@ -251,10 +251,12 @@ namespace OBSControl.Utilities
             if (!baseString.Contains("?"))
                 return baseString;
             StringBuilder stringBuilder = new StringBuilder(baseString.Length);
+            StringBuilder section = new StringBuilder(20);
             bool substituteNext = false;
-            bool processingGroup = false;
-            bool ignoreGroup = true;
-            string groupString = string.Empty;
+            bool processingGroup = false; // Group that is skipped if there's no data
+            bool dataGroup = false; // Has data associated with the substitution
+            bool ignoreGroup = true; // False if the processingGroup contains data
+            string currentData = string.Empty;
             foreach (char ch in baseString)
             {
                 switch (ch)
@@ -264,10 +266,21 @@ namespace OBSControl.Utilities
                         continue;
                     case '>':
                         processingGroup = false;
-                        if (!ignoreGroup && !string.IsNullOrEmpty(groupString))
-                            stringBuilder.Append(groupString);
-                        groupString = string.Empty;
+                        if (!ignoreGroup && section.Length > 0)
+                            stringBuilder.Append(section.ToString());
+                        section.Clear();
                         ignoreGroup = true;
+                        continue;
+                    case '{':
+                        dataGroup = true;
+                        continue;
+                    case '}':
+                        if (dataGroup)
+                        {
+                            currentData = section.ToString();
+                            section.Clear();
+                        }
+                        dataGroup = false;
                         continue;
                     case '?':
                         substituteNext = true;
@@ -289,7 +302,7 @@ namespace OBSControl.Utilities
                                 if (!string.IsNullOrEmpty(data))
                                 {
                                     ignoreGroup = false;
-                                    groupString += data;
+                                    section.Append(data);
                                 }
                             }
                             else
@@ -309,16 +322,16 @@ namespace OBSControl.Utilities
                         else
                         {
                             if (processingGroup)
-                                groupString += ch;
+                                section.Append(ch);
+                            if (dataGroup)
+                                section.Append(ch);
                             else
                                 stringBuilder.Append(ch);
                         }
                         break;
                 }
             }
-            char[] invalidChars = Path.GetInvalidFileNameChars();
-            for(int i = 0; i < invalidChars.Length; i++)
-                stringBuilder.Replace(invalidChars[i], '_');
+            Utilities.GetSafeFilename(ref stringBuilder);
             return stringBuilder.ToString();
         }
     }
