@@ -2,10 +2,10 @@
   "$schema": "https://raw.githubusercontent.com/nike4613/ModSaber-MetadataFileSchema/master/Schema.json",
   "author": "Zingabopp",
   "description": "Automatically record videos using OBS Websocket.",
-  "gameVersion": "1.9.0",
+  "gameVersion": "1.9.1",
   "id": "OBSControl",
   "name": "OBSControl",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "dependsOn": {
     "BeatSaberMarkupLanguage": "^1.2.2",
     "BS Utils": "^1.4.8"
