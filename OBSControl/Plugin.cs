@@ -29,9 +29,8 @@ namespace OBSControl
         {
             instance = this;
             Logger.log = logger;
-            Logger.log.Debug("Logger initialized.");
+            Logger.log?.Debug("Logger initialized.");
             config = conf.Generated<PluginConfig>();
-            HarmonyPatches.HarmonyManager.Initialize();
             OBSWebsocketDotNet.OBSLogger.SetLogger(new OBSLogger());
             BSMLSettings.instance.AddSettingsMenu("OBSControl", "OBSControl.UI.SettingsView.bsml", config);
         }
@@ -44,7 +43,7 @@ namespace OBSControl
         public void OnEnable()
         {
             //config.Value.FillDefaults();
-            Logger.log.Debug("OnEnable()");
+            Logger.log?.Debug("OnEnable()");
             new GameObject("OBSControl_OBSController").AddComponent<OBSController>();
             new GameObject("OBSControl_RecordingController").AddComponent<RecordingController>();
             ApplyHarmonyPatches();
@@ -58,10 +57,10 @@ namespace OBSControl
         [OnDisable]
         public void OnDisable()
         {
-            Logger.log.Debug("OnDisable()");
+            Logger.log?.Debug("OnDisable()");
             RemoveHarmonyPatches();
-            GameObject.Destroy(OBSController.instance.gameObject);
-            GameObject.Destroy(RecordingController.instance.gameObject);
+            GameObject.Destroy(OBSController.instance?.gameObject);
+            GameObject.Destroy(RecordingController.instance?.gameObject);
             Enabled = false;
         }
         #endregion
@@ -86,7 +85,7 @@ namespace OBSControl
         [OnExit]
         public void OnApplicationQuit()
         {
-            Logger.log.Debug("OnApplicationQuit");
+            Logger.log?.Debug("OnApplicationQuit");
             if (RecordingController.instance != null)
                 GameObject.Destroy(RecordingController.instance);
             if (OBSController.instance != null)

@@ -5,18 +5,18 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using HarmonyLib;
-
+#nullable enable
 namespace OBSControl.HarmonyPatches
 {
     public class HarmonyPatchInfo
     {
         public Harmony HarmonyInstance { get; set; }
         public MethodInfo OriginalMethod { get; protected set; }
-        public HarmonyMethod PrefixMethod { get; protected set; }
-        public HarmonyMethod PostfixMethod { get; protected set; }
+        public HarmonyMethod? PrefixMethod { get; protected set; }
+        public HarmonyMethod? PostfixMethod { get; protected set; }
         public bool IsApplied { get; protected set; }
 
-        public HarmonyPatchInfo(Harmony harmony, MethodInfo original, HarmonyMethod prefix, HarmonyMethod postfix)
+        public HarmonyPatchInfo(Harmony harmony, MethodInfo original, HarmonyMethod? prefix, HarmonyMethod? postfix)
         {
             HarmonyInstance = harmony;
             OriginalMethod = original ?? throw new ArgumentNullException(nameof(original), $"{nameof(original)} cannot be null when creating a HarmonyPatchInfo.");
@@ -26,19 +26,19 @@ namespace OBSControl.HarmonyPatches
             PostfixMethod = postfix;
         }
 
-        public bool ApplyPatch(Harmony harmony = null)
+        public bool ApplyPatch(Harmony? harmony = null)
         {
             if (harmony == null)
                 harmony = HarmonyInstance ?? throw new ArgumentNullException(nameof(harmony), $"Must have a non-null HarmonyInstance for ApplyPatch()");
             if (IsApplied) return false;
             try
             {
-                string patchTypeName = null;
+                string? patchTypeName = null;
                 if (PrefixMethod != null)
                     patchTypeName = PrefixMethod.method.DeclaringType?.Name;
                 else if (PostfixMethod != null)
                     patchTypeName = PostfixMethod.method.DeclaringType?.Name;
-                Logger.log.Debug($"Harmony patching '{OriginalMethod.Name}' with '{patchTypeName}'");
+                Logger.log?.Debug($"Harmony patching '{OriginalMethod.Name}' with '{patchTypeName}'");
                 harmony.Patch(OriginalMethod, PrefixMethod, PostfixMethod);
                 IsApplied = true;
                 HarmonyManager.AppliedPatches.Add(this);
@@ -46,22 +46,22 @@ namespace OBSControl.HarmonyPatches
             }
             catch (Exception e)
             {
-                Logger.log.Error($"Unable to patch method {OriginalMethod.Name}: {e.Message}");
-                Logger.log.Debug(e);
+                Logger.log?.Error($"Unable to patch method {OriginalMethod.Name}: {e.Message}");
+                Logger.log?.Debug(e);
                 return false;
             }
         }
 
-        public bool RemovePatch(Harmony harmony = null)
+        public bool RemovePatch(Harmony? harmony = null)
         {
             if (harmony == null)
                 harmony = HarmonyInstance ?? throw new ArgumentNullException(nameof(harmony), $"Must have a non-null HarmonyInstance for ApplyPatch()");
-            string patchTypeName = null;
+            string? patchTypeName = null;
             if (PrefixMethod != null)
                 patchTypeName = PrefixMethod.method.DeclaringType?.Name;
             else if (PostfixMethod != null)
                 patchTypeName = PostfixMethod.method.DeclaringType?.Name;
-            Logger.log.Debug($"Removing Harmony patch '{patchTypeName}' from '{OriginalMethod.Name}'");
+            Logger.log?.Debug($"Removing Harmony patch '{patchTypeName}' from '{OriginalMethod.Name}'");
             if (PrefixMethod != null)
                 harmony.Unpatch(OriginalMethod, PrefixMethod.method);
             if (PostfixMethod != null)

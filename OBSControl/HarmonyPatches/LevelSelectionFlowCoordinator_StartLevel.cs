@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using HarmonyLib;
-using BS_Utils;
-using static OBSControl.Utilities.ReflectionUtil;
+﻿using HarmonyLib;
+using IPA.Utilities;
 using OBSControl.OBSComponents;
+using System;
+using System.Collections;
 using System.Reflection;
-
+using UnityEngine;
+#nullable enable
 namespace OBSControl.HarmonyPatches
 {
     [HarmonyPatch(typeof(LevelSelectionFlowCoordinator), "StartLevel",
@@ -21,6 +16,10 @@ namespace OBSControl.HarmonyPatches
         })]
     internal class LevelSelectionNavigationController_StartLevel
     {
+        internal static FieldAccessor<LevelSelectionNavigationController, StandardLevelDetailViewController>.Accessor AccessDetailViewController =
+            FieldAccessor<LevelSelectionNavigationController, StandardLevelDetailViewController>.GetAccessor("_levelDetailViewController");
+        internal static FieldAccessor<StandardLevelDetailViewController, StandardLevelDetailView>.Accessor AccessDetailView =
+            FieldAccessor<StandardLevelDetailViewController, StandardLevelDetailView>.GetAccessor("_standardLevelDetailView");
         public static bool DelayedStartActive { get; private set; }
 
         /// <summary>
@@ -31,14 +30,19 @@ namespace OBSControl.HarmonyPatches
             ref Action beforeSceneSwitchCallback, ref bool practice,
             LevelSelectionNavigationController ____levelSelectionNavigationController)
         {
-            if (!OBSController.instance.IsConnected)
+            if(RecordingController.instance == null)
             {
-                Logger.log.Warn($"Not connected to OBS, skipping StartLevel override.");
+                Logger.log?.Warn($"RecordingController is null, unable to start recording.");
+                return true;
+            }
+            if (!(OBSController.instance?.IsConnected ?? false))
+            {
+                Logger.log?.Warn($"Not connected to OBS, skipping StartLevel override.");
                 return true;
             }
             if (Plugin.config.LevelStartDelay == 0)
             {
-                RecordingController.instance.StartRecordingLevel(difficultyBeatmap);
+                RecordingController.instance.StartRecordingLevel();
                 SharedCoroutineStarter.instance.StartCoroutine(RecordingController.instance.GameStatusSetup());
                 return true;
             }
@@ -51,9 +55,9 @@ namespace OBSControl.HarmonyPatches
             }
             DelayedStartActive = true;
             WaitingToStart = true;
-            Logger.log.Debug("LevelSelectionNavigationController_StartLevel");
-            var detailViewController = ____levelSelectionNavigationController.GetPrivateField<StandardLevelDetailViewController>("_levelDetailViewController");
-            var levelView = detailViewController.GetPrivateField<StandardLevelDetailView>("_standardLevelDetailView");
+            Logger.log?.Debug("LevelSelectionNavigationController_StartLevel");
+            StandardLevelDetailViewController detailViewController = AccessDetailViewController(ref ____levelSelectionNavigationController);
+            StandardLevelDetailView levelView = AccessDetailView(ref detailViewController);
             if (levelView != null)
                 levelView.playButton.interactable = false;
             SharedCoroutineStarter.instance.StartCoroutine(DelayedLevelStart(__instance, difficultyBeatmap, beforeSceneSwitchCallback, practice, levelView?.playButton));
@@ -62,31 +66,30 @@ namespace OBSControl.HarmonyPatches
 
         private static IEnumerator DelayedLevelStart(LevelSelectionFlowCoordinator coordinator,
             IDifficultyBeatmap difficultyBeatmap, Action beforeSceneSwitchCallback, bool practice,
-            UnityEngine.UI.Button playButton)
+            UnityEngine.UI.Button? playButton)
         {
-            IBeatmapLevel levelInfo = difficultyBeatmap.level;
-            playButton.interactable = false;
-            Logger.log.Debug($"Delaying level start by {Plugin.config.LevelStartDelay} seconds...");
-            if (levelInfo != null)
-                Logger.log.Debug($"levelInfo is not null: {levelInfo.songName} by {levelInfo.levelAuthorName}");
+            if (playButton != null)
+                playButton.interactable = false;
             else
-                Logger.log.Warn($"levelInfo is null, unable to set song file format.");
-            RecordingController.instance.StartRecordingLevel(difficultyBeatmap);
+                Logger.log?.Warn($"playButton is null for DelayedLevelStart, unable to disable while waiting.");
+            Logger.log?.Debug($"Delaying level start by {Plugin.config.LevelStartDelay} seconds...");
+            RecordingController.instance?.StartRecordingLevel();
             yield return new WaitForSeconds(Plugin.config.LevelStartDelay); ;
             WaitingToStart = false;
             //playButton.interactable = true;
             StartLevel(coordinator, difficultyBeatmap, beforeSceneSwitchCallback, practice);
-            SharedCoroutineStarter.instance.StartCoroutine(RecordingController.instance.GameStatusSetup());
+            if (RecordingController.instance != null)
+                SharedCoroutineStarter.instance.StartCoroutine(RecordingController.instance.GameStatusSetup());
         }
 
-        private static StartLevelDelegate _startLevel;
+        private static StartLevelDelegate? _startLevel;
         private static StartLevelDelegate StartLevel
         {
             get
             {
                 if (_startLevel == null)
                 {
-                    var presentMethod = typeof(LevelSelectionFlowCoordinator).GetMethod("StartLevel", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    MethodInfo presentMethod = typeof(LevelSelectionFlowCoordinator).GetMethod("StartLevel", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                     _startLevel = (StartLevelDelegate)Delegate.CreateDelegate(typeof(StartLevelDelegate), presentMethod);
                 }
                 return _startLevel;

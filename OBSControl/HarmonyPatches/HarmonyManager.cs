@@ -5,49 +5,51 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-
+#nullable enable
 namespace OBSControl.HarmonyPatches
 {
     public static class HarmonyManager
     {
         public static readonly string HarmonyId = "com.github.Zingabopp.OBSControl";
-        internal static Harmony harmony;
-        private static readonly BindingFlags allBindingFlags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-        private static HarmonyPatchInfo LevelDelayPatch;
-        internal readonly static HashSet<HarmonyPatchInfo> AppliedPatches = new HashSet<HarmonyPatchInfo>();
-
-        public static void Initialize()
+        private static Harmony? _harmony;
+        internal static Harmony Harmony
         {
-            harmony = new Harmony(HarmonyId);
+            get
+            {
+                return _harmony ??= new Harmony(HarmonyId);
+            }
         }
+        private static readonly BindingFlags allBindingFlags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        private static HarmonyPatchInfo? LevelDelayPatch;
+        internal readonly static HashSet<HarmonyPatchInfo> AppliedPatches = new HashSet<HarmonyPatchInfo>();
 
         public static bool ApplyPatch(HarmonyPatchInfo patchInfo)
         {
-            return patchInfo.ApplyPatch(harmony);
+            return patchInfo.ApplyPatch(Harmony);
         }
 
         public static bool RemovePatch(HarmonyPatchInfo patchInfo)
         {
-            return patchInfo.RemovePatch(harmony);
+            return patchInfo.RemovePatch(Harmony);
         }
 
-        public static bool ApplyPatch(Harmony harmony, MethodInfo original, HarmonyMethod prefix = null, HarmonyMethod postfix = null)
+        public static bool ApplyPatch(Harmony harmony, MethodInfo original, HarmonyMethod? prefix = null, HarmonyMethod? postfix = null)
         {
             try
             {
-                string patchTypeName = null;
+                string? patchTypeName = null;
                 if (prefix != null)
                     patchTypeName = prefix.method.DeclaringType?.Name;
                 else if (postfix != null)
                     patchTypeName = postfix.method.DeclaringType?.Name;
-                Logger.log.Debug($"Harmony patching {original.Name} with {patchTypeName}");
+                Logger.log?.Debug($"Harmony patching {original.Name} with {patchTypeName}");
                 harmony.Patch(original, prefix, postfix);
                 return true;
             }
             catch (Exception e)
             {
-                Logger.log.Error($"Unable to patch method {original.Name}: {e.Message}");
-                Logger.log.Debug(e);
+                Logger.log?.Error($"Unable to patch method {original.Name}: {e.Message}");
+                Logger.log?.Debug(e);
                 return false;
             }
         }
@@ -63,7 +65,7 @@ namespace OBSControl.HarmonyPatches
             {
                 patch.RemovePatch();
             }
-            harmony.UnpatchAll(HarmonyId);
+            Harmony.UnpatchAll(HarmonyId);
         }
         public static HarmonyPatchInfo GetLevelDelayPatch()
         {
@@ -71,7 +73,7 @@ namespace OBSControl.HarmonyPatches
             {
                 MethodInfo original = typeof(LevelSelectionFlowCoordinator).GetMethod("StartLevel", allBindingFlags);
                 HarmonyMethod prefix = new HarmonyMethod(typeof(LevelSelectionNavigationController_StartLevel).GetMethod("Prefix", allBindingFlags));
-                LevelDelayPatch = new HarmonyPatchInfo(harmony, original, prefix, null);
+                LevelDelayPatch = new HarmonyPatchInfo(Harmony, original, prefix, null);
             }
             return LevelDelayPatch;
         }

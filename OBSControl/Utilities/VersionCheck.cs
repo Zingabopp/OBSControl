@@ -8,7 +8,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Collections;
 using System.Globalization;
-
+#nullable disable
 namespace OBSControl.Utilities
 {
     public struct GithubVersion
@@ -1451,4 +1451,5 @@ namespace OBSControl.Utilities
         }
     }
     #endregion
+#nullable restore
 }

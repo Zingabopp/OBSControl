@@ -4,29 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
-
+#nullable enable
 namespace OBSControl
 {
     public static class GameStatus
     {
-        private static GameplayModifiersModelSO _gpModSO;
-        private static GameplayCoreSceneSetupData _gameSetupData;
+        private static GameplayModifiersModelSO? _gpModSO;
+        private static GameplayCoreSceneSetupData? _gameSetupData;
         public static int MaxScore;
         public static int MaxModifiedScore;
 
-        /*
-        private static GameplayCoreSceneSetup gameplayCoreSceneSetup
-        {
-            get
-            {
-                if (_gameplayCoreSceneSetup == null)
-                    _gameplayCoreSceneSetup = GameObject.FindObjectsOfType<GameplayCoreSceneSetup>().FirstOrDefault();
-                return _gameplayCoreSceneSetup;
-            }
-        }
-        */
-
-        public static GameplayCoreSceneSetupData gameSetupData
+        public static GameplayCoreSceneSetupData? GameSetupData
         {
             get
             {
@@ -36,31 +24,31 @@ namespace OBSControl
             }
         }
 
-        public static IDifficultyBeatmap difficultyBeatmap
+        public static IDifficultyBeatmap? DifficultyBeatmap
         {
-            get { return gameSetupData?.difficultyBeatmap; }
+            get { return GameSetupData?.difficultyBeatmap; }
         }
 
-        public static IBeatmapLevel LevelInfo
+        public static IBeatmapLevel? LevelInfo
         {
             get
             {
-                return difficultyBeatmap?.level;
+                return DifficultyBeatmap?.level;
             }
         }
 
-        public static GameplayModifiersModelSO GpModSO
+        public static GameplayModifiersModelSO? GpModSO
         {
             get
             {
                 if (_gpModSO == null)
                 {
-                    Logger.log.Debug("GameplayModifersModelSO is null, getting new one");
+                    Logger.log?.Debug("GameplayModifersModelSO is null, getting new one");
                     _gpModSO = Resources.FindObjectsOfTypeAll<GameplayModifiersModelSO>().FirstOrDefault();
                 }
                 if (_gpModSO == null)
                 {
-                    Logger.log.Warn("GameplayModifersModelSO is still null");
+                    Logger.log?.Warn("GameplayModifersModelSO is still null");
                 }
                 //else
                 //    Logger.Debug("Found GameplayModifersModelSO");
@@ -72,15 +60,15 @@ namespace OBSControl
         {
             try
             {
-                MaxScore = ScoreModel.MaxRawScoreForNumberOfNotes(difficultyBeatmap.beatmapData.notesCount);
-                Logger.log.Debug($"MaxScore: {MaxScore}");
-                MaxModifiedScore = GameStatus.GpModSO.GetModifiedScoreForGameplayModifiers(GameStatus.MaxScore, gameSetupData.gameplayModifiers);
-                Logger.log.Debug($"MaxModifiedScore: {MaxModifiedScore}");
+                MaxScore = ScoreModel.MaxRawScoreForNumberOfNotes(DifficultyBeatmap?.beatmapData.notesCount ?? 0);
+                Logger.log?.Debug($"MaxScore: {MaxScore}");
+                MaxModifiedScore = GameStatus.GpModSO?.GetModifiedScoreForGameplayModifiers(GameStatus.MaxScore, GameSetupData?.gameplayModifiers) ?? 0;
+                Logger.log?.Debug($"MaxModifiedScore: {MaxModifiedScore}");
             }
             catch (Exception ex)
             {
-                Logger.log.Error($"Error getting max scores: {ex}");
-                Logger.log.Debug(ex);
+                Logger.log?.Error($"Error getting max scores: {ex}");
+                Logger.log?.Debug(ex);
             }
         }
     }

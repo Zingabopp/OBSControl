@@ -4,6 +4,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
 
     <IsPackable>false</IsPackable>
+    <Configurations>Debug;Release;DebugMergeDisabled</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,22 +17,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OBSControl\OBSControl.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Main">
-      <HintPath>$(SolutionDir)Refs\Main.dll</HintPath>
-      <Aliases>BeatSaber</Aliases>
-    </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath>$(SolutionDir)Refs\UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.AudioModule">
-      <HintPath>$(SolutionDir)Refs\UnityEngine.AudioModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>$(SolutionDir)Refs\UnityEngine.CoreModule.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>

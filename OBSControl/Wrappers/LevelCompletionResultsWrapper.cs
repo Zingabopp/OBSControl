@@ -12,6 +12,7 @@ namespace OBSControl.Wrappers
         public LevelCompletionResultsWrapper(LevelCompletionResults results, int playCount, int maxModifiedScore)
         {
             _results = results;
+            GameplayModifiers = new GameplayModifiersWrapper(results.gameplayModifiers);
             PlayCount = playCount;
             MaxModifiedScore = maxModifiedScore;
             if (MaxModifiedScore != 0)
@@ -21,30 +22,30 @@ namespace OBSControl.Wrappers
         public int MaxModifiedScore { get; private set; }
         public float ScorePercent { get; private set; }
 
-        public GameplayModifiers gameplayModifiers => _results.gameplayModifiers;
+        public IGameplayModifiers GameplayModifiers { get; }
 
-        public int modifiedScore => _results.modifiedScore;
+        public int ModifiedScore => _results.modifiedScore;
 
-        public int rawScore => _results.rawScore;
+        public int RawScore => _results.rawScore;
 
-        public RankModel.Rank rank => _results.rank;
+        public ScoreRank Rank => _results.rank.ToScoreRank();
 
-        public bool fullCombo => _results.fullCombo;
+        public bool FullCombo => _results.fullCombo;
 
-        public LevelCompletionResults.LevelEndStateType levelEndStateType => _results.levelEndStateType;
+        public LevelEndState LevelEndStateType => _results.levelEndStateType.ToLevelEndState();
 
-        public LevelCompletionResults.LevelEndAction levelEndAction => _results.levelEndAction;
+        public SongEndAction LevelEndAction => _results.levelEndAction.ToSongEndAction();
 
-        public int averageCutScore => _results.averageCutScore;
+        public int AverageCutScore => _results.averageCutScore;
 
-        public int goodCutsCount => _results.goodCutsCount;
+        public int GoodCutsCount => _results.goodCutsCount;
 
-        public int badCutsCount => _results.badCutsCount;
+        public int BadCutsCount => _results.badCutsCount;
 
-        public int missedCount => _results.missedCount;
+        public int MissedCount => _results.missedCount;
 
-        public int maxCombo => _results.maxCombo;
+        public int MaxCombo => _results.maxCombo;
 
-        public float endSongTime => _results.endSongTime;
+        public float EndSongTime => _results.endSongTime;
     }
 }

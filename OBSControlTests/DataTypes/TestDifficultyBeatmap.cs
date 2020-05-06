@@ -1,69 +1,51 @@
-﻿extern alias BeatSaber;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using BeatSaber;
+using OBSControl.Utilities;
+using OBSControl.Wrappers;
 
 namespace OBSControlTests.DataTypes
 {
-    public class TestDifficultyBeatmap : IDifficultyBeatmap
+    public class TestDifficultyBeatmap : ILevelData
     {
         public static TestDifficultyBeatmap Default
         {
             get
             {
-                return new TestDifficultyBeatmap()
-                {
-                    TestBeatmapLevel = TestBeatmapLevel.Default,
-                    difficulty = BeatmapDifficulty.ExpertPlus,
-                    noteJumpMovementSpeed = 15.232f
-                };
+                return new TestDifficultyBeatmap();
             }
         }
 
-        public IBeatmapLevel level => TestBeatmapLevel;
+        public string LevelID { get; set; } = "custom_level_ABC123";
 
-        public TestBeatmapLevel TestBeatmapLevel { get; set; }
+        public string SongName { get; set; } = "TestSong";
 
-        public IDifficultyBeatmapSet parentDifficultyBeatmapSet => throw new NotImplementedException();
+        public string SongSubName { get; set; } = "TestSubname";
 
-        public BeatmapDifficulty difficulty
-        {
-            get
-            {
-                if (_difficulty != null)
-                    return _difficulty ?? BeatmapDifficulty.Easy;
-                if (_difficultyRank == null)
-                    return BeatmapDifficulty.Easy;
-                if (Enum.IsDefined(typeof(BeatmapDifficulty), _difficultyRank))
-                    return (BeatmapDifficulty)_difficultyRank;
-                return BeatmapDifficulty.Easy;
-            }
-            set
-            {
-                _difficulty = value;
-            }
-        }
+        public string SongAuthorName { get; set; } = "TestAuthor";
 
-        public int difficultyRank
-        {
-            get
-            {
-                return _difficultyRank ?? (int)(_difficulty ?? BeatmapDifficulty.Easy);
-            }
-            set
-            {
-                _difficultyRank = value;
-            }
-        }
+        public string LevelAuthorName { get; set; } = "TestMapper";
 
-        public float noteJumpMovementSpeed { get; set; }
+        public float BeatsPerMinute { get; set; } = 123.50f;
 
-        public float noteJumpStartBeatOffset { get; set; }
+        public float SongTimeOffset { get; set; } = 5.33f;
 
-        private BeatmapDifficulty? _difficulty;
-        private int? _difficultyRank;
+        public float Shuffle { get; set; } = 1.5f;
 
-        public BeatmapData beatmapData => throw new NotImplementedException();
+        public float ShufflePeriod { get; set; } = 0.33f;
+
+        public float PreviewStartTime { get; set; } = 30.34f;
+
+        public float PreviewDuration { get; set; } = 30f;
+
+        public float SongDuration { get; set; } = 180.32f;
+
+        public Difficulty Difficulty { get; set; } = Difficulty.Expert;
+
+        public int DifficultyRank => (int)Difficulty;
+
+        public float NoteJumpMovementSpeed { get; set; } = 15.32f;
+
+        public float NoteJumpStartBeatOffset { get; set; } = 1.99f;
     }
 }

@@ -5,21 +5,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+#nullable enable
 namespace OBSControl
 {
     public class OBSLogger : IOBSLogger
     {
         public void Log(string message, OBSLogLevel level)
         {
-            Logger.log.Log(level.ToIPALogLevel(), "[OBSWebSocket] " + message);
+            Logger.log?.Log(level.ToIPALogLevel(), "[OBSWebSocket] " + message);
         }
 
         public void Log(Exception ex, OBSLogLevel level)
         {
             var ipaLevel = level.ToIPALogLevel();
-            Logger.log.Log(ipaLevel, "Exception in OBSWebSocket:");
-            Logger.log.Log(ipaLevel, ex);
+            Logger.log?.Log(ipaLevel, "Exception in OBSWebSocket:");
+            Logger.log?.Log(ipaLevel, ex);
         }
     }
 
