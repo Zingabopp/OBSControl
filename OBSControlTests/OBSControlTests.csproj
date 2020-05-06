@@ -5,6 +5,7 @@
 
     <IsPackable>false</IsPackable>
     <Configurations>Debug;Release;DebugMergeDisabled</Configurations>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
