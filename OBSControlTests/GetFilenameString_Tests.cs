@@ -233,35 +233,6 @@ namespace OBSControlTests
             Assert.AreEqual(expectedResult, result);
         }
 
-        [TestMethod]
-        public void TestThing()
-        {
-            string intString = "5";
-            if(TryParseInteger(intString, out int firstValue) == true)
-            {
-                Console.WriteLine($"intString is an integer with a value of {firstValue}");
-            }
-            else
-            {
-                Console.WriteLine($"intString, '{intString}', is not an integer");
-            }
-            intString = "a5";
-            if (TryParseInteger(intString, out int secondValue) == true)
-            {
-                Console.WriteLine($"intString is an integer with a value of {secondValue}");
-            }
-            else
-            {
-                Console.WriteLine($"intString '{intString}' is not an integer");
-            }
-        }
-
-        public static bool TryParseInteger(string intString, out int value)
-        {
-            bool returnValue = int.TryParse(intString, out int result);
-            value = result;
-            return returnValue;
-        }
 
         [TestMethod]
         public void DateInMiddle_Test()
