@@ -20,11 +20,12 @@ namespace OBSControl.OBSComponents
         private OBSWebsocket? _obs => OBSController.instance?.Obs;
         internal readonly HarmonyPatches.HarmonyPatchInfo LevelDelayPatch = HarmonyPatches.HarmonyManager.GetLevelDelayPatch();
         private const string DefaultFileFormat = "%CCYY-%MM-%DD %hh-%mm-%ss";
+        public const string DefaultDateTimeFormat = "yyyyMMddHHmmss";
         public bool WaitingToStop { get; private set; }
         public Task? StopRecordingTask { get; private set; }
         private string ToDateTimeFileFormat(DateTime dateTime)
         {
-            return dateTime.ToString("yyyyMMddHHmmss");
+            return dateTime.ToString(DefaultDateTimeFormat);
         }
 
         public string? RecordingFolder { get; protected set; }

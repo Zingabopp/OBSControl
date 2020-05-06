@@ -86,6 +86,57 @@ namespace OBSControlTests
             Console.WriteLine($"Result: '{result}'");
             Assert.AreEqual(expectedResult, result);
         }
+
+
+        [TestMethod]
+        public void UnclosedGroup()
+        {
+            TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
+            TestGameplayModifiers modifiers = new TestGameplayModifiers();
+            TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            string dateFormat = "yyyyMMdd";
+            string baseString = $"?N-?A_?@{{{dateFormat}}}<-?D";
+            Console.WriteLine("Format: " + baseString);
+            string expectedResult = $"{b.SongName}-{b.LevelAuthorName}_{DateTime.Now.ToString(dateFormat)}";
+            expectedResult = OBSControl.Utilities.Utilities.GetSafeFilename(expectedResult);
+            string result = GetFilenameString(baseString, b, results);
+            Console.WriteLine($"Result: '{result}'");
+            Assert.AreEqual(expectedResult, result);
+        }
+
+        [TestMethod]
+        public void UnclosedData()
+        {
+            TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
+            TestGameplayModifiers modifiers = new TestGameplayModifiers();
+            TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            string dateFormat = "yyyyMMddHHmm";
+            string baseString = $"?N-?A_?@{{{dateFormat}<-?D";
+            Console.WriteLine("Format: " + baseString);
+            string expectedResult = $"{b.SongName}-{b.LevelAuthorName}_{DateTime.Now.ToString(dateFormat)}{{{dateFormat}";
+            expectedResult = OBSControl.Utilities.Utilities.GetSafeFilename(expectedResult);
+            string result = GetFilenameString(baseString, b, results);
+            Console.WriteLine($"Result: '{result}'");
+            Assert.AreEqual(expectedResult, result);
+        }
+
+        [TestMethod]
+        public void DataWithNoDataSubstitute()
+        {
+            TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
+            TestGameplayModifiers modifiers = new TestGameplayModifiers();
+            TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            string dateFormat = "yyyyMMdd";
+            int limit = 40;
+            string baseString = $"?N-?A_?@{{{dateFormat}}}-?D{{{limit}}}";
+            Console.WriteLine("Format: " + baseString);
+            string expectedResult = $"{b.SongName}-{b.LevelAuthorName}_{DateTime.Now.ToString(dateFormat)}-{b.Difficulty}";
+            expectedResult = OBSControl.Utilities.Utilities.GetSafeFilename(expectedResult);
+            string result = GetFilenameString(baseString, b, results);
+            Console.WriteLine($"Result: '{result}'");
+            Assert.AreEqual(expectedResult, result);
+        }
+
         [TestMethod]
         public void LimitedLevelAuthor()
         {
@@ -103,6 +154,56 @@ namespace OBSControlTests
             Assert.AreEqual(expectedResult, result);
         }
 
+        [TestMethod]
+        public void SongAndAuthorLimits()
+        {
+            TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
+            TestGameplayModifiers modifiers = new TestGameplayModifiers();
+            TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            string dateFormat = "yyyyMMdd";
+            int authorLimit = 5;
+            int songLimit = 3;
+            string baseString = $"?N{{{songLimit}}}-?A{{{authorLimit}}}_?@{{{dateFormat}}}-?D";
+            Console.WriteLine("Format: " + baseString);
+            string expectedResult = $"{b.SongName.Substring(0, songLimit)}-{b.LevelAuthorName.Substring(0, authorLimit)}_{DateTime.Now.ToString(dateFormat)}-{b.Difficulty}";
+            expectedResult = OBSControl.Utilities.Utilities.GetSafeFilename(expectedResult);
+            string result = GetFilenameString(baseString, b, results);
+            Console.WriteLine($"Result: '{result}'");
+            Assert.AreEqual(expectedResult, result);
+        }
+
+        [TestMethod]
+        public void AuthorLimitHigherThanString()
+        {
+            TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
+            TestGameplayModifiers modifiers = new TestGameplayModifiers();
+            TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            string dateFormat = "yyyyMMdd";
+            int limit = 40;
+            string baseString = $"?N-?A{{{limit}}}_?@{{{dateFormat}}}-?D";
+            Console.WriteLine("Format: " + baseString);
+            string expectedResult = $"{b.SongName}-{b.LevelAuthorName}_{DateTime.Now.ToString(dateFormat)}-{b.Difficulty}";
+            expectedResult = OBSControl.Utilities.Utilities.GetSafeFilename(expectedResult);
+            string result = GetFilenameString(baseString, b, results);
+            Console.WriteLine($"Result: '{result}'");
+            Assert.AreEqual(expectedResult, result);
+        }
+
+        [TestMethod]
+        public void AuthorLimit_InvalidInt()
+        {
+            TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
+            TestGameplayModifiers modifiers = new TestGameplayModifiers();
+            TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            string dateFormat = "yyyyMMdd";
+            string baseString = $"?N-?A{{{"A5"}}}_?@{{{dateFormat}}}-?D";
+            Console.WriteLine("Format: " + baseString);
+            string expectedResult = $"{b.SongName}-{b.LevelAuthorName}_{DateTime.Now.ToString(dateFormat)}-{b.Difficulty}";
+            expectedResult = OBSControl.Utilities.Utilities.GetSafeFilename(expectedResult);
+            string result = GetFilenameString(baseString, b, results);
+            Console.WriteLine($"Result: '{result}'");
+            Assert.AreEqual(expectedResult, result);
+        }
 
         [TestMethod]
         public void TestThing()

@@ -12,6 +12,7 @@ namespace OBSControl.Utilities
 {
     public static class FileRenaming
     {
+        public const string DefaultDateTimeFormat = "yyyyMMddHHmm";
         public static string GetDefaultFilename() => DateTime.Now.ToString("yyyyMMddHHmmss");
         public static readonly ReadOnlyDictionary<char, LevelDataType> LevelDataSubstitutions = new ReadOnlyDictionary<char, LevelDataType>(new Dictionary<char, LevelDataType>()
         {
@@ -137,7 +138,7 @@ namespace OBSControl.Utilities
                         retVal = retVal.Substring(0, subNameLimit);
                     return retVal;
                 case LevelDataType.Date:
-                    return DateTime.Now.ToString(data ?? "yyyyMMddHHmm");
+                    return DateTime.Now.ToString(data ?? DefaultDateTimeFormat);
                 case LevelDataType.FirstPlay:
                     if (levelCompletionResults.PlayCount == 0)
                         return "1st";
