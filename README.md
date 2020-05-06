@@ -26,39 +26,41 @@ Settings can be found in-game in the `Mod Settings > OBSControl` menu.
     * Optional groups are bounded by `<` `>`
       * The group is only shown if one or more of the substitutions inside the group are not empty strings.
         * Example: The format `VideoFile<_I_Got_A_?F>` will be `VideoFile_I_Got_A_FC` if you get a full combo or `VideoFile` if you don't.
+    * Optional parameters: Some substitutions can have additional parameters inside { }. For example, the format `?@{yyyyMMddHHmm}` would rename the file to `202005050807.mkv` on 05/05/2020 8:07 AM.
 
 Availble Substitutions:
 ----------------------
 **Song Data:**
-|Key|Substitution|Notes|
-|---|---|---|
-|B| BeatsPerMinute |BPM to two decimal places, ignoring trailing zeroes.|
-|D| DifficultyName |Full name of the difficulty.|
-|d| DifficultyShortName |Short name of the difficulty (i.e `E+` instead of `ExpertPlus`).|
-|A| LevelAuthorName |Name of the mapper.|
-|a| SongAuthorName |Name of the song artist.|
-|I| LevelId |LevelId of the song.|
-|J| NoteJumpSpeed |NJS to two decimal places, ignoring trailing 0s.|
-|L| SongDurationLabeled |Duration of the song in minutes and seconds (i.e. `3m.25s` for 3 min 25 sec).|
-|l| SongDurationNoLabels |Duration of the song in minutes and seconds with no labels (i.e. `3.25` for 3 min 25 sec).|
-|N| SongName |Name of the song.|
-|n| SongSubName |Subname of the song.|
+|Key|Substitution|Parameter(s)|Notes|
+|---|---|---|---|
+|B|BeatsPerMinute||BPM to two decimal places, ignoring trailing zeroes.|
+|D|DifficultyName||Full name of the difficulty.|
+|d|DifficultyShortName||Short name of the difficulty (i.e `E+` instead of `ExpertPlus`).|
+|A|LevelAuthorName|(int)Max Length|Name of the mapper.|
+|a|SongAuthorName|(int)Max Length|Name of the song artist.|
+|@|CurrentTime|(string)DateTimeFormat|Date/Time of the recording when stopped. [Format Information](https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings), default is `yyyyMMddHHmm`|
+|I|LevelId||LevelId of the song.|
+|J|NoteJumpSpeed||NJS to two decimal places, ignoring trailing 0s.|
+|L|SongDurationLabeled||Duration of the song in minutes and seconds (i.e. `3m.25s` for 3 min 25 sec).|
+|l|SongDurationNoLabels||Duration of the song in minutes and seconds with no labels (i.e. `3.25` for 3 min 25 sec).|
+|N|SongName|(int)Max Length|Name of the song.|
+|n|SongSubName|(int)Max length|Subname of the song.|
 
 **Completion Results Data:**
-|Key|Substitution|Notes|
-|---|---|---|
-|1| FirstPlay |`1st` if you haven't played the song according to Beat Saber's data.|
-|b| BadCutsCount |Number of bad cuts.|
-|T| EndSongTimeLabeled |How far into the song you got in minutes and seconds (i.e. `3m.25s` for 3 min 25 sec).|
-|t| EndSongTimeNoLabels |How far into the song you got in minutes and seconds with no labels (i.e. `3.25` for 3 min 25 sec).|
-|F| FullCombo |`FC` if you full combo'd the song.|
-|M| Modifiers |Enabled song modifiers, separated by `_` (i.e. `DA_FS` for Disappearing Arrows and Faster Song).|
-|m| MissedCount |Number of notes missed.|
-|G| GoodCutsCount |Number of good cuts.|
-|E| LevelEndType |Has a value for any level end type (`Cleared`/`Quit`/`Failed`/`Unknown`).|
-|e| LevelIncompleteType |Only has a value if the level was incomplete (`Quit`/`Failed`/`Unknown`).|
-|C| MaxCombo |Max combo for the song.|
-|S| RawScore |Score before any modifiers were applied.|
-|s| ModifiedScore |Score after modifiers (your actual score).|
-|R| Rank |Score rank (`SSS`/`SS`/`S`/`A`/`B`/`C`/`D`/`E`).|
-|%| ScorePercent | Score percent to two decimal places.|
+|Key|Substitution|Parameter(s)|Notes|
+|---|---|---|---|
+|1|FirstPlay||`1st` if you haven't played the song according to Beat Saber's data.|
+|b|BadCutsCount||Number of bad cuts.|
+|T|EndSongTimeLabeled||How far into the song you got in minutes and seconds (i.e. `3m.25s` for 3 min 25 sec).|
+|t|EndSongTimeNoLabels||How far into the song you got in minutes and seconds with no labels (i.e. `3.25` for 3 min 25 sec).|
+|F|FullCombo||`FC` if you full combo'd the song.|
+|M|Modifiers||Enabled song modifiers, separated by `_` (i.e. `DA_FS` for Disappearing Arrows and Faster Song).|
+|m|MissedCount||Number of notes missed.|
+|G|GoodCutsCount||Number of good cuts.|
+|E|LevelEndType||Has a value for any level end type (`Cleared`/`Quit`/`Failed`/`Unknown`).|
+|e|LevelIncompleteType||Only has a value if the level was incomplete (`Quit`/`Failed`/`Unknown`).|
+|C|MaxCombo||Max combo for the song.|
+|S|RawScore||Score before any modifiers were applied.|
+|s|ModifiedScore||Score after modifiers (your actual score).|
+|R|Rank||Score rank (`SSS`/`SS`/`S`/`A`/`B`/`C`/`D`/`E`).|
+|%|ScorePercent|| Score percent to two decimal places.|
