@@ -13,13 +13,17 @@ namespace OBSControlTests
         [TestMethod]
         public void NullArguments()
         {
-            TestLevelCompletionResults results = null;
-            TestDifficultyBeatmap difficultyBeatmap = TestDifficultyBeatmap.Default;
+            TestLevelCompletionResults? results = null;
+            TestDifficultyBeatmap? difficultyBeatmap = TestDifficultyBeatmap.Default;
             string baseString = "?N-?A_?%<_[?M]><-?F><-?e>";
+#pragma warning disable CS8604 // Possible null reference argument.
             Assert.ThrowsException<ArgumentNullException>(() => GetFilenameString(baseString, difficultyBeatmap, results));
+#pragma warning restore CS8604 // Possible null reference argument.
             results = TestLevelCompletionResults.DefaultCompletionResults;
             difficultyBeatmap = null;
+#pragma warning disable CS8604 // Possible null reference argument.
             Assert.ThrowsException<ArgumentNullException>(() => GetFilenameString(baseString, difficultyBeatmap, results));
+#pragma warning restore CS8604 // Possible null reference argument.
         }
 
         [TestMethod]
@@ -327,14 +331,13 @@ namespace OBSControlTests
             modifiers.SongSpeed = SongSpeed.Slower;
             results.LevelEndStateType = LevelEndState.Failed;
             results.MaxCombo = results.TotalNotes - 1;
-            string result = null;
             string baseString = "?N-?A_?%<_[?M]><-?F><-?e>";
             int iterations = 1;
             Stopwatch sw = new Stopwatch();
             sw.Start();
             for (int i = 0; i < iterations; i++)
             {
-                result = GetFilenameString(baseString, difficultyBeatmap, results);
+                _ = GetFilenameString(baseString, difficultyBeatmap, results);
             }
             sw.Stop();
             Console.WriteLine($"{sw.ElapsedMilliseconds}ms for {iterations} iterations.");

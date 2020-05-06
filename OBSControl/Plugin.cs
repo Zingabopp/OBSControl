@@ -13,15 +13,17 @@ using UnityEngine;
 using OBSControl.OBSComponents;
 using IPALogger = IPA.Logging.Logger;
 using BeatSaberMarkupLanguage.Settings;
-
+#nullable enable
 namespace OBSControl
 {
     [Plugin(RuntimeOptions.DynamicInit)]
     public class Plugin
     {
+#pragma warning disable CS8618 // Non-nullable field is uninitialized. Consider declaring as nullable.
         internal static Plugin instance;
-        internal static string Name => "OBSControl";
         internal static PluginConfig config;
+#pragma warning restore CS8618 // Non-nullable field is uninitialized. Consider declaring as nullable.
+        internal static string Name => "OBSControl";
         internal static bool Enabled;
 
         [Init]

@@ -224,7 +224,7 @@ namespace OBSControl.OBSComponents
                 Logger.log?.Warn($"Unable to rename last recording, provided new name is null.");
                 return;
             }
-            if(newName.Length == 0)
+            if (newName.Length == 0)
             {
                 Logger.log?.Info($"Skipping file rename, no RecordingFileFormat provided.");
                 return;
@@ -317,8 +317,11 @@ namespace OBSControl.OBSComponents
                 }
 
                 Wrappers.LevelCompletionResultsWrapper resultsWrapper = new Wrappers.LevelCompletionResultsWrapper(levelCompletionResults, stats?.playCount ?? 0, GameStatus.MaxModifiedScore);
-                newFileName = Utilities.FileRenaming.GetFilenameString(Plugin.config.RecordingFileFormat,
-                    new BeatmapLevelWrapper(GameStatus.DifficultyBeatmap), resultsWrapper);
+                if (GameStatus.DifficultyBeatmap != null)
+                {
+                    newFileName = Utilities.FileRenaming.GetFilenameString(Plugin.config.RecordingFileFormat,
+                        new BeatmapLevelWrapper(GameStatus.DifficultyBeatmap), resultsWrapper);
+                }
             }
 #pragma warning disable CA1031 // Do not catch general exception types
             catch (Exception ex)

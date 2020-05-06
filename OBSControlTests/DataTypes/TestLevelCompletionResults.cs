@@ -42,6 +42,7 @@ namespace OBSControlTests.DataTypes
         public TestLevelCompletionResults(int totalNotes)
         {
             TotalNotes = totalNotes;
+            GameplayModifiers = DefaultModifiers;
         }
 
         public int TotalNotes { get; set; }
