@@ -219,9 +219,14 @@ namespace OBSControl.OBSComponents
         private string? RenameString;
         public void RenameLastRecording(string? newName)
         {
-            if (string.IsNullOrEmpty(newName))
+            if (newName == null)
             {
-                Logger.log?.Warn($"Unable to rename last recording, provided new name is null or empty.");
+                Logger.log?.Warn($"Unable to rename last recording, provided new name is null.");
+                return;
+            }
+            if(newName.Length == 0)
+            {
+                Logger.log?.Info($"Skipping file rename, no RecordingFileFormat provided.");
                 return;
             }
             string? recordingFolder = RecordingFolder;

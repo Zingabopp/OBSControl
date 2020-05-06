@@ -260,8 +260,8 @@ namespace OBSControl.Utilities
                 throw new ArgumentNullException(nameof(levelData), "difficultyBeatmap cannot be null for GetFilenameString.");
             if (levelCompletionResults == null)
                 throw new ArgumentNullException(nameof(levelCompletionResults), "levelCompletionResults cannot be null for GetFilenameString.");
-            if(baseString == null)
-                return GetDefaultFilename();
+            if(string.IsNullOrEmpty(baseString) || baseString == null)
+                return string.Empty;
             if (!baseString.Contains("?"))
                 return baseString;
             StringBuilder stringBuilder = new StringBuilder(baseString.Length);

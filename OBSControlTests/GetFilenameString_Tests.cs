@@ -35,6 +35,34 @@ namespace OBSControlTests
         }
 
         [TestMethod]
+        public void NullFormat()
+        {
+            TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
+            TestGameplayModifiers modifiers = new TestGameplayModifiers();
+            TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            string? baseString = null;
+            Console.WriteLine($"Format: '{baseString}'");
+            string expectedResult = string.Empty;
+            string result = GetFilenameString(baseString, b, results);
+            Console.WriteLine($"Result: '{result}'");
+            Assert.AreEqual(expectedResult, result);
+        }
+
+        [TestMethod]
+        public void EmptyFormat()
+        {
+            TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
+            TestGameplayModifiers modifiers = new TestGameplayModifiers();
+            TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            string? baseString = string.Empty;
+            Console.WriteLine($"Format: '{baseString}'");
+            string expectedResult = string.Empty;
+            string result = GetFilenameString(baseString, b, results);
+            Console.WriteLine($"Result: '{result}'");
+            Assert.AreEqual(expectedResult, result);
+        }
+
+        [TestMethod]
         public void AllArguments()
         {
 
