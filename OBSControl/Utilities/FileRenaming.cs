@@ -95,6 +95,7 @@ namespace OBSControl.Utilities
         public static string GetLevelDataString(LevelDataType levelDataType, ILevelData levelData, 
             ILevelCompletionResults levelCompletionResults, string? data = null)
         {
+            string? retVal = null;
             switch (levelDataType)
             {
                 case LevelDataType.None:
@@ -106,13 +107,19 @@ namespace OBSControl.Utilities
                 case LevelDataType.DifficultyName:
                     return GetDifficultyName(levelData.Difficulty, false);
                 case LevelDataType.LevelAuthorName:
-                    return levelData.LevelAuthorName;
+                    retVal = levelData.LevelAuthorName;
+                    if (int.TryParse(data, out int mapperLimit) && retVal.Length > mapperLimit)
+                        retVal = retVal.Substring(0, mapperLimit);
+                    return retVal;
                 case LevelDataType.LevelId:
                     return levelData.LevelID;
                 case LevelDataType.NoteJumpSpeed:
                     return levelData.NoteJumpMovementSpeed.ToString("N2").TrimEnd('0').TrimEnd('.').TrimEnd(',');
                 case LevelDataType.SongAuthorName:
-                    return levelData.SongAuthorName;
+                    retVal = levelData.SongAuthorName;
+                    if (int.TryParse(data, out int authorLimit) && retVal.Length > authorLimit)
+                        retVal = retVal.Substring(0, authorLimit);
+                    return retVal;
                 case LevelDataType.SongDurationNoLabels:
                     levelData.SongDuration.MinutesAndSeconds(out int durMin, out int durSec);
                     return durMin + "." + durSec.ToString("00");
@@ -120,9 +127,15 @@ namespace OBSControl.Utilities
                     levelData.SongDuration.MinutesAndSeconds(out int durMinL, out int durSecL);
                     return durMinL + "m." + durSecL.ToString("00") + "s";
                 case LevelDataType.SongName:
-                    return levelData.SongName;
+                    retVal = levelData.SongName;
+                    if (int.TryParse(data, out int songNameLimit) && retVal.Length > songNameLimit)
+                        retVal = retVal.Substring(0, songNameLimit);
+                    return retVal;
                 case LevelDataType.SongSubName:
-                    return levelData.SongSubName;
+                    retVal = levelData.SongSubName;
+                    if (int.TryParse(data, out int subNameLimit) && retVal.Length > subNameLimit)
+                        retVal = retVal.Substring(0, subNameLimit);
+                    return retVal;
                 case LevelDataType.Date:
                     return DateTime.Now.ToString(data ?? "yyyyMMddHHmm");
                 case LevelDataType.FirstPlay:
@@ -253,34 +266,23 @@ namespace OBSControl.Utilities
             StringBuilder stringBuilder = new StringBuilder(baseString.Length);
             StringBuilder section = new StringBuilder(20);
             bool substituteNext = false;
-            bool processingGroup = false; // Group that is skipped if there's no data
-            bool dataGroup = false; // Has data associated with the substitution
+            bool inProcessingGroup = false; // Group that is skipped if there's no data
             bool ignoreGroup = true; // False if the processingGroup contains data
-            string currentData = string.Empty;
-            foreach (char ch in baseString)
+            for(int i = 0; i < baseString.Length; i++)
             {
+                char ch = baseString[i];
                 switch (ch)
                 {
                     case '<':
-                        processingGroup = true;
+                        section.Clear();
+                        inProcessingGroup = true;
                         continue;
                     case '>':
-                        processingGroup = false;
+                        inProcessingGroup = false;
                         if (!ignoreGroup && section.Length > 0)
                             stringBuilder.Append(section.ToString());
                         section.Clear();
                         ignoreGroup = true;
-                        continue;
-                    case '{':
-                        dataGroup = true;
-                        continue;
-                    case '}':
-                        if (dataGroup)
-                        {
-                            currentData = section.ToString();
-                            section.Clear();
-                        }
-                        dataGroup = false;
                         continue;
                     case '?':
                         substituteNext = true;
@@ -288,12 +290,24 @@ namespace OBSControl.Utilities
                     default:
                         if (substituteNext)
                         {
-                            if (processingGroup)
+                            string? dataString = null;
+                            int nextIndex = i + 1;
+                            if (nextIndex < baseString.Length && baseString[nextIndex] == '{')
+                            {
+                                nextIndex++;
+                                int lastIndex = baseString.IndexOf('}', nextIndex);
+                                if(lastIndex > 0)
+                                {
+                                    dataString = baseString.Substring(nextIndex, lastIndex - nextIndex);
+                                    i = lastIndex;
+                                }
+                            }
+                            if (inProcessingGroup)
                             {
                                 string data;
                                 try
                                 {
-                                    data = GetLevelDataString(LevelDataSubstitutions[ch], levelData, levelCompletionResults);
+                                    data = GetLevelDataString(LevelDataSubstitutions[ch], levelData, levelCompletionResults, dataString);
                                 }
                                 catch
                                 { 
@@ -309,7 +323,7 @@ namespace OBSControl.Utilities
                             {
                                 try
                                 {
-                                    stringBuilder.Append(GetLevelDataString(LevelDataSubstitutions[ch], levelData, levelCompletionResults));
+                                    stringBuilder.Append(GetLevelDataString(LevelDataSubstitutions[ch], levelData, levelCompletionResults, dataString));
                                 }
                                 catch 
                                 { 
@@ -321,9 +335,7 @@ namespace OBSControl.Utilities
                         }
                         else
                         {
-                            if (processingGroup)
-                                section.Append(ch);
-                            if (dataGroup)
+                            if (inProcessingGroup)
                                 section.Append(ch);
                             else
                                 stringBuilder.Append(ch);
