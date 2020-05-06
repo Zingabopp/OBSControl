@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <UsingTask TaskName="ILRepack" AssemblyFile="ILRepack.MSBuild.Task.dll"/>
-  <Target Name="ILRepack" AfterTargets="Build" Condition="'$(NCrunch)' != '1' AND '$(DisableMerge)' != 'True'" >
+  <Target Name="ILRepack" AfterTargets="Build" Condition="'$(NCrunch)' != '1'" >
     <PropertyGroup>
-      <WorkingDirectory>$(OutputPath)</WorkingDirectory>
+      <WorkingDirectory>$(ProjectDir)$(OutputPath)</WorkingDirectory>
     </PropertyGroup>
     <ItemGroup>
       <!--<InputAssemblies Include="$(OutputPath)OBSControl.dll" />-->
@@ -14,21 +14,18 @@
       <!-- Must be a fully qualified name -->
       <!-- <DoNotInternalizeAssemblies Include="System.Threading.Tasks.Dataflow.dll" /> -->
     </ItemGroup>
-
     <ILRepack
         Parallel="true"
         Internalize="true"
         InternalizeExcludeAssemblies="@(DoNotInternalizeAssemblies)"
         MainAssembly="$(AssemblyName).dll"
-        OutputAssembly="$(AssemblyName)-merged.dll"
+        OutputAssembly="$(WorkingDirectory)Merged\$(AssemblyName).dll"
         InputAssemblies="@(InputAssemblies)"
         OutputType="Dll"
         Verbose="false"
         DebugInfo="true"
         WorkingDirectory="$(WorkingDirectory)"
     />
-    <Move SourceFiles="$(OutputPath)$(AssemblyName)-merged.dll" DestinationFiles="$(OutputPath)Merged\$(AssemblyName).dll" />
-    <Move SourceFiles="$(OutputPath)$(AssemblyName)-merged.pdb" DestinationFiles="$(OutputPath)Merged\$(AssemblyName).pdb" />
   </Target>
 </Project>
 <!-- /ILRepack -->
