@@ -41,6 +41,7 @@
     <WarningLevel>4</WarningLevel>
     <DebugType>portable</DebugType>
     <DisableMerge>true</DisableMerge>
+    <DisableCopyToPlugins>true</DisableCopyToPlugins>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>portable</DebugType>
