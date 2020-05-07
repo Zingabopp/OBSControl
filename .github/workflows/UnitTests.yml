@@ -6,13 +6,13 @@ on:
     paths: 
       - 'OBSControl/**'
       - 'OBSControlTests/**'
-      - '.github/workflows/UnitTests.yaml'
+      - '.github/workflows/UnitTests.yml'
   pull_request:
     branches: [ master ]
     paths: 
       - 'OBSControl/**'
       - 'OBSControlTests/**'
-      - '.github/workflows/UnitTests.yaml'
+      - '.github/workflows/UnitTests.yml'
 
 jobs:
   tests:
