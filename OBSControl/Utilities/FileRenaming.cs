@@ -155,7 +155,7 @@ namespace OBSControl.Utilities
                 case LevelDataType.FullCombo:
                     return levelCompletionResults.FullCombo ? "FC" : string.Empty;
                 case LevelDataType.Modifiers:
-                    return GetModifierString(levelCompletionResults.GameplayModifiers);
+                    return levelCompletionResults.GameplayModifiers.ToModifierString();
                 case LevelDataType.GoodCutsCount:
                     return levelCompletionResults.GoodCutsCount.ToString();
                 case LevelDataType.LevelEndType:
@@ -196,54 +196,6 @@ namespace OBSControl.Utilities
                 default:
                     return "NA";
             }
-        }
-
-        public static string GetModifierString(IGameplayModifiers modifiers, string separator = "_")
-        {
-            List<string> activeModifiers = new List<string>();
-            if (modifiers.SongSpeed != SongSpeed.Normal)
-            {
-                if (modifiers.SongSpeed == SongSpeed.Faster)
-                    activeModifiers.Add("FS");
-                else
-                    activeModifiers.Add("SS");
-            }
-            if (modifiers.DisappearingArrows)
-                activeModifiers.Add("DA");
-            if (modifiers.GhostNotes)
-                activeModifiers.Add("GN");
-            if (modifiers.BatteryEnergy)
-                activeModifiers.Add("BE");
-            if (modifiers.DemoNoFail)
-                activeModifiers.Add("DNF");
-            if (modifiers.DemoNoObstacles)
-                activeModifiers.Add("DNO");
-            if (modifiers.EnabledObstacleType != EnabledObstacleType.All)
-            {
-                if (modifiers.EnabledObstacleType == EnabledObstacleType.FullHeightOnly)
-                    activeModifiers.Add("FHO");
-                else
-                    activeModifiers.Add("NO");
-            }
-            //if (modifiers.energyType == GameplayModifiers.EnergyType.Battery)
-            //    activeModifiers.Add("BE");
-            if (modifiers.FailOnSaberClash)
-                activeModifiers.Add("FSC");
-            if (modifiers.FastNotes)
-                activeModifiers.Add("FN");
-            if (modifiers.InstaFail)
-                activeModifiers.Add("IF");
-            if (modifiers.NoArrows)
-                activeModifiers.Add("NA");
-            if (modifiers.NoBombs)
-                activeModifiers.Add("NB");
-            if (modifiers.NoFail)
-                activeModifiers.Add("NF");
-            //if (modifiers.noObstacles)
-            //    activeModifiers.Add("NO");
-            if (modifiers.StrictAngles)
-                activeModifiers.Add("SA");
-            return string.Join(separator, activeModifiers);
         }
 
         /// <summary>

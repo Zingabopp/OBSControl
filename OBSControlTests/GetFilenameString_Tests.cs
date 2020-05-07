@@ -4,6 +4,8 @@ using OBSControlTests.DataTypes;
 using System.Diagnostics;
 using static OBSControl.Utilities.FileRenaming;
 using OBSControl.Wrappers;
+using OBSControl.Utilities;
+using System.Text;
 
 namespace OBSControlTests
 {
@@ -44,6 +46,7 @@ namespace OBSControlTests
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
             TestGameplayModifiers modifiers = new TestGameplayModifiers();
             TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            results.GameplayModifiers = modifiers;
             string? baseString = null;
             Console.WriteLine($"Format: '{baseString}'");
             string expectedResult = string.Empty;
@@ -58,6 +61,7 @@ namespace OBSControlTests
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
             TestGameplayModifiers modifiers = new TestGameplayModifiers();
             TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            results.GameplayModifiers = modifiers;
             string? baseString = string.Empty;
             Console.WriteLine($"Format: '{baseString}'");
             string expectedResult = string.Empty;
@@ -79,14 +83,16 @@ namespace OBSControlTests
             modifiers.SongSpeed = SongSpeed.Slower;
             results.LevelEndStateType = LevelEndState.Failed;
             results.MaxCombo = results.TotalNotes;
-            string baseString = string.Empty;
+            int expectedLength = LevelDataSubstitutions.Keys.Count * 7 * 3;
+            StringBuilder stringBuilder = new StringBuilder(expectedLength);
             foreach (var ch in LevelDataSubstitutions.Keys)
             {
-                baseString += "|" + LevelDataSubstitutions[ch] + ":?" + ch + "|\n";
+                stringBuilder.Append("|" + LevelDataSubstitutions[ch] + "-?" + ch + "__");
             }
-            Console.WriteLine("Format: " + baseString.Replace("\n", "") + "\n");
+            string baseString = stringBuilder.ToString();
+            Console.WriteLine("Format: " + baseString.Replace("__", "\n        "));
             string result = GetFilenameString(baseString, difficultyBeatmap, results);
-            Console.WriteLine(result);
+            Console.WriteLine(result.Replace("__", "\n"));
         }
 
         [TestMethod]
@@ -94,6 +100,7 @@ namespace OBSControlTests
         {
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
             TestGameplayModifiers modifiers = new TestGameplayModifiers();
+            results.GameplayModifiers = modifiers;
             TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
             string dateFormat = "yyyyMMdd";
             string baseString = $"?@{{{dateFormat}}}-?N-?A-?D";
@@ -110,6 +117,7 @@ namespace OBSControlTests
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
             TestGameplayModifiers modifiers = new TestGameplayModifiers();
             TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            results.GameplayModifiers = modifiers;
             string dateFormat = "yyyyMMdd";
             string baseString = $"?N-?A<_?@{{{dateFormat}}}>-?D<_?F>";
             Console.WriteLine("Format: " + baseString);
@@ -126,6 +134,7 @@ namespace OBSControlTests
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
             TestGameplayModifiers modifiers = new TestGameplayModifiers();
             TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            results.GameplayModifiers = modifiers;
             string dateFormat = "yyyyMMdd";
             string baseString = $"?N-?A_?@{{{dateFormat}}}<-?D";
             Console.WriteLine("Format: " + baseString);
@@ -142,6 +151,7 @@ namespace OBSControlTests
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
             TestGameplayModifiers modifiers = new TestGameplayModifiers();
             TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            results.GameplayModifiers = modifiers;
             string dateFormat = "yyyyMMddHHmm";
             string baseString = $"?N-?A_?@{{{dateFormat}<-?D";
             Console.WriteLine("Format: " + baseString);
@@ -158,6 +168,7 @@ namespace OBSControlTests
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
             TestGameplayModifiers modifiers = new TestGameplayModifiers();
             TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            results.GameplayModifiers = modifiers;
             string dateFormat = "yyyyMMdd";
             int limit = 40;
             string baseString = $"?N-?A_?@{{{dateFormat}}}-?D{{{limit}}}";
@@ -175,6 +186,7 @@ namespace OBSControlTests
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
             TestGameplayModifiers modifiers = new TestGameplayModifiers();
             TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            results.GameplayModifiers = modifiers;
             string dateFormat = "yyyyMMdd";
             int limit = 5;
             string baseString = $"?N-?A{{{limit}}}_?@{{{dateFormat}}}-?D";
@@ -192,6 +204,7 @@ namespace OBSControlTests
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
             TestGameplayModifiers modifiers = new TestGameplayModifiers();
             TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            results.GameplayModifiers = modifiers;
             string dateFormat = "yyyyMMdd";
             int authorLimit = 5;
             int songLimit = 3;
@@ -210,6 +223,7 @@ namespace OBSControlTests
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
             TestGameplayModifiers modifiers = new TestGameplayModifiers();
             TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            results.GameplayModifiers = modifiers;
             string dateFormat = "yyyyMMdd";
             int limit = 40;
             string baseString = $"?N-?A{{{limit}}}_?@{{{dateFormat}}}-?D";
@@ -227,6 +241,7 @@ namespace OBSControlTests
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
             TestGameplayModifiers modifiers = new TestGameplayModifiers();
             TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            results.GameplayModifiers = modifiers;
             string dateFormat = "yyyyMMdd";
             string baseString = $"?N-?A{{{"A5"}}}_?@{{{dateFormat}}}-?D";
             Console.WriteLine("Format: " + baseString);
@@ -244,6 +259,7 @@ namespace OBSControlTests
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
             TestGameplayModifiers modifiers = new TestGameplayModifiers();
             TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            results.GameplayModifiers = modifiers;
             string dateFormat = "yyyyMMdd";
             string baseString = $"?N-?A_?@{{{dateFormat}}}-?D";
             Console.WriteLine("Format: " + baseString);
@@ -259,6 +275,7 @@ namespace OBSControlTests
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
             TestGameplayModifiers modifiers = new TestGameplayModifiers();
             TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            results.GameplayModifiers = modifiers;
             string dateFormat = "yyyyMMdd";
             string baseString = $"?N-?A_?@{{{dateFormat}}}";
             Console.WriteLine("Format: " + baseString);
@@ -282,7 +299,7 @@ namespace OBSControlTests
             results.LevelEndStateType = LevelEndState.Failed;
             results.MaxCombo = results.TotalNotes - 1;
             string baseString = "?N-?A<_[?M]><-?F><-?e>";
-            string expectedModifierString = GetModifierString(modifiers);
+            string expectedModifierString = modifiers.ToString();
             string expectedResult = OBSControl.Utilities.Utilities.GetSafeFilename($"{b.SongName}-{b.LevelAuthorName}_[{expectedModifierString}]-Failed");
             Console.WriteLine("Format: " + baseString);
             string result = GetFilenameString(baseString, b, results);
@@ -299,9 +316,9 @@ namespace OBSControlTests
         {
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
             TestGameplayModifiers modifiers = new TestGameplayModifiers();
-            TestDifficultyBeatmap difficultyBeatmap = TestDifficultyBeatmap.Default;
+            TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
             results.GameplayModifiers = modifiers;
-            difficultyBeatmap.SongName = "<?Test?S%ongName>";
+            b.SongName = "<?Test?S%ongName>";
             modifiers.DisappearingArrows = true;
             modifiers.FastNotes = true;
             modifiers.SongSpeed = SongSpeed.Slower;
@@ -309,12 +326,13 @@ namespace OBSControlTests
             results.MaxCombo = results.TotalNotes - 1;
             string baseString = "?N-?A_?%<_[?M]><-?F><-?e>";
             Console.WriteLine("Format: " + baseString);
-            string result = GetFilenameString(baseString, difficultyBeatmap, results);
-            Console.WriteLine("  " + result + ".mkv");
-            baseString = "?N-?A_?%_[?M]-?F-?e";
-            Console.WriteLine("Format: " + baseString);
-            result = GetFilenameString(baseString, difficultyBeatmap, results);
-            Console.WriteLine("  " + result + ".mkv");
+            string result = GetFilenameString(baseString, b, results);
+            string scoreStr = Math.Round(results.ScorePercent, 2, MidpointRounding.ToZero).ToString("F2");
+            string expectedResult = $"{b.SongName}-{b.LevelAuthorName}_{scoreStr}_[{modifiers}]-Failed";
+            expectedResult = Utilities.GetSafeFilename(expectedResult);
+            Console.WriteLine($"  '{expectedResult}'");
+            Console.WriteLine($"  '{result}'");
+            Assert.AreEqual(expectedResult, result);
         }
 
 
@@ -330,9 +348,15 @@ namespace OBSControlTests
             modifiers.FastNotes = true;
             modifiers.SongSpeed = SongSpeed.Slower;
             results.LevelEndStateType = LevelEndState.Failed;
-            results.MaxCombo = results.TotalNotes - 1;
-            string baseString = "?N-?A_?%<_[?M]><-?F><-?e>";
-            int iterations = 1;
+            results.MaxCombo = results.TotalNotes - 1; 
+            int expectedLength = LevelDataSubstitutions.Keys.Count * 7 * 3;
+            StringBuilder stringBuilder = new StringBuilder(expectedLength);
+            foreach (var ch in LevelDataSubstitutions.Keys)
+            {
+                stringBuilder.Append("|" + LevelDataSubstitutions[ch] + "-?" + ch + "__");
+            }
+            string baseString = stringBuilder.ToString();
+            int iterations = 100;
             Stopwatch sw = new Stopwatch();
             sw.Start();
             for (int i = 0; i < iterations; i++)
@@ -340,7 +364,7 @@ namespace OBSControlTests
                 _ = GetFilenameString(baseString, difficultyBeatmap, results);
             }
             sw.Stop();
-            Console.WriteLine($"{sw.ElapsedMilliseconds}ms for {iterations} iterations.");
+            Console.WriteLine($"Average: {(float)sw.ElapsedMilliseconds / iterations}ms |  {sw.ElapsedMilliseconds}ms for {iterations} iterations.");
         }
     }
 }

@@ -30,5 +30,10 @@ namespace OBSControl.Wrappers
         public SongSpeed SongSpeed => _modifiers.songSpeed.ToSongSpeed();
         public float SongSpeedMul => _modifiers.songSpeedMul;
         public bool NoArrows => _modifiers.noArrows;
+
+        public override string ToString()
+        {
+            return this.ToModifierString();
+        }
     }
 }
