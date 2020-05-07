@@ -6,13 +6,13 @@ on:
     paths: 
       - 'OBSControl/**'
       - 'OBSControlTests/**'
-      - '.github/workflows/UnitTests.yaml'
+      - '.github/workflows/UnitTests.yml'
   pull_request:
     branches: [ master ]
     paths: 
       - 'OBSControl/**'
       - 'OBSControlTests/**'
-      - '.github/workflows/UnitTests.yaml'
+      - '.github/workflows/UnitTests.yml'
 
 jobs:
   tests:
@@ -22,4 +22,4 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
-      - run: dotnet test
+      - run: dotnet test --logger GitHubActions
