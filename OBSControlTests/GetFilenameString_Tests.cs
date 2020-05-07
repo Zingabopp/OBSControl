@@ -336,12 +336,6 @@ namespace OBSControlTests
         }
 
         [TestMethod]
-        public void IntentionalFail()
-        {
-            Assert.Fail("This was supposed to fail.");
-        }
-
-        [TestMethod]
         public void PerformanceTest()
         {
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
