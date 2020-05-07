@@ -9,7 +9,7 @@ namespace OBSControl.Wrappers
 {
     public class BeatmapLevelWrapper : ILevelData
     {
-        private IDifficultyBeatmap _difficultyBeatmap;
+        private readonly IDifficultyBeatmap _difficultyBeatmap;
         public BeatmapLevelWrapper(IDifficultyBeatmap difficultyBeatmap)
         {
             _difficultyBeatmap = difficultyBeatmap ?? throw new ArgumentNullException(nameof(difficultyBeatmap), "difficultyBeatmap cannot be null.");

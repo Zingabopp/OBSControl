@@ -65,11 +65,13 @@ namespace OBSControl
                 MaxModifiedScore = GameStatus.GpModSO?.GetModifiedScoreForGameplayModifiers(GameStatus.MaxScore, GameSetupData?.gameplayModifiers) ?? 0;
                 Logger.log?.Debug($"MaxModifiedScore: {MaxModifiedScore}");
             }
+#pragma warning disable CA1031 // Do not catch general exception types
             catch (Exception ex)
             {
                 Logger.log?.Error($"Error getting max scores: {ex}");
                 Logger.log?.Debug(ex);
             }
+#pragma warning restore CA1031 // Do not catch general exception types
         }
     }
 }

@@ -66,11 +66,13 @@ namespace OBSControl.OBSComponents
                     await obs.SetFilenameFormatting(fileFormat).ConfigureAwait(false);
                     currentFormat = await obs.GetFilenameFormatting().ConfigureAwait(false);
                 }
+#pragma warning disable CA1031 // Do not catch general exception types
                 catch (Exception ex)
                 {
                     Logger.log?.Error($"Error getting current filename format from OBS: {ex.Message}");
                     Logger.log?.Debug(ex);
                 }
+#pragma warning restore CA1031 // Do not catch general exception types
             } while (currentFormat != fileFormat && tries < 10);
             CurrentFileFormat = fileFormat;
             string? startScene = Plugin.config.StartSceneName;
@@ -103,11 +105,13 @@ namespace OBSControl.OBSComponents
                 }
 
             }
+#pragma warning disable CA1031 // Do not catch general exception types
             catch (Exception ex)
             {
                 Logger.log?.Error($"Error starting recording in OBS: {ex.Message}");
                 Logger.log?.Debug(ex);
             }
+#pragma warning restore CA1031 // Do not catch general exception types
         }
 
         public async Task<string[]> GetAvailableScenes()
@@ -122,12 +126,14 @@ namespace OBSControl.OBSComponents
             {
                 return (await obs.GetSceneList().ConfigureAwait(false)).Scenes.Select(s => s.Name).ToArray();
             }
+#pragma warning disable CA1031 // Do not catch general exception types
             catch (Exception ex)
             {
                 Logger.log?.Error($"Error validating scenes: {ex.Message}");
                 Logger.log?.Debug(ex);
                 return Array.Empty<string>();
             }
+#pragma warning restore CA1031 // Do not catch general exception types
         }
 
         public bool ValidateScenes(IEnumerable<string> availableScenes, params string[] scenes)
@@ -204,11 +210,13 @@ namespace OBSControl.OBSComponents
                 if (ex.Message != "recording not active")
                     Logger.log?.Debug(ex);
             }
+#pragma warning disable CA1031 // Do not catch general exception types
             catch (Exception ex)
             {
                 Logger.log?.Error($"Unexpected exception trying to stop recording: {ex.Message}");
                 Logger.log?.Debug(ex);
             }
+#pragma warning restore CA1031 // Do not catch general exception types
             finally
             {
                 WaitingToStop = false;
@@ -271,11 +279,13 @@ namespace OBSControl.OBSComponents
                 Logger.log?.Debug($"Attempting to rename to '{newFile}'");
                 targetFile.MoveTo(Path.Combine(directory.FullName, newFile));
             }
+#pragma warning disable CA1031 // Do not catch general exception types
             catch (Exception ex)
             {
                 Logger.log?.Error($"Unable to rename {targetFile.Name} to {newFile}: {ex.Message}");
                 Logger.log?.Debug(ex);
             }
+#pragma warning restore CA1031 // Do not catch general exception types
         }
 
         public bool recordingCurrentLevel;
@@ -337,7 +347,7 @@ namespace OBSControl.OBSComponents
 
         private void Obs_RecordingStateChanged(object sender, OutputState type)
         {
-            Logger.log?.Info($"Recording State Changed: {type.ToString()}");
+            Logger.log?.Info($"Recording State Changed: {type}");
             switch (type)
             {
                 case OutputState.Starting:
