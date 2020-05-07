@@ -4,13 +4,13 @@ on:
   push:
     branches: [ master ]
     paths: 
-      'OBSControl/**'
-      'OBSControlTests/**'
+      - 'OBSControl/**'
+      - 'OBSControlTests/**'
   pull_request:
     branches: [ master ]
     paths: 
-      'OBSControl/**'
-      'OBSControlTests/**'
+      - 'OBSControl/**'
+      - 'OBSControlTests/**'
 
 jobs:
   tests:
