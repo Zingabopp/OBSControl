@@ -1,0 +1,25 @@
+name: Unit Tests
+
+on:
+  push:
+    branches: [ master ]
+    paths: 
+      - 'OBSControl/**'
+      - 'OBSControlTests/**'
+      - '.github/workflows/UnitTests.yaml'
+  pull_request:
+    branches: [ master ]
+    paths: 
+      - 'OBSControl/**'
+      - 'OBSControlTests/**'
+      - '.github/workflows/UnitTests.yaml'
+
+jobs:
+  tests:
+    name: Unit Testing
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - run: dotnet test
