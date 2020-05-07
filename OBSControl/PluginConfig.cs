@@ -91,7 +91,6 @@ namespace OBSControl
         {
             // Do stuff when the config is changed.
             TryAddCurrentNames(StartSceneName, GameSceneName, EndSceneName);
-            Logger.log?.Warn($"SceneOptions: {string.Join(", ", SceneSelectOptions)}");
             RefreshDropdowns();
             OBSController.instance?.gameObject.SetActive(Enabled);
         }
