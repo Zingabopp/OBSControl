@@ -335,6 +335,11 @@ namespace OBSControlTests
             Assert.AreEqual(expectedResult, result);
         }
 
+        [TestMethod]
+        public void IntentionalFail()
+        {
+            Assert.Fail("This was supposed to fail.");
+        }
 
         [TestMethod]
         public void PerformanceTest()
