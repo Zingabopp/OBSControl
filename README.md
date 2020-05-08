@@ -40,15 +40,15 @@ Availble Substitutions:
 |B|BeatsPerMinute||BPM to two decimal places, ignoring trailing zeroes.|
 |D|DifficultyName||Full name of the difficulty.|
 |d|DifficultyShortName||Short name of the difficulty (i.e `E+` instead of `ExpertPlus`).|
-|A|LevelAuthorName|(int)Max Length|Name of the mapper.|
-|a|SongAuthorName|(int)Max Length|Name of the song artist.|
+|A|LevelAuthorName|(int)Max Length|Name of the mapper. Example: `?A{10}` to use up to 10 characters of the mapper name.|
+|a|SongAuthorName|(int)Max Length|Name of the song artist. Example: `?a{10}` to use up to 10 characters of the artist name.|
 |@|CurrentTime|(string)DateTimeFormat|Date/Time of the recording when stopped. [Format Information](https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings), default is `yyyyMMddHHmm`|
 |I|LevelId||LevelId of the song.|
 |J|NoteJumpSpeed||NJS to two decimal places, ignoring trailing 0s.|
 |L|SongDurationLabeled||Duration of the song in minutes and seconds (i.e. `3m.25s` for 3 min 25 sec).|
 |l|SongDurationNoLabels||Duration of the song in minutes and seconds with no labels (i.e. `3.25` for 3 min 25 sec).|
-|N|SongName|(int)Max Length|Name of the song.|
-|n|SongSubName|(int)Max length|Subname of the song.|
+|N|SongName|(int)Max Length|Name of the song. Example: `?N{10}` to use up to 10 characters of the song name.|
+|n|SongSubName|(int)Max length|Subname of the song. Example: `?n{10}` to use up to 10 characters of the song subname.|
 
 **Completion Results Data:**
 |Key|Substitution|Parameter(s)|Notes|
