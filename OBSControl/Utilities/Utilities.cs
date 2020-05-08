@@ -1,6 +1,6 @@
-﻿using Microsoft.SqlServer.Server;
-using System;
+﻿using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 #nullable enable
 namespace OBSControl.Utilities
@@ -18,13 +18,24 @@ namespace OBSControl.Utilities
         public static void GetSafeFilename(ref StringBuilder filenameBuilder, string? substitute = null)
         {
             _ = filenameBuilder ?? throw new ArgumentNullException(nameof(filenameBuilder), "filenameBuilder cannot be null for GetSafeFilename");
-            if (substitute == null)
+            char[] invalidChars = Path.GetInvalidFileNameChars();
+
+            char[] invalidSubstitutes = invalidChars.Where(c => substitute.Contains(c)).ToArray();
+            if (substitute == null || invalidSubstitutes.Length > 0)
+            {
+                if (invalidSubstitutes.Length > 0)
+                {
+                    Logger.log?.Warn($"{nameof(Plugin.config.InvalidCharacterSubstitute)} has invalid character(s): {string.Join(", ", invalidSubstitutes)}");
+                }
                 substitute = string.Empty;
-            foreach (var character in Path.GetInvalidFileNameChars())
+            }
+            string spaceReplacement = Plugin.config.ReplaceSpacesWith ?? " ";
+            if (Plugin.config.ReplaceSpacesWith != " ")
+                filenameBuilder.Replace(" ", spaceReplacement);
+            foreach (char character in invalidChars)
             {
                 filenameBuilder.Replace(character.ToString(), substitute);
             }
-            filenameBuilder.Replace(" ", "_");
         }
 
         public static void MinutesAndSeconds(this float totalSeconds, out int minutes, out int seconds)

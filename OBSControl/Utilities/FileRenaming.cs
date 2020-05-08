@@ -296,7 +296,8 @@ namespace OBSControl.Utilities
                         break;
                 }
             }
-            Utilities.GetSafeFilename(ref stringBuilder);
+            string invalidSubstitute = Plugin.config.InvalidCharacterSubstitute ?? string.Empty;
+            Utilities.GetSafeFilename(ref stringBuilder, invalidSubstitute);
             return stringBuilder.ToString();
         }
     }

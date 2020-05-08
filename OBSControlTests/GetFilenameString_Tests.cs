@@ -312,6 +312,32 @@ namespace OBSControlTests
         }
 
         [TestMethod]
+        public void Group_OneSubstituteEmpty()
+        {
+            TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
+            TestGameplayModifiers modifiers = new TestGameplayModifiers();
+            TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            results.GameplayModifiers = modifiers;
+            b.SongName = "<TestSongName>";
+            modifiers.DisappearingArrows = true;
+            modifiers.FastNotes = true;
+            modifiers.SongSpeed = SongSpeed.Slower;
+            results.LevelEndStateType = LevelEndState.Failed;
+            results.MaxCombo = results.TotalNotes - 1;
+            string baseString = "?N<_?F>";
+            string expectedModifierString = modifiers.ToString();
+            string expectedResult = OBSControl.Utilities.Utilities.GetSafeFilename($"{b.SongName}-{b.LevelAuthorName}_[{expectedModifierString}]-Failed");
+            Console.WriteLine("Format: " + baseString);
+            string result = GetFilenameString(baseString, b, results);
+            Assert.AreEqual(expectedResult, result);
+            Console.WriteLine("  " + result + ".mkv");
+            baseString = "?N-?A_?%_[?M]-?F-?e";
+            Console.WriteLine("Format: " + baseString);
+            result = GetFilenameString(baseString, b, results);
+            Console.WriteLine("  " + result + ".mkv");
+        }
+
+        [TestMethod]
         public void InvalidFilenameCharacters()
         {
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
