@@ -199,6 +199,7 @@ namespace OBSControl.OBSComponents
                 await obs.StopRecording().ConfigureAwait(false);
                 if (!stopImmediate && validOutro)
                 {
+		    await Task.Delay(100).ConfigureAwait(false); // To ensure recording has fully stopped.
                     Logger.log?.Info($"Setting game OBS scene to '{gameScene}'");
                     await obs.SetCurrentScene(gameScene).ConfigureAwait(false);
                 }
