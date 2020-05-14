@@ -96,6 +96,32 @@ namespace OBSControlTests
         }
 
         [TestMethod]
+        public void CustomSpaceSubstitute()
+        {
+            TestDifficultyBeatmap difficultyBeatmap = TestDifficultyBeatmap.Default;
+            TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
+            difficultyBeatmap.SongName = "Test Song";
+            string baseString = $"?N-?A";
+            string result = GetFilenameString(baseString, difficultyBeatmap, results, string.Empty, ".");
+            string expectedResult = $"{difficultyBeatmap.SongName.Replace(' ', '.')}-{difficultyBeatmap.LevelAuthorName}";
+            Assert.AreEqual(expectedResult, result);
+            Console.WriteLine(result.Replace("__", "\n"));
+        }
+
+        [TestMethod]
+        public void CustomInvalidCharacterSubstitute()
+        {
+            TestDifficultyBeatmap difficultyBeatmap = TestDifficultyBeatmap.Default;
+            TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
+            difficultyBeatmap.SongName = "Test|Song";
+            string baseString = $"?N-?A";
+            string result = GetFilenameString(baseString, difficultyBeatmap, results, ".", ".");
+            string expectedResult = $"{difficultyBeatmap.SongName.Replace('|', '.')}-{difficultyBeatmap.LevelAuthorName}";
+            Assert.AreEqual(expectedResult, result);
+            Console.WriteLine(result.Replace("__", "\n"));
+        }
+
+        [TestMethod]
         public void DateAtStart_Test()
         {
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
