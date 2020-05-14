@@ -1,0 +1,25 @@
+name: Unit Tests - Dev
+
+on:
+  push:
+    branches: [ dev ]
+    paths: 
+      - 'OBSControl/**'
+      - 'OBSControlTests/**'
+      - '.github/workflows/UnitTests-Dev.yml'
+  pull_request:
+    branches: [ dev ]
+    paths: 
+      - 'OBSControl/**'
+      - 'OBSControlTests/**'
+      - '.github/workflows/UnitTests-Dev.yml'
+
+jobs:
+  tests:
+    name: Unit Testing
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - run: dotnet test --logger GitHubActions -p:DisableZipRelease=true -p:DisableCopyToPlugins=true -p:CIBuild=true
