@@ -1,0 +1,44 @@
+name: Dev Build
+
+on:
+  push:
+    branches: [ dev ]
+    paths:
+      - 'OBSControl/**'
+      - '.github/workflows/BuildDev.yml'
+  pull_request:
+    branches: [ dev ]
+    paths: 'OBSControl/**'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.101
+    - name: Build
+      id: Build
+      run: dotnet build --configuration Release -p:DisableZipRelease=true -p:DisableCopyToPlugins=true -p:CIBuild=true
+    - name: Echo Filename
+      run: echo $BUILDTEXT ($ASSEMBLYNAME)
+      env:
+        BUILDTEXT: Filename=${{ steps.Build.outputs.filename }}
+        ASSEMBLYNAME: AssemblyName=${{ steps.Build.outputs.assemblyname }}
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: ${{ steps.Build.outputs.filename }}
+        path: ./OBSControl/bin/Release/Final
+    - name: CopyPDB
+      working-directory: ./OBSControl/bin/Release
+      run: copy ${{ steps.Build.outputs.assemblyname }}.pdb Final/Plugins/${{ steps.Build.outputs.assemblyname }}.pdb
+    - name: Upload Artifact With PDB
+      uses: actions/upload-artifact@v1
+      with:
+        name: ${{ steps.Build.outputs.filename }}_WithPDB
+        path: ./OBSControl/bin/Release/Final
