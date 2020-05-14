@@ -2,35 +2,35 @@
 using System.IO;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 #nullable enable
 namespace OBSControl.Utilities
 {
     public static class Utilities
     {
-        public static string GetSafeFilename(string fileName, string? substitute = null)
+        public static string GetSafeFilename(string fileName, string? substitute = null, string? spaceReplacement = null)
         {
             _ = fileName ?? throw new ArgumentNullException(nameof(fileName), "fileName cannot be null for GetSafeFilename");
             StringBuilder retStr = new StringBuilder(fileName);
-            GetSafeFilename(ref retStr, substitute);
+            GetSafeFilename(ref retStr, substitute, spaceReplacement);
             return retStr.ToString();
         }
 
-        public static void GetSafeFilename(ref StringBuilder filenameBuilder, string? substitute = null)
+        public static void GetSafeFilename(ref StringBuilder filenameBuilder, string? substitute = null, string? spaceReplacement = null)
         {
             _ = filenameBuilder ?? throw new ArgumentNullException(nameof(filenameBuilder), "filenameBuilder cannot be null for GetSafeFilename");
             char[] invalidChars = Path.GetInvalidFileNameChars();
 
-            char[] invalidSubstitutes = invalidChars.Where(c => substitute.Contains(c)).ToArray();
+            char[] invalidSubstitutes = substitute == null ? Array.Empty<char>() : invalidChars.Where(c => substitute.Contains(c)).ToArray();
             if (substitute == null || invalidSubstitutes.Length > 0)
             {
                 if (invalidSubstitutes.Length > 0)
                 {
-                    Logger.log?.Warn($"{nameof(Plugin.config.InvalidCharacterSubstitute)} has invalid character(s): {string.Join(", ", invalidSubstitutes)}");
+                    //Logger.log?.Warn($"{nameof(Plugin.config.InvalidCharacterSubstitute)} has invalid character(s): {string.Join(", ", invalidSubstitutes)}");
                 }
                 substitute = string.Empty;
             }
-            string spaceReplacement = Plugin.config.ReplaceSpacesWith ?? " ";
-            if (Plugin.config.ReplaceSpacesWith != " ")
+            if (spaceReplacement != null && spaceReplacement != " ")
                 filenameBuilder.Replace(" ", spaceReplacement);
             foreach (char character in invalidChars)
             {

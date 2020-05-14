@@ -326,14 +326,16 @@ namespace OBSControlTests
             results.MaxCombo = results.TotalNotes - 1;
             string baseString = "?N<_?F>";
             string expectedModifierString = modifiers.ToString();
-            string expectedResult = OBSControl.Utilities.Utilities.GetSafeFilename($"{b.SongName}-{b.LevelAuthorName}_[{expectedModifierString}]-Failed");
+            string expectedResult = OBSControl.Utilities.Utilities.GetSafeFilename($"{b.SongName}");
             Console.WriteLine("Format: " + baseString);
             string result = GetFilenameString(baseString, b, results);
             Assert.AreEqual(expectedResult, result);
             Console.WriteLine("  " + result + ".mkv");
-            baseString = "?N-?A_?%_[?M]-?F-?e";
+            baseString = "?N-?A_[?M]<-?F>-?e";
             Console.WriteLine("Format: " + baseString);
             result = GetFilenameString(baseString, b, results);
+            expectedResult = OBSControl.Utilities.Utilities.GetSafeFilename($"{b.SongName}-{b.LevelAuthorName}_[{expectedModifierString}]-Failed");
+            Assert.AreEqual(expectedResult, result);
             Console.WriteLine("  " + result + ".mkv");
         }
 

@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Collections.ObjectModel;
+using UnityEngine;
 #nullable enable
 namespace OBSControl.Utilities
 {
@@ -206,7 +207,8 @@ namespace OBSControl.Utilities
         /// <param name="levelCompletionResults"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="difficultyBeatmap"/> or <paramref name="levelCompletionResults"/> is null.</exception>
-        public static string GetFilenameString(string? baseString, ILevelData levelData, ILevelCompletionResults levelCompletionResults)
+        public static string GetFilenameString(string? baseString, ILevelData levelData, ILevelCompletionResults levelCompletionResults, 
+            string? invalidSubstitute = "", string? spaceReplacement = null)
         {
             if (levelData == null)
                 throw new ArgumentNullException(nameof(levelData), "difficultyBeatmap cannot be null for GetFilenameString.");
@@ -296,8 +298,7 @@ namespace OBSControl.Utilities
                         break;
                 }
             }
-            string invalidSubstitute = Plugin.config.InvalidCharacterSubstitute ?? string.Empty;
-            Utilities.GetSafeFilename(ref stringBuilder, invalidSubstitute);
+            Utilities.GetSafeFilename(ref stringBuilder, invalidSubstitute ?? string.Empty, spaceReplacement);
             return stringBuilder.ToString();
         }
     }

@@ -330,7 +330,8 @@ namespace OBSControl.OBSComponents
                 if (GameStatus.DifficultyBeatmap != null)
                 {
                     newFileName = Utilities.FileRenaming.GetFilenameString(Plugin.config.RecordingFileFormat,
-                        new BeatmapLevelWrapper(GameStatus.DifficultyBeatmap), resultsWrapper);
+                        new BeatmapLevelWrapper(GameStatus.DifficultyBeatmap), resultsWrapper, 
+                        Plugin.config.InvalidCharacterSubstitute, Plugin.config.ReplaceSpacesWith);
                 }
             }
 #pragma warning disable CA1031 // Do not catch general exception types
