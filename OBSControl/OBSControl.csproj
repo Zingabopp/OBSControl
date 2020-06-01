@@ -48,11 +48,11 @@
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="BS_Utils">
-      <HintPath>$(BeatSaberReferences)\BS_Utils.dll</HintPath>
+      <HintPath>$(BeatSaberReferences)\BeatSaber\BS_Utils.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="HMLib">
-      <HintPath>$(BeatSaberReferences)\HMLib.dll</HintPath>
+      <HintPath>$(BeatSaberReferences)\BeatSaber\HMLib.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System">
@@ -75,11 +75,11 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Main">
-      <HintPath>$(BeatSaberReferences)\Main.dll</HintPath>
+      <HintPath>$(BeatSaberReferences)\BeatSaber\Main.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="HMUI">
-      <HintPath>$(BeatSaberReferences)\HMUI.dll</HintPath>
+      <HintPath>$(BeatSaberReferences)\BeatSaber\HMUI.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="IPA.Loader">
@@ -91,20 +91,20 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Unity.TextMeshPro">
-      <HintPath>$(BeatSaberReferences)\Unity.TextMeshPro.dll</HintPath>
+      <HintPath>$(BeatSaberReferences)\BeatSaber\Unity.TextMeshPro.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>$(BeatSaberReferences)\UnityEngine.dll</HintPath>
+      <HintPath>$(BeatSaberReferences)\BeatSaber\UnityEngine.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>$(BeatSaberReferences)\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>$(BeatSaberReferences)\BeatSaber\UnityEngine.CoreModule.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <Private>True</Private>
-      <HintPath>$(BeatSaberReferences)\UnityEngine.UI.dll</HintPath>
+      <HintPath>$(BeatSaberReferences)\BeatSaber\UnityEngine.UI.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
   </ItemGroup>
@@ -142,7 +142,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BSMTTasks">
-      <Version>1.0.16</Version>
+      <Version>1.0.17</Version>
       <IncludeAssets>build</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
