@@ -12,7 +12,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
       with:
@@ -21,9 +21,17 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.101
+    - name: GetStrippedRefs
+      env:
+        FILES_URL: ${{ secrets.BSFILES_URL }}
+      run: wget --no-check-certificate "$FILES_URL" -q -O bsfiles.zip
+    - name: ExtractRefs
+      run: unzip -q bsfiles.zip -d ./Refs/BeatSaber
     - name: Build
       id: Build
-      run: dotnet build --configuration Release -p:DisableZipRelease=true -p:DisableCopyToPlugins=true -p:CIBuild=true
+      env: 
+        FrameworkPathOverride: /usr/lib/mono/4.8-api
+      run: dotnet build --configuration ClientRelease -p:DisableZipRelease=true -p:DisableCopyToPlugins=true -p:CIBuild=true
     - name: Echo Filename
       run: echo $BUILDTEXT ($ASSEMBLYNAME)
       env:
