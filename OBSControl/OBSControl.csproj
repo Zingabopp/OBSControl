@@ -48,7 +48,7 @@
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="BS_Utils">
-      <HintPath>$(BeatSaberReferences)\BeatSaber\BS_Utils.dll</HintPath>
+      <HintPath>$(BeatSaberReferences)\BS_Utils.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="HMLib">
