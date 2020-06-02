@@ -23,4 +23,10 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
+      - name: GetStrippedRefs
+        env:
+          FILES_URL: ${{ secrets.BSFILES_URL }}
+        run: wget --no-check-certificate "$FILES_URL" -q -O bsfiles.zip
+      - name: ExtractRefs
+        run: unzip -q bsfiles.zip -d ./Refs/BeatSaber
       - run: dotnet test --logger GitHubActions -p:DisableZipRelease=true -p:DisableCopyToPlugins=true -p:CIBuild=true
