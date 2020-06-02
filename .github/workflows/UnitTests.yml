@@ -7,19 +7,33 @@ on:
       - 'OBSControl/**'
       - 'OBSControlTests/**'
       - '.github/workflows/UnitTests.yml'
+      - 'packages/**'
   pull_request:
     branches: [ master ]
     paths: 
       - 'OBSControl/**'
       - 'OBSControlTests/**'
-      - '.github/workflows/UnitTests.yml'
+      - 'packages/**'
 
 jobs:
   tests:
     name: Unit Testing
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
-      - run: dotnet test --logger GitHubActions -p:DisableZipRelease=true -p:DisableCopyToPlugins=true -p:CIBuild=true
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.1.101
+      - name: GetStrippedRefs
+        env:
+          FILES_URL: ${{ secrets.BSFILES_URL }}
+        run: wget --no-check-certificate "$FILES_URL" -q -O bsfiles.zip
+      - name: ExtractRefs
+        run: unzip -q bsfiles.zip -d ./Refs/BeatSaber
+      - name: Test
+        env:
+          FrameworkPathOverride: /usr/lib/mono/4.8-api
+        run: dotnet test --logger GitHubActions -p:DisableZipRelease=true -p:DisableCopyToPlugins=true -p:CIBuild=true
