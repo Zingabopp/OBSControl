@@ -6,6 +6,7 @@ using static OBSControl.Utilities.FileRenaming;
 using OBSControl.Wrappers;
 using OBSControl.Utilities;
 using System.Text;
+using System.IO;
 
 namespace OBSControlTests
 {
@@ -113,12 +114,17 @@ namespace OBSControlTests
         {
             TestDifficultyBeatmap difficultyBeatmap = TestDifficultyBeatmap.Default;
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
-            difficultyBeatmap.SongName = "Test|Song";
-            string baseString = $"?N-?A";
-            string result = GetFilenameString(baseString, difficultyBeatmap, results, ".", ".");
-            string expectedResult = $"{difficultyBeatmap.SongName.Replace('|', '.')}-{difficultyBeatmap.LevelAuthorName}";
-            Assert.AreEqual(expectedResult, result);
-            Console.WriteLine(result.Replace("__", "\n"));
+            char[] invalidChars = Path.GetInvalidFileNameChars();
+            Console.WriteLine($"InvalidFileNameChars: {string.Join(' ', Path.GetInvalidFileNameChars())}");
+            for(int i = 0; i < invalidChars.Length; i++)
+            {
+                difficultyBeatmap.SongName = $"Test{invalidChars[i]}Son g";
+                string baseString = $"?N-?A";
+                string result = GetFilenameString(baseString, difficultyBeatmap, results, ".", ".");
+                string expectedResult = $"Test.Son.g-{difficultyBeatmap.LevelAuthorName}";
+                Assert.AreEqual(expectedResult, result);
+                Console.WriteLine(result.Replace("__", "\n"));
+            }
         }
 
         [TestMethod]
