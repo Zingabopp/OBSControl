@@ -3,7 +3,11 @@
   <UsingTask TaskName="ILRepack" AssemblyFile="ILRepack.MSBuild.Task.dll"/>
   <Target Name="ILRepack" AfterTargets="Build" Condition="'$(NCrunch)' != '1'" >
     <PropertyGroup>
+      <RepackPDB>false</RepackPDB>
       <WorkingDirectory>$(ProjectDir)$(OutputPath)</WorkingDirectory>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(OS)'=='Windows_NT'">
+      <RepackPDB>true</RepackPDB>
     </PropertyGroup>
     <ItemGroup>
       <!--<InputAssemblies Include="$(OutputPath)OBSControl.dll" />-->
@@ -23,8 +27,9 @@
         InputAssemblies="@(InputAssemblies)"
         OutputType="Dll"
         Verbose="false"
-        DebugInfo="true"
+        DebugInfo="$(RepackPDB)"
         WorkingDirectory="$(WorkingDirectory)"
     />
+    <Message Text="OS is $(OS), repacked PDB available: $(RepackPDB)" Importance="high"/>
   </Target>
 </Project>
