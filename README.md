@@ -8,7 +8,7 @@ A Beat Saber mod to automatically start/stop recording in OBS when you play a so
   ![](https://raw.githubusercontent.com/Zingabopp/OBSControl/master/Docs/OBSControl_OBS-Settings.png)
   * If OBS is running on the same PC as Beat Saber, you would use `ws://127.0.0.1:4444` (default) as the `ServerAddress` in `Beat Saber\UserData\OBSControl.json`.
 * Beat Saber
-  * Extract the release zip to your Beat Saber folder. `OBSControl.dll` should end up in your `Beat Saber\Plugins` folder.
+  * Extract the release zip from the [Releases](https://github.com/Zingabopp/OBSControl/releases) page to your Beat Saber folder. `OBSControl.dll` should end up in your `Beat Saber\Plugins` folder.
   * You should see OBSControl in the Mod Settings menu if you installed it correctly.
   
 ## Configuration
