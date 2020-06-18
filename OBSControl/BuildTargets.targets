@@ -24,12 +24,12 @@
     <Copy SourceFiles="$(OutputPath)Merged\$(AssemblyName).dll" DestinationFiles="$(OutputPath)Final\Plugins\$(AssemblyName).dll" />
   </Target>
   <Target Name="ZipRelease" AfterTargets="ILRepack" Condition="'$(DisableZipRelease)' != 'True' AND '$(Configuration)' == 'Release'">
-    <Message Text="Zipping plugin for release." Importance="high" />
+    <Message Text="Zipping plugin for release. DisableCopy2Plugins: $(DisableCopyToPlugins)" Importance="high" />
     <GetCommitHash ProjectDir="$(ProjectDir)">
       <Output TaskParameter="CommitShortHash" PropertyName="CommitShortHash" />
     </GetCommitHash>
     <Copy SourceFiles="$(OutputPath)Merged\$(AssemblyName).dll" DestinationFiles="$(IntermediateOutputPath)zip\Plugins\$(AssemblyName).dll" />
-    <GetManifestInfo>
+    <GetManifestInfo ErrorOnMismatch="True" ManifestPath="manifestasdf.json">
       <Output TaskParameter="PluginVersion" PropertyName="PluginVersion" />
       <Output TaskParameter="GameVersion" PropertyName="GameVersion" />
       <Output TaskParameter="AssemblyVersion" PropertyName="AssemblyVersion" />
@@ -38,6 +38,7 @@
     <ZipDir DirectoryName="$(IntermediateOutputPath)zip" ZipFileName="$(OutDir)zip\$(AssemblyName)-$(PluginVersion)-bs$(GameVersion)-$(CommitShortHash).zip" />
   </Target>
   <Target Name="CopyToPlugins" AfterTargets="ILRepack" Condition="'$(DisableCopyToPlugins)' != 'True'">
+    <Message Text="Starting CopyToPlugins." Importance="high" />
     <IsProcessRunning ProcessName="Beat Saber">
       <Output TaskParameter="IsRunning" PropertyName="IsRunning" />
     </IsProcessRunning>

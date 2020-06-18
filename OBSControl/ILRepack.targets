@@ -2,6 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <UsingTask TaskName="ILRepack" AssemblyFile="ILRepack.MSBuild.Task.dll"/>
   <Target Name="ILRepack" AfterTargets="Build" Condition="'$(NCrunch)' != '1'" >
+    <Message Text="Starting ILRepack..." Importance="high" />
     <PropertyGroup>
       <RepackPDB>false</RepackPDB>
       <WorkingDirectory>$(ProjectDir)$(OutputPath)</WorkingDirectory>
