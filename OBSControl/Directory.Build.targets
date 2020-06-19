@@ -12,7 +12,7 @@
     <IsProcessRunning ProcessName="Beat Saber">
       <Output TaskParameter="IsRunning" PropertyName="IsRunning" />
     </IsProcessRunning>
-    <Message Text="Building for CI | IsRunning:${IsRunning}" Importance="high" />
+    <Message Text="Building for CI | IsRunning:$(IsRunning)" Importance="high" />
     <GetManifestInfo ErrorOnMismatch="True">
       <Output TaskParameter="PluginVersion" PropertyName="PluginVersion" />
       <Output TaskParameter="GameVersion" PropertyName="GameVersion" />
