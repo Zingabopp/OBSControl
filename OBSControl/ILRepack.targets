@@ -11,7 +11,6 @@
       <RepackPDB>true</RepackPDB>
     </PropertyGroup>
     <ItemGroup>
-      <!--<InputAssemblies Include="$(OutputPath)OBSControl.dll" />-->
       <InputAssemblies Include="obs-websocket-dotnet.dll" />
       <InputAssemblies Include="websocket-sharp.dll" />
     </ItemGroup>

@@ -5,14 +5,13 @@
   <PropertyGroup>
     <BuildTargetsVersion>1.2</BuildTargetsVersion>
     <BuildTargetsModified>true</BuildTargetsModified>
+    <OutputAssemblyName>$(OutputPath)Merged\$(AssemblyName)</OutputAssemblyName>
+    <ArtifactDestination>$(OutputPath)Final</ArtifactDestination>
     <!--Set this to true if you edit this file to prevent automatic updates-->
   </PropertyGroup>
   <!--Build Targets-->
   <Target Name="BuildForCI" AfterTargets="ILRepack" Condition="'$(ContinuousIntegrationBuild)' == 'True'">
-    <IsProcessRunning ProcessName="Beat Saber">
-      <Output TaskParameter="IsRunning" PropertyName="IsRunning" />
-    </IsProcessRunning>
-    <Message Text="Building for CI | IsRunning:$(IsRunning)" Importance="high" />
+    <Message Text="Building for CI" Importance="high" />
     <GetManifestInfo ErrorOnMismatch="True">
       <Output TaskParameter="PluginVersion" PropertyName="PluginVersion" />
       <Output TaskParameter="GameVersion" PropertyName="GameVersion" />
@@ -24,22 +23,23 @@
     <Message Text="PluginVersion: $(PluginVersion), AssemblyVersion: $(AssemblyVersion), GameVersion: $(GameVersion)" Importance="high" />
     <Message Text="::set-output name=filename::$(AssemblyName)-$(PluginVersion)-bs$(GameVersion)-$(CommitShortHash)" Importance="high" />
     <Message Text="::set-output name=assemblyname::$(AssemblyName)" Importance="high" />
-    <Message Text="Copying '$(OutputPath)Merged\$(AssemblyName).dll' to '$(OutputPath)Final\Plugins\$(AssemblyName).dll'" Importance="high" />
-    <Copy SourceFiles="$(OutputPath)Merged\$(AssemblyName).dll" DestinationFiles="$(OutputPath)Final\Plugins\$(AssemblyName).dll" />
+    <Message Text="::set-output name=artifactpath::$(ArtifactDestination)" Importance="high" />
+    <Message Text="Copying '$(OutputAssemblyName).dll' to '$(ArtifactDestination)\Plugins\$(AssemblyName).dll'" Importance="high" />
+    <Copy SourceFiles="$(OutputAssemblyName).dll" DestinationFiles="$(ArtifactDestination)\Plugins\$(AssemblyName).dll" />
   </Target>
   <Target Name="ZipRelease" AfterTargets="ILRepack" Condition="'$(DisableZipRelease)' != 'True' AND '$(Configuration)' == 'Release'">
-    <Message Text="Zipping plugin for release." Importance="high" />
+    <Message Text="Zipping plugin '$(OutputAssemblyName)' for release." Importance="high" />
     <GetCommitHash ProjectDir="$(ProjectDir)">
       <Output TaskParameter="CommitShortHash" PropertyName="CommitShortHash" />
     </GetCommitHash>
-    <Copy SourceFiles="$(OutputPath)Merged\$(AssemblyName).dll" DestinationFiles="$(IntermediateOutputPath)zip\Plugins\$(AssemblyName).dll" />
+    <Copy SourceFiles="$(OutputAssemblyName).dll" DestinationFiles="$(ArtifactDestination)\Plugins\$(AssemblyName).dll" />
     <GetManifestInfo ErrorOnMismatch="True">
       <Output TaskParameter="PluginVersion" PropertyName="PluginVersion" />
       <Output TaskParameter="GameVersion" PropertyName="GameVersion" />
       <Output TaskParameter="AssemblyVersion" PropertyName="AssemblyVersion" />
     </GetManifestInfo>
     <Message Text="PluginVersion: $(PluginVersion), AssemblyVersion: $(AssemblyVersion), GameVersion: $(GameVersion)" Importance="high" />
-    <ZipDir DirectoryName="$(IntermediateOutputPath)zip" ZipFileName="$(OutDir)zip\$(AssemblyName)-$(PluginVersion)-bs$(GameVersion)-$(CommitShortHash).zip" />
+    <ZipDir DirectoryName="$(ArtifactDestination)" ZipFileName="$(OutDir)zip\$(AssemblyName)-$(PluginVersion)-bs$(GameVersion)-$(CommitShortHash).zip" />
   </Target>
   <Target Name="CopyToPlugins" AfterTargets="ILRepack" Condition="'$(DisableCopyToPlugins)' != 'True' AND '$(ContinuousIntegrationBuild)' != 'True'">
     <IsProcessRunning ProcessName="Beat Saber">
@@ -53,7 +53,7 @@
     </PropertyGroup>
     <Error Text="Unable to copy assembly to game folder. BeatSaberDir doesn't exist: $(BeatSaberDir)" Condition="!Exists($(BeatSaberDir))"/>
     <Message Text="Copying $(OutputPath)Merged\$(AssemblyName).dll to $(PluginDir) folder" Importance="high" />
-    <Copy SourceFiles="$(OutputPath)Merged\$(AssemblyName).dll" DestinationFiles="$(PluginDir)\$(AssemblyName).dll" />
-    <Copy SourceFiles="$(OutputPath)Merged\$(AssemblyName).pdb" DestinationFiles="$(PluginDir)\$(AssemblyName).pdb" />
+    <Copy SourceFiles="$(OutputAssemblyName).dll" DestinationFiles="$(PluginDir)\$(AssemblyName).dll" />
+    <Copy SourceFiles="$(OutputAssemblyName).pdb" DestinationFiles="$(PluginDir)\$(AssemblyName).pdb" />
   </Target>
 </Project>
