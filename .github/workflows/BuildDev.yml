@@ -33,7 +33,7 @@ jobs:
       id: Build
       env: 
         FrameworkPathOverride: /usr/lib/mono/4.8-api
-      run: dotnet build --configuration Release -p:DisableZipRelease=true -p:DisableCopyToPlugins=true -p:CIBuild=true
+      run: dotnet build --configuration Release
     - name: Echo Filename
       run: echo $BUILDTEXT \($ASSEMBLYNAME\)
       env:
@@ -43,4 +43,4 @@ jobs:
       uses: actions/upload-artifact@v1
       with:
         name: ${{ steps.Build.outputs.filename }}
-        path: ./OBSControl/bin/Release/Final
+        path: ${{ steps.Build.outputs.artifactpath }}
