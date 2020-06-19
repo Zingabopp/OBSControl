@@ -2,11 +2,54 @@
 <!-- This file contains the build tasks and targets for verifying the manifest, zipping Release builds,
      and copying the plugin to to your Beat Saber folder. Only edit this if you know what you are doing. -->
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ItemGroup>
-    <PackageReference Include="BeatSaberModdingTools.Tasks">
-      <Version>1.1.5</Version>
-      <IncludeAssets>build</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-  </ItemGroup>
+  <PropertyGroup>
+    <BuildTargetsVersion>1.2</BuildTargetsVersion>
+    <BuildTargetsModified>true</BuildTargetsModified>
+    <!--Set this to true if you edit this file to prevent automatic updates-->
+  </PropertyGroup>
+  <!--Build Targets-->
+  <Target Name="BuildForCI" AfterTargets="ILRepack" Condition="'$(CIBuild)' == 'True'">
+    <GetManifestInfo ErrorOnMismatch="True">
+      <Output TaskParameter="PluginVersion" PropertyName="PluginVersion" />
+      <Output TaskParameter="GameVersion" PropertyName="GameVersion" />
+      <Output TaskParameter="AssemblyVersion" PropertyName="AssemblyVersion" />
+    </GetManifestInfo>
+    <GetCommitHash ProjectDir="$(ProjectDir)">
+      <Output TaskParameter="CommitShortHash" PropertyName="CommitShortHash" />
+    </GetCommitHash>
+    <Message Text="PluginVersion: $(PluginVersion), AssemblyVersion: $(AssemblyVersion), GameVersion: $(GameVersion)" Importance="high" />
+    <Message Text="::set-output name=filename::$(AssemblyName)-$(PluginVersion)-bs$(GameVersion)-$(CommitShortHash)" Importance="high" />
+    <Message Text="::set-output name=assemblyname::$(AssemblyName)" Importance="high" />
+    <Message Text="Copying '$(OutputPath)Merged\$(AssemblyName).dll' to '$(OutputPath)Final\Plugins\$(AssemblyName).dll'" Importance="high" />
+    <Copy SourceFiles="$(OutputPath)Merged\$(AssemblyName).dll" DestinationFiles="$(OutputPath)Final\Plugins\$(AssemblyName).dll" />
+  </Target>
+  <Target Name="ZipRelease" AfterTargets="ILRepack" Condition="'$(DisableZipRelease)' != 'True' AND '$(Configuration)' == 'Release'">
+    <Message Text="Zipping plugin for release." Importance="high" />
+    <GetCommitHash ProjectDir="$(ProjectDir)">
+      <Output TaskParameter="CommitShortHash" PropertyName="CommitShortHash" />
+    </GetCommitHash>
+    <Copy SourceFiles="$(OutputPath)Merged\$(AssemblyName).dll" DestinationFiles="$(IntermediateOutputPath)zip\Plugins\$(AssemblyName).dll" />
+    <GetManifestInfo ErrorOnMismatch="True">
+      <Output TaskParameter="PluginVersion" PropertyName="PluginVersion" />
+      <Output TaskParameter="GameVersion" PropertyName="GameVersion" />
+      <Output TaskParameter="AssemblyVersion" PropertyName="AssemblyVersion" />
+    </GetManifestInfo>
+    <Message Text="PluginVersion: $(PluginVersion), AssemblyVersion: $(AssemblyVersion), GameVersion: $(GameVersion)" Importance="high" />
+    <ZipDir DirectoryName="$(IntermediateOutputPath)zip" ZipFileName="$(OutDir)zip\$(AssemblyName)-$(PluginVersion)-bs$(GameVersion)-$(CommitShortHash).zip" />
+  </Target>
+  <Target Name="CopyToPlugins" AfterTargets="ILRepack" Condition="'$(DisableCopyToPlugins)' != 'True'">
+    <IsProcessRunning ProcessName="Beat Saber">
+      <Output TaskParameter="IsRunning" PropertyName="IsRunning" />
+    </IsProcessRunning>
+    <PropertyGroup Condition="'$(IsRunning)' == 'True'">
+      <PluginDir>$(BeatSaberDir)\IPA\Pending\Plugins</PluginDir>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(IsRunning)' == 'False'">
+      <PluginDir>$(BeatSaberDir)\Plugins</PluginDir>
+    </PropertyGroup>
+    <Error Text="Unable to copy assembly to game folder. BeatSaberDir doesn't exist: $(BeatSaberDir)" Condition="!Exists($(BeatSaberDir))"/>
+    <Message Text="Copying $(OutputPath)Merged\$(AssemblyName).dll to $(PluginDir) folder" Importance="high" />
+    <Copy SourceFiles="$(OutputPath)Merged\$(AssemblyName).dll" DestinationFiles="$(PluginDir)\$(AssemblyName).dll" />
+    <Copy SourceFiles="$(OutputPath)Merged\$(AssemblyName).pdb" DestinationFiles="$(PluginDir)\$(AssemblyName).pdb" />
+  </Target>
 </Project>
