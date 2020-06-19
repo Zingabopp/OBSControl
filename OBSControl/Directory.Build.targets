@@ -24,7 +24,7 @@
     <Message Text="::set-output name=filename::$(AssemblyName)-$(PluginVersion)-bs$(GameVersion)-$(CommitShortHash)" Importance="high" />
     <Message Text="::set-output name=assemblyname::$(AssemblyName)" Importance="high" />
     <Message Text="::set-output name=artifactpath::$(ArtifactDestination)" Importance="high" />
-    <Message Text="Copying '$(OutputAssemblyName).dll' to '$(ArtifactDestination)\Plugins\$(AssemblyName).dll'" Importance="high" />
+    <Message Text="Copying '$(OutputAssemblyName).dll' to '$(ArtifactDestination)/Plugins/$(AssemblyName).dll'" Importance="high" />
     <Copy SourceFiles="$(OutputAssemblyName).dll" DestinationFiles="$(ArtifactDestination)\Plugins\$(AssemblyName).dll" />
   </Target>
   <Target Name="ZipRelease" AfterTargets="ILRepack" Condition="'$(DisableZipRelease)' != 'True' AND '$(Configuration)' == 'Release'">
