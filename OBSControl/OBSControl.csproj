@@ -142,15 +142,11 @@
   <ItemGroup>
     <None Include="BuildTargets.targets" />
     <None Include=".gitignore" />
+    <None Include="Directory.Build.targets" />
     <None Include="ILRepack.targets" />
     <EmbeddedResource Include="UI\SettingsView.bsml" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="BSMTTasks">
-      <Version>1.1.3</Version>
-      <IncludeAssets>build</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
     <PackageReference Include="ILRepack.MSBuild.Task">
       <Version>2.0.13</Version>
       <IncludeAssets>build</IncludeAssets>
