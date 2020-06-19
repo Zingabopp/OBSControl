@@ -25,10 +25,10 @@
     <Message Text="::set-output name=assemblyname::$(AssemblyName)" Importance="high" />
     <Message Text="::set-output name=artifactpath::$(ArtifactDestination)" Importance="high" />
     <Message Text="Copying '$(OutputAssemblyName).dll' to '$(ArtifactDestination)/Plugins/$(AssemblyName).dll'" Importance="high" />
-    <Copy SourceFiles="$(OutputAssemblyName).dll" DestinationFiles="$(ArtifactDestination)\Plugins\$(AssemblyName).dll" />
+    <Copy SourceFiles="$(OutputAssemblyName).dll" DestinationFiles="$(ProjectDir)$(ArtifactDestination)\Plugins\$(AssemblyName).dll" />
   </Target>
   <Target Name="ZipRelease" AfterTargets="ILRepack" Condition="'$(DisableZipRelease)' != 'True' AND '$(Configuration)' == 'Release'">
-    <Message Text="Zipping plugin '$(OutputAssemblyName)' for release." Importance="high" />
+    <Message Text="Zipping '$(ArtifactDestination)' for release." Importance="high" />
     <GetCommitHash ProjectDir="$(ProjectDir)">
       <Output TaskParameter="CommitShortHash" PropertyName="CommitShortHash" />
     </GetCommitHash>
