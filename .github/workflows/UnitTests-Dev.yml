@@ -37,4 +37,4 @@ jobs:
       - name: Test
         env:
           FrameworkPathOverride: /usr/lib/mono/4.8-api
-        run: dotnet test --logger GitHubActions -p:DisableZipRelease=true -p:DisableCopyToPlugins=true -p:CIBuild=true
+        run: dotnet test --logger GitHubActions
