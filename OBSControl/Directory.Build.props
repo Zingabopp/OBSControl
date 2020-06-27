@@ -6,4 +6,9 @@
     <DisableCopyToPlugins>true</DisableCopyToPlugins>
     <DisableZipRelease>true</DisableZipRelease>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(NCrunch)' == '1'">
+    <ContinuousIntegrationBuild>fase</ContinuousIntegrationBuild>
+    <DisableCopyToPlugins>true</DisableCopyToPlugins>
+    <DisableZipRelease>true</DisableZipRelease>
+  </PropertyGroup>
 </Project>
