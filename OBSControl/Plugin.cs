@@ -13,6 +13,7 @@ using UnityEngine;
 using OBSControl.OBSComponents;
 using IPALogger = IPA.Logging.Logger;
 using BeatSaberMarkupLanguage.Settings;
+using OBSControl.UI;
 #nullable enable
 namespace OBSControl
 {
@@ -35,6 +36,13 @@ namespace OBSControl
             config = conf.Generated<PluginConfig>();
             OBSWebsocketDotNet.OBSLogger.SetLogger(new OBSLogger());
             BSMLSettings.instance.AddSettingsMenu("OBSControl", "OBSControl.UI.SettingsView.bsml", config);
+            BS_Utils.Utilities.BSEvents.lateMenuSceneLoadedFresh += BSEvents_lateMenuSceneLoadedFresh;
+        }
+
+        private void BSEvents_lateMenuSceneLoadedFresh(ScenesTransitionSetupDataSO obj)
+        {
+            Logger.log?.Warn("Creating control screen.");
+            ControlScreenCoordinator.Instance.ShowControlScreen();
         }
         #region IDisablable
 

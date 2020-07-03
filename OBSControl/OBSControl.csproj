@@ -12,7 +12,7 @@
     <AssemblyName>OBSControl</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <PathMap Condition="'$(SolutionDir)' != ''">$(SolutionDir)=C:\</PathMap>
+    <!--<PathMap Condition="'$(SolutionDir)' != ''">$(SolutionDir)=C:\</PathMap>-->
     <DebugType>portable</DebugType>
     <BeatSaberReferences>$(SolutionDir)Refs</BeatSaberReferences>
     <BeatSaberDir>$(ProjectDir)References</BeatSaberDir>
@@ -103,6 +103,11 @@
       <HintPath>$(BeatSaberReferences)\BeatSaber\UnityEngine.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="UnityEngine.AnimationModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <Private>False</Private>
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>$(BeatSaberReferences)\BeatSaber\UnityEngine.CoreModule.dll</HintPath>
       <Private>True</Private>
@@ -110,6 +115,16 @@
     <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <Private>True</Private>
       <HintPath>$(BeatSaberReferences)\BeatSaber\UnityEngine.UI.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="UnityEngine.UIElementsModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <Private>False</Private>
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.UIElementsModule.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <Private>False</Private>
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.UIModule.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
   </ItemGroup>
@@ -125,6 +140,8 @@
     <Compile Include="PluginConfig.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="OBSComponents\RecordingController.cs" />
+    <Compile Include="UI\ControlScreenCoordinator.cs" />
+    <Compile Include="UI\ControlScreen_Main.cs" />
     <Compile Include="Utilities\FileRenaming.cs" />
     <Compile Include="Wrappers\BeatmapLevelWrapper.cs" />
     <Compile Include="Wrappers\ConversionExtensions.cs" />
@@ -145,10 +162,13 @@
     <None Include=".gitignore" />
     <None Include="ILRepack.targets" />
     <EmbeddedResource Include="UI\SettingsView.bsml" />
+    <EmbeddedResource Include="UI\ControlScreen_Main.bsml">
+      <DependentUpon>ControlScreen_Main.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BeatSaberModdingTools.Tasks">
-      <Version>1.1.5</Version>
+      <Version>1.2.0</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

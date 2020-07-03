@@ -1,10 +1,16 @@
-﻿using HarmonyLib;
+﻿using BeatSaberMarkupLanguage;
+using BeatSaberMarkupLanguage.Components;
+using HarmonyLib;
 using IPA.Utilities;
 using OBSControl.OBSComponents;
+using OBSWebsocketDotNet.Types;
 using System;
 using System.Collections;
+using System.Linq;
 using System.Reflection;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 #nullable enable
 namespace OBSControl.HarmonyPatches
 {
@@ -30,7 +36,7 @@ namespace OBSControl.HarmonyPatches
             ref Action beforeSceneSwitchCallback, ref bool practice,
             LevelSelectionNavigationController ____levelSelectionNavigationController)
         {
-            if(RecordingController.instance == null)
+            if (RecordingController.instance == null)
             {
                 Logger.log?.Warn($"RecordingController is null, unable to start recording.");
                 return true;
@@ -58,12 +64,65 @@ namespace OBSControl.HarmonyPatches
             Logger.log?.Debug("LevelSelectionNavigationController_StartLevel");
             StandardLevelDetailViewController detailViewController = AccessDetailViewController(ref ____levelSelectionNavigationController);
             StandardLevelDetailView levelView = AccessDetailView(ref detailViewController);
-            if (levelView != null)
+            Button playButton = levelView.playButton;
+            if (playButton != null)
+            {
                 levelView.playButton.interactable = false;
-            SharedCoroutineStarter.instance.StartCoroutine(DelayedLevelStart(__instance, difficultyBeatmap, beforeSceneSwitchCallback, practice, levelView?.playButton));
+                RecordStateChangedAction = new EventHandler<OutputState>((e, OutputState) =>
+                {
+                    string buttonText = OutputState switch
+                    {
+                        OutputState.Starting => RecordingText,
+                        OutputState.Started => RecordingText,
+                        OutputState.Stopping => NotRecording,
+                        OutputState.Stopped => NotRecording,
+                        _ => DefaultText
+                    };
+                    SetButtonText(playButton, buttonText);
+                });
+                SetButtonText(playButton, NotRecording);
+            }
+            SharedCoroutineStarter.instance.StartCoroutine(DelayedLevelStart(__instance, difficultyBeatmap, beforeSceneSwitchCallback, practice, playButton));
             return false;
         }
 
+        private static void SetButtonText(Button button, string text)
+        {
+            if(button == null)
+            {
+                Logger.log?.Debug("Button was null when trying to set colors.");
+                return;
+            }
+            HMMainThreadDispatcher.instance.Enqueue(() =>
+            {
+                button.SetButtonText(text);
+            });
+            
+        }
+
+        private static EventHandler<OutputState>? _recordStateChangedAction;
+        internal static EventHandler<OutputState>? RecordStateChangedAction
+        {
+            get => _recordStateChangedAction;
+            set
+            {
+                if (_recordStateChangedAction == value)
+                    return;
+                if (OBSController.instance == null)
+                    return;
+                OBSController.instance.RecordingStateChanged -= _recordStateChangedAction;
+                _recordStateChangedAction = value;
+                if (value != null)
+                {
+                    OBSController.instance.RecordingStateChanged -= value;
+                    OBSController.instance.RecordingStateChanged += value;
+                }
+            }
+        }
+
+        static string DefaultText = "Play";
+        static string NotRecording = "Waiting for OBS";
+        static string RecordingText = "Recording";
         private static IEnumerator DelayedLevelStart(LevelSelectionFlowCoordinator coordinator,
             IDifficultyBeatmap difficultyBeatmap, Action beforeSceneSwitchCallback, bool practice,
             UnityEngine.UI.Button? playButton)
@@ -78,6 +137,11 @@ namespace OBSControl.HarmonyPatches
             WaitingToStart = false;
             //playButton.interactable = true;
             StartLevel(coordinator, difficultyBeatmap, beforeSceneSwitchCallback, practice);
+            if (playButton != null)
+            {
+                SetButtonText(playButton, DefaultText);
+            }
+            RecordStateChangedAction = null;
             if (RecordingController.instance != null)
                 SharedCoroutineStarter.instance.StartCoroutine(RecordingController.instance.GameStatusSetup());
         }
