@@ -1,8 +1,61 @@
 ﻿<bg background="round-rect-panel" background-color="red" xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
-  <tab-selector id='TabSelector' tab-tag='new-tag' />
+  <horizontal anchor-max-y='1' anchor-min-y='.855' anchor-max-x='.99' anchor-min-x='.04'
+            min-width='95' preferred-height='7' child-expand-height='true' child-expand-width='false'
+            background='round-rect-panel' background-color='lime'>
+    <tab-selector id='TabSelector' tab-tag='new-tag'  />
+  </horizontal>
   <vertical anchor-max-y='0.85' anchor-min-y='0' anchor-max-x='1' anchor-min-x='.03'
             min-width='95' child-align='UpperLeft' child-expand-height='true'
             background='round-rect-panel' background-color='lime'>
+
+    <tab id='RecordingTab' tags='new-tag' tab-name='Recording'
+           background='round-rect-panel' background-color='cyan' >
+      <vertical  child-align='UpperLeft' child-expand-height='false'
+                   min-width='95' preferred-width='95' horizontal-fit='PreferredSize'
+                   background='round-rect-panel' background-color='darkblue'
+                   child-control-height='false' child-control-width='true'>
+        <horizontal background='round-rect-panel' background-color='grey'
+                    preferred-height='6' pad-left='3' pad-right='-3'
+                    child-control-width='false' child-expand-width='false'>
+          <text text='Recording State:' font-size='4'  align='MidlineLeft' size-delta-x='35' />
+          <text text='~IsRecording' align='MidlineLeft' size-delta-x='25' />
+          <button text='Start' active='~IsNotRecording' interactable='~IsConnected' on-click='StartRecording' preferred-height='5' min-width='30' preferred-width='30'/>
+          <button text='Stop' active='~IsRecording' interactable='~IsConnected' on-click='StopRecording' preferred-height='5' min-width='30' preferred-width='30'/>
+        </horizontal>
+        <horizontal background='round-rect-panel' background-color='grey'
+                      preferred-height='6' pad-left='3' pad-right='-3'
+                      child-control-width='false' child-expand-width='false'>
+          <checkbox text='Enable AutoRecord:' font-size='4' size-delta-x='41' align='MidlineLeft' />
+        </horizontal>
+        <horizontal background='round-rect-panel' background-color='grey'
+                    preferred-height='6' pad-left='3' pad-right='-3'
+                    child-control-width='false' child-expand-width='false'>
+          <text text='Free Disk Space:'  align='MidlineLeft' size-delta-x='35' />
+          <text data='~FreeDiskSpace' data-format='#,0 MB' overflow-mode='Overflow' align='MidlineLeft' size-delta-x='25' />
+        </horizontal>
+        <horizontal background='round-rect-panel' background-color='grey' preferred-width='95'
+                        preferred-height='6' pad-left='3' pad-right='-3' horizontal-fit='PreferredSize'
+                    child-expand-width='true' child-control-width='false' >
+          <horizontal background='round-rect-panel' background-color='red'
+            preferred-height='6'  child-expand-width='true' child-control-width='false'
+                      min-width='42' horizontal-fit='MinSize'>
+            <text text='Output Total Frames:'  align='MidlineLeft' size-delta-x='28' />
+            <text data='~OutputTotalFrames' data-format='#,0' align='MidlineLeft' size-delta-x='17' />
+          </horizontal>
+          <text text=' | ' size-delta-x='2' overflow-mode='Truncate'/>
+          <horizontal background='round-rect-panel' background-color='red'
+                       child-expand-width='true' child-control-width='false'
+                      preferred-height='6' min-width='42' horizontal-fit='MinSize'>
+            <text text='Skipped Frames:'  align='MidlineLeft' size-delta-x='30' />
+            <text data='~OutputSkippedFrames' data-format='#,0' align='MidlineLeft' size-delta-x='17' />
+          </horizontal>
+        </horizontal>
+        <horizontal background='round-rect-panel' background-color='grey'
+                    preferred-height='6' min-width='50' pad-left='3' pad-right='-3'
+                    child-control-width='false' child-expand-width='false'>
+        </horizontal>
+      </vertical>
+    </tab>
     <tab id='MainTab' tags='new-tag' tab-name='Main'
          background='round-rect-panel' background-color='cyan' >
       <vertical  child-align='UpperLeft' pad-left='1' pad-right='1' child-expand-height='false'
@@ -13,7 +66,7 @@
           <horizontal min-width='50' child-expand-width='false' child-control-width='false'
                       child-align='MiddleLeft'>
             <text text='Connection State:'  align='MidlineLeft' size-delta-x='35' />
-            <text data='Test' data-formatter='~ConnectionStateFormatter' align='MidlineLeft' size-delta-x='25' />
+            <text data='~IsConnected' data-formatter='~ConnectionStateFormatter' align='MidlineLeft' size-delta-x='25' />
           </horizontal>
           <button text='Disconnect' interactable='false' align='MidlineRight' preferred-height='5' min-width='34' preferred-width='34' />
         </horizontal>
@@ -26,28 +79,13 @@
         <horizontal background='round-rect-panel' background-color='fuchsia'
                     preferred-height='6' min-width='50'
                     child-control-width='false' child-expand-width='false'>
-          <text text='Free Disk Space:'  align='MidlineLeft' size-delta-x='35' />
-          <text data='~FreeDiskSpace' data-format='#,0 MB' overflow-mode='Overflow' align='MidlineLeft' size-delta-x='25' />
-        </horizontal>
-        <horizontal background='round-rect-panel' background-color='fuchsia'
-                    preferred-height='6' min-width='50'
-                    child-control-width='false' child-expand-width='false'>
           <text text='Render Missed Frames:'  align='MidlineLeft' size-delta-x='35' />
           <text data='RenderMissedFrames' data-format='#,0 Frames' align='MidlineLeft' size-delta-x='25' />
         </horizontal>
-        <horizontal background='round-rect-panel' background-color='fuchsia'
-                    preferred-height='6' min-width='50'
-                    child-control-width='false' child-expand-width='false'>
-          <text text='Output Total Frames:'  align='MidlineLeft' size-delta-x='35' />
-          <text data='~OutputTotalFrames' data-format='#,0 Frames' align='MidlineLeft' size-delta-x='25' />
-        </horizontal>
-        <horizontal background='round-rect-panel' background-color='fuchsia'
-                    preferred-height='6' min-width='50'
-                    child-control-width='false' child-expand-width='false'>
-          <text text='Output Skipped Frames:'  align='MidlineLeft' size-delta-x='35' />
-          <text data='OutputSkippedFrames' data-format='#,0 Frames' align='MidlineLeft' size-delta-x='25' />
-        </horizontal>
+
       </vertical>
     </tab>
+
+
   </vertical>
 </bg>

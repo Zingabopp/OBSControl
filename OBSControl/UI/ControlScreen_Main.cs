@@ -7,7 +7,7 @@ using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.ViewControllers;
-
+using OBSControl.OBSComponents;
 
 namespace OBSControl.UI
 {
@@ -39,6 +39,14 @@ namespace OBSControl.UI
         {
             SetConnectionState(e);
         }
+
+
+        // For this method of setting the ResourceName, this class must be the first class in the file.
+        //public override string ResourceName => string.Join(".", GetType().Namespace, GetType().Name);
+        [UIComponent(nameof(TabSelector))]
+        public TabSelector TabSelector { get; protected set; }
+
+        #region Properties
         [UIValue("ConnectionStateFormatter")]
         public ConnectionStateFormatter ConnectionStateFormatter = new ConnectionStateFormatter();
 
@@ -55,13 +63,6 @@ namespace OBSControl.UI
                 NotifyPropertyChanged();
             }
         }
-
-        // For this method of setting the ResourceName, this class must be the first class in the file.
-        //public override string ResourceName => string.Join(".", GetType().Namespace, GetType().Name);
-        [UIComponent(nameof(TabSelector))]
-        public TabSelector TabSelector { get; protected set; }
-
-        #region Properties
 
         [UIValue(nameof(ConnectionState))]
         public string ConnectionState
@@ -88,7 +89,14 @@ namespace OBSControl.UI
                     return;
                 _isRecording = value;
                 NotifyPropertyChanged();
+                NotifyPropertyChanged(nameof(IsNotRecording));
             }
+        }
+        [UIValue(nameof(IsNotRecording))]
+        public bool IsNotRecording
+        {
+            get => !_isRecording;
+            set => IsRecording = !value;
         }
 
         private bool _isStreaming;
@@ -181,6 +189,22 @@ namespace OBSControl.UI
             }
         }
 
+        #endregion
+
+        #region Actions
+
+        [UIAction(nameof(StartRecording))]
+        public void StartRecording()
+        {
+            RecordingController.instance.StartRecordingLevel();
+        }
+
+        [UIAction(nameof(StopRecording))]
+        public void StopRecording()
+        {
+            RecordingController.instance.TryStopRecordingAsync(null, true);
+        }
+        
         #endregion
 
         public void SetConnectionState(bool isConnected)

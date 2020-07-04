@@ -184,6 +184,9 @@
       <Name>obs-websocket-dotnet</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="UI\Formatters\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="ILRepack.targets" />
   <PropertyGroup>
