@@ -12,7 +12,8 @@
     </PropertyGroup>
     <ItemGroup>
       <InputAssemblies Include="obs-websocket-dotnet.dll" />
-      <InputAssemblies Include="websocket-sharp.dll" />
+      <InputAssemblies Include="SuperSocket.ClientEngine.dll" />
+      <InputAssemblies Include="WebSocket4Net.dll" />
     </ItemGroup>
     <ItemGroup>
       <!-- Must be a fully qualified name -->
