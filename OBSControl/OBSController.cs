@@ -99,7 +99,7 @@ namespace OBSControl
         private PluginConfig Config => Plugin.config;
         public event EventHandler? DestroyingObs;
         private WaitForSeconds HeartbeatTimeout = new WaitForSeconds(10);
-        private TimeSpan HeartbeatTimespan = new TimeSpan(0, 0, 10);
+        private TimeSpan HeartbeatTimespan = new TimeSpan(0, 0, 30);
         private IEnumerator<WaitForSeconds> HeartbeatCoroutine()
         {
             while (wasConnected)
@@ -123,15 +123,20 @@ namespace OBSControl
         {
             Logger.log?.Debug("CreateObsInstance()");
             var newObs = new OBSWebsocket();
-            newObs.WSTimeout = new TimeSpan(0, 0, 30);
-            newObs.Connected += OnConnect;
-            newObs.Disconnected += OnDisconnect;
-            newObs.StreamingStateChanged += Obs_StreamingStateChanged;
-            newObs.StreamStatus += Obs_StreamStatus;
-            newObs.SceneListChanged += OnObsSceneListChanged;
+            SetEvents(newObs);
             Obs = newObs;
             Logger.log?.Debug("CreateObsInstance finished");
         }
+
+        protected void SetEvents(OBSWebsocket obs)
+        {
+            obs.Connected += OnConnect;
+            obs.Disconnected += OnDisconnect;
+            obs.StreamingStateChanged += Obs_StreamingStateChanged;
+            obs.StreamStatus += Obs_StreamStatus;
+            obs.SceneListChanged += OnObsSceneListChanged;
+        }
+
         private bool wasConnected = false;
         #region Events
 
