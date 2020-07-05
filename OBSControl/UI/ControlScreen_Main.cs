@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.ViewControllers;
 using OBSControl.OBSComponents;
+using OBSControl.UI.Formatters;
 
 namespace OBSControl.UI
 {
@@ -40,15 +36,15 @@ namespace OBSControl.UI
             SetConnectionState(e);
         }
 
-
+        
         // For this method of setting the ResourceName, this class must be the first class in the file.
         //public override string ResourceName => string.Join(".", GetType().Namespace, GetType().Name);
         [UIComponent(nameof(TabSelector))]
         public TabSelector TabSelector { get; protected set; }
 
         #region Properties
-        [UIValue("ConnectionStateFormatter")]
-        public ConnectionStateFormatter ConnectionStateFormatter = new ConnectionStateFormatter();
+        [UIValue(nameof(BoolFormatter))]
+        public BoolFormatter BoolFormatter = new BoolFormatter();
 
         private bool _isConnected;
         [UIValue(nameof(IsConnected))]
@@ -215,28 +211,6 @@ namespace OBSControl.UI
                 true => "Connected",
                 false => "Disconnected"
             };
-        }
-    }
-
-    public class ConnectionStateFormatter : ICustomFormatter
-    {
-        public string Format(string format, object arg, IFormatProvider formatProvider)
-        {
-            Logger.log?.Warn($"Arg is {arg.ToString()}");
-            if (arg is bool boolVal)
-            {
-                return boolVal switch
-                {
-                    true => "Connected",
-                    false => "Disconnected"
-                };
-            }
-            else if (arg.ToString() == "Test")
-            {
-                return "<Testing>";
-            }    
-            else
-                return "<ERROR>";
         }
     }
 }
