@@ -142,6 +142,7 @@
     <Compile Include="OBSComponents\RecordingController.cs" />
     <Compile Include="UI\ControlScreenCoordinator.cs" />
     <Compile Include="UI\ControlScreen_Main.cs" />
+    <Compile Include="UI\Formatters\BoolFormatter.cs" />
     <Compile Include="Utilities\FileRenaming.cs" />
     <Compile Include="Wrappers\BeatmapLevelWrapper.cs" />
     <Compile Include="Wrappers\ConversionExtensions.cs" />
@@ -184,9 +185,7 @@
       <Name>obs-websocket-dotnet</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="UI\Formatters\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="ILRepack.targets" />
   <PropertyGroup>
