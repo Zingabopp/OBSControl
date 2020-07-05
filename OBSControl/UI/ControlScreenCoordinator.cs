@@ -7,12 +7,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
-
+#nullable enable
 namespace OBSControl.UI
 {
     public class ControlScreenCoordinator
     {
-        private static ControlScreenCoordinator _instance;
+        private static ControlScreenCoordinator? _instance;
         public static ControlScreenCoordinator Instance
         {
             get
@@ -26,8 +26,8 @@ namespace OBSControl.UI
         {
         }
         private List<Tab> Tabs = new List<Tab>();
-        protected FloatingScreen ControlScreen;
-        protected ControlScreen_Main ControlScreen_Main;
+        protected FloatingScreen? ControlScreen;
+        protected ControlScreen_Main? ControlScreen_Main;
 
         public void ShowControlScreen()
         {
