@@ -1,31 +1,29 @@
 ::from ./bsinstalldir.txt
-"Beat Saber_Data/
-""Managed/
-"""HMLib.dll?virt
-"""HMUI.dll?virt
-"""Main.dll?virt
-"""IPA.
-""""Loader.dll
-"""Unity.TextMeshPro.dll
-"""UnityEngine.
-""""dll
-""""CoreModule.dll
-""""AudioModule.dll
-""""UI
-""""".dll
-"Libs/
-""0Harmony.dll
-""Newtonsoft.Json.dll
+"Beat Saber_Data/Managed/
+""HMLib.dll?virt?alias=Beat Saber_Data\Managed\HMLib.dll
+""HMUI.dll?virt?alias=Beat Saber_Data\Managed\HMUI.dll
+""Main.dll?virt?alias=Beat Saber_Data\Managed\Main.dll
+""netstandard.dll?alias=Beat Saber_Data\Managed\netstandard.dll
+""Unity.TextMeshPro.dll?alias=Beat Saber_Data\Managed\Unity.TextMeshPro.dll
+""UnityEngine.
+"""dll?alias=Beat Saber_Data\Managed\UnityEngine.dll
+"""AnimationModule.dll?alias=Beat Saber_Data\Managed\UnityEngine.AnimationModule.dll
+"""AudioModule.dll?alias=Beat Saber_Data\Managed\UnityEngine.AudioModule.dll
+"""CoreModule.dll?alias=Beat Saber_Data\Managed\UnityEngine.CoreModule.dll
+"""UI.dll?alias=Beat Saber_Data\Managed\UnityEngine.UI.dll
+"""UIModule.dll?alias=Beat Saber_Data\Managed\UnityEngine.UIModule.dll
+"""UIElementsModule.dll?alias=Beat Saber_Data\Managed\UnityEngine.UIElementsModule.dll
+
 "Plugins/
-""BS_Utils.dll
-""BSML.dll
+""BSML.dll?alias=Plugins\BSML.dll
+""BS_Utils.dll?alias=Plugins\BS_Utils.dll
+
+"Libs/
+""0Harmony.dll?alias=Libs\0Harmony.dll
 
 ::startopt
 "::resolveInHere Libs/
-""SemVer.dll
-""Newtonsoft.Json.dll
-
-::startopt
+""SemVer.dll?alias=Libs\SemVer.dll
+""Newtonsoft.Json.dll?alias=Libs\Newtonsoft.Json.dll
 "::resolveInHere Beat Saber_Data/Managed/
-""IPA.
-"""Loader.dll
+""IPA.Loader.dll?alias=Beat Saber_Data\Managed\IPA.Loader.dll
