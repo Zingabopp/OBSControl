@@ -15,8 +15,8 @@ namespace OBSControl.Wrappers
             GameplayModifiers = new GameplayModifiersWrapper(results.gameplayModifiers);
             PlayCount = playCount;
             MaxModifiedScore = maxModifiedScore;
-            if (MaxModifiedScore != 0)
-                ScorePercent = ((float)results.rawScore / MaxModifiedScore) * 100f;
+            if (MaxModifiedScore != 0) // Should never be 0, but check anyway to be safe.
+                ScorePercent = ((float)results.modifiedScore / MaxModifiedScore) * 100f;
         }
         public int PlayCount { get; private set; }
         public int MaxModifiedScore { get; private set; }
