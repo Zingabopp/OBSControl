@@ -33,7 +33,7 @@ jobs:
           FILES_URL: ${{ secrets.BSFILES_URL }}
         run: wget --no-check-certificate "$FILES_URL" -q -O bsfiles.zip
       - name: ExtractRefs
-        run: unzip -q bsfiles.zip -d ./Refs/BeatSaber
+        run: unzip -q -n bsfiles.zip -d ./Refs
       - name: Test
         env:
           FrameworkPathOverride: /usr/lib/mono/4.8-api
