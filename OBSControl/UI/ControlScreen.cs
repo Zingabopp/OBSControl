@@ -9,15 +9,16 @@ using UnityEngine;
 
 namespace OBSControl.UI
 {
-    [HotReload(@"C:\Users\Jared\source\repos\Zingabopp\OBSControl\OBSControl\UI\ControlScreen_Main.bsml")]
+    [HotReload(@"C:\Users\Jared\source\repos\Zingabopp\OBSControl\OBSControl\UI\ControlScreen.bsml")]
 
-    public class ControlScreen_Main : BSMLAutomaticViewController
+    public partial class ControlScreen : BSMLAutomaticViewController
     {
         private string connectionState;
-        public ControlScreen_Main()
+        public ControlScreen()
         {
-            OBSController.instance.ConnectionStateChanged += Instance_ConnectionStateChanged;
+            OBSController.instance.ConnectionStateChanged += OnConnectionStateChanged;
             OBSController.instance.Heartbeat += Instance_Heartbeat;
+            OBSController.instance.RecordingStateChanged += OnRecordingStateChanged;
             SetConnectionState(OBSController.instance.IsConnected);
             Logger.log.Warn($"Created Main: {this.ContentFilePath}");
         }
@@ -33,7 +34,7 @@ namespace OBSControl.UI
             FreeDiskSpace = e.Stats.FreeDiskSpace;
         }
 
-        private void Instance_ConnectionStateChanged(object sender, bool e)
+        private void OnConnectionStateChanged(object sender, bool e)
         {
             SetConnectionState(e);
         }
@@ -61,6 +62,8 @@ namespace OBSControl.UI
                 NotifyPropertyChanged();
                 NotifyPropertyChanged(nameof(ConnectedTextColor));
                 NotifyPropertyChanged(nameof(ConnectButtonText));
+                NotifyPropertyChanged(nameof(RecordButtonInteractable));
+                
             }
         }
         private bool _connectButtonInteractable = true;
@@ -110,59 +113,6 @@ namespace OBSControl.UI
                 NotifyPropertyChanged();
             }
         }
-
-        private bool _isRecording;
-
-        [UIValue(nameof(IsRecording))]
-        public bool IsRecording
-        {
-            get { return _isRecording; }
-            set
-            {
-                if (_isRecording == value)
-                    return;
-                _isRecording = value;
-                NotifyPropertyChanged();
-                NotifyPropertyChanged(nameof(RecordingTextColor));
-                NotifyPropertyChanged(nameof(IsNotRecording));
-            }
-        }
-
-        [UIValue(nameof(RecordingTextColor))]
-        public string RecordingTextColor
-        {
-            get
-            {
-                return IsRecording switch
-                {
-                    true => "green",
-                    false => "red"
-                };
-            }
-        }
-
-        [UIValue(nameof(IsNotRecording))]
-        public bool IsNotRecording
-        {
-            get => !_isRecording;
-            set => IsRecording = !value;
-        }
-
-        private bool _isStreaming;
-
-        [UIValue(nameof(IsStreaming))]
-        public bool IsStreaming
-        {
-            get { return _isStreaming; }
-            set
-            {
-                if (_isStreaming == value)
-                    return;
-                _isStreaming = value;
-                NotifyPropertyChanged();
-            }
-        }
-
 
         private int _renderTotalFrames;
 
@@ -224,36 +174,9 @@ namespace OBSControl.UI
             }
         }
 
-        private double _freeDiskSpace;
-        [UIValue(nameof(FreeDiskSpace))]
-        public double FreeDiskSpace
-        {
-            get { return _freeDiskSpace; }
-            set
-            {
-                if (_freeDiskSpace == value)
-                    return;
-                _freeDiskSpace = value;
-                NotifyPropertyChanged();
-            }
-        }
-
         #endregion
 
         #region Actions
-
-        [UIAction(nameof(StartRecording))]
-        public void StartRecording()
-        {
-            RecordingController.instance.StartRecordingLevel();
-        }
-
-        [UIAction(nameof(StopRecording))]
-        public void StopRecording()
-        {
-            RecordingController.instance.TryStopRecordingAsync(null, true);
-        }
-
         [UIAction(nameof(ConnectButtonClicked))]
         public async void ConnectButtonClicked()
         {

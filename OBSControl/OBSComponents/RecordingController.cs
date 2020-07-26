@@ -21,6 +21,7 @@ namespace OBSControl.OBSComponents
         internal readonly HarmonyPatches.HarmonyPatchInfo LevelDelayPatch = HarmonyPatches.HarmonyManager.GetLevelDelayPatch();
         private const string DefaultFileFormat = "%CCYY-%MM-%DD %hh-%mm-%ss";
         public const string DefaultDateTimeFormat = "yyyyMMddHHmmss";
+        public OutputState OutputState { get; protected set; }
         public bool WaitingToStop { get; private set; }
         public Task? StopRecordingTask { get; private set; }
         private string ToDateTimeFileFormat(DateTime dateTime)
@@ -350,6 +351,7 @@ namespace OBSControl.OBSComponents
         private void Obs_RecordingStateChanged(object sender, OutputState type)
         {
             Logger.log?.Info($"Recording State Changed: {type}");
+            OutputState = type;
             switch (type)
             {
                 case OutputState.Starting:

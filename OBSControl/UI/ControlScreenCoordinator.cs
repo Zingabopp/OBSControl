@@ -32,7 +32,7 @@ namespace OBSControl.UI
 
         private List<Tab> Tabs = new List<Tab>();
         protected FloatingScreen? ControlScreen;
-        protected ControlScreen_Main? ControlScreen_Main;
+        protected ControlScreen? ControlScreen_Main;
 
         protected ControlScreenCoordinator()
         {
@@ -96,14 +96,14 @@ namespace OBSControl.UI
             if (ControlScreen == null)
             {
                 ControlScreen = CreateFloatingScreen();
-
-                ControlScreen_Main = BeatSaberUI.CreateViewController<ControlScreen_Main>();
+                ControlScreen_Main = BeatSaberUI.CreateViewController<ControlScreen>();
                 ControlScreen.SetRootViewController(ControlScreen_Main, false);
                 SetScreenTransform(ControlScreen, Plugin.config);
                 Logger.log?.Critical($"Control screen created: {ControlScreen != null}");
             }
             ControlScreen.gameObject.SetActive(true);
         }
+
         public FloatingScreen CreateFloatingScreen()
         {
             PluginConfig config = Plugin.config;
@@ -124,6 +124,8 @@ namespace OBSControl.UI
 #endif
             if (!config.ShowScreenHandle)
                 screen.ShowHandle = false;
+
+            
             GameObject.DontDestroyOnLoad(screen.gameObject);
             return screen;
         }

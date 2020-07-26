@@ -144,8 +144,9 @@
     <Compile Include="PluginConfig.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="OBSComponents\RecordingController.cs" />
+    <Compile Include="UI\ControlScreen_Recording.cs" />
     <Compile Include="UI\ControlScreenCoordinator.cs" />
-    <Compile Include="UI\ControlScreen_Main.cs" />
+    <Compile Include="UI\ControlScreen.cs" />
     <Compile Include="UI\Formatters\BoolFormatter.cs" />
     <Compile Include="Utilities\FileRenaming.cs" />
     <Compile Include="Wrappers\BeatmapLevelWrapper.cs" />
@@ -167,8 +168,8 @@
     <None Include=".gitignore" />
     <None Include="ILRepack.targets" />
     <EmbeddedResource Include="UI\SettingsView.bsml" />
-    <EmbeddedResource Include="UI\ControlScreen_Main.bsml">
-      <DependentUpon>ControlScreen_Main.cs</DependentUpon>
+    <EmbeddedResource Include="UI\ControlScreen.bsml">
+      <DependentUpon>ControlScreen.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

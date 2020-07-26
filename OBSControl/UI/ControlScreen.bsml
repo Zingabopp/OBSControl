@@ -54,8 +54,10 @@
             <text text='Recording State:' font-size='4'  align='MidlineLeft' size-delta-x='~LabelWidth' />
             <text data='IsRecording' data-formatter='BoolFormatter' data-format='Recording|Stopped' color='~RecordingTextColor'
                   align='MidlineLeft' size-delta-x='25' />
-            <button text='Start' active='~IsNotRecording' interactable='~IsConnected' on-click='StartRecording' preferred-height='5' min-width='30' preferred-width='30'/>
-            <button text='Stop' active='~IsRecording' interactable='~IsConnected' on-click='StopRecording' preferred-height='5' min-width='30' preferred-width='30'/>
+            <button text='Start' active='~IsNotRecording' interactable='~RecordButtonInteractable'
+                    on-click='StartRecording' preferred-height='5' min-width='30' preferred-width='30'/>
+            <button text='Stop' active='~IsRecording' interactable='~RecordButtonInteractable'
+                    on-click='StopRecording' preferred-height='5' min-width='30' preferred-width='30'/>
           </horizontal>
           <horizontal background='round-rect-panel'
                         preferred-height='6' pad-left='3' pad-right='-3'
