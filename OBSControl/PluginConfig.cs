@@ -5,6 +5,7 @@ using IPA.Config.Stores.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 #nullable enable
 [assembly: InternalsVisibleTo(GeneratedStore.AssemblyVisibilityTarget)]
@@ -82,6 +83,17 @@ namespace OBSControl
         [UIValue(nameof(EndSceneName))]
         public virtual string EndSceneName { get; set; } = string.Empty;
 
+        #region Floating Screen
+        public virtual float ScreenPosX { get; set; } = 0f;
+        public virtual float ScreenPosY { get; set; } = 2.9f;
+        public virtual float ScreenPosZ { get; set; } = 2.4f;
+        public virtual float ScreenRotX { get; set; } = -30f;
+        public virtual float ScreenRotY { get; set; } = 0f;
+        public virtual float ScreenRotZ { get; set; } = 0f;
+        public virtual bool ShowScreenHandle { get; set; } = true;
+
+        #endregion
+
         /// <summary>
         /// This is called whenever BSIPA reads the config from disk (including when file changes are detected).
         /// </summary>
@@ -100,6 +112,10 @@ namespace OBSControl
             RefreshDropdowns();
             OBSController.instance?.gameObject.SetActive(Enabled);
         }
+
+#pragma warning disable CS8603 // Possible null reference return.
+        public IDisposable ChangeTransaction() => null;
+#pragma warning restore CS8603 // Possible null reference return.
 
         public void UpdateSceneOptions(IEnumerable<string> newOptions)
         {
@@ -159,5 +175,17 @@ namespace OBSControl
         private float _startSceneDuration = 1f;
         private float _endSceneDuration = 2f;
         #endregion
+    }
+
+    internal static class ConfigExtensions
+    {
+        public static Vector3 GetScreenPosition(this PluginConfig config)
+        {
+            return new Vector3(config.ScreenPosX, config.ScreenPosY, config.ScreenPosZ);
+        }
+        public static Quaternion GetScreenRotation(this PluginConfig config)
+        {
+            return Quaternion.Euler(config.ScreenRotX, config.ScreenRotY, config.ScreenRotZ);
+        }
     }
 }

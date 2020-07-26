@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Web.UI;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.ViewControllers;
 using OBSControl.OBSComponents;
 using OBSControl.UI.Formatters;
+using UnityEngine;
 
 namespace OBSControl.UI
 {
@@ -36,7 +38,7 @@ namespace OBSControl.UI
             SetConnectionState(e);
         }
 
-        
+
         // For this method of setting the ResourceName, this class must be the first class in the file.
         //public override string ResourceName => string.Join(".", GetType().Namespace, GetType().Name);
         [UIComponent(nameof(TabSelector))]
@@ -57,6 +59,42 @@ namespace OBSControl.UI
                     return;
                 _isConnected = value;
                 NotifyPropertyChanged();
+                NotifyPropertyChanged(nameof(ConnectedTextColor));
+                NotifyPropertyChanged(nameof(ConnectButtonText));
+            }
+        }
+        private bool _connectButtonInteractable = true;
+        [UIValue(nameof(ConnectButtonInteractable))]
+        public bool ConnectButtonInteractable
+        {
+            get => _connectButtonInteractable;
+            set
+            {
+                if (_connectButtonInteractable == value) return;
+                _connectButtonInteractable = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+        [UIValue(nameof(ConnectButtonText))]
+        public string ConnectButtonText
+        {
+            get
+            {
+                return IsConnected ? "Disconnect" : "Connect";
+            }
+        }
+
+        [UIValue(nameof(ConnectedTextColor))]
+        public string ConnectedTextColor
+        {
+            get
+            {
+                return IsConnected switch
+                {
+                    true => "green",
+                    false => "red"
+                };
             }
         }
 
@@ -85,9 +123,24 @@ namespace OBSControl.UI
                     return;
                 _isRecording = value;
                 NotifyPropertyChanged();
+                NotifyPropertyChanged(nameof(RecordingTextColor));
                 NotifyPropertyChanged(nameof(IsNotRecording));
             }
         }
+
+        [UIValue(nameof(RecordingTextColor))]
+        public string RecordingTextColor
+        {
+            get
+            {
+                return IsRecording switch
+                {
+                    true => "green",
+                    false => "red"
+                };
+            }
+        }
+
         [UIValue(nameof(IsNotRecording))]
         public bool IsNotRecording
         {
@@ -200,7 +253,33 @@ namespace OBSControl.UI
         {
             RecordingController.instance.TryStopRecordingAsync(null, true);
         }
-        
+
+        [UIAction(nameof(ConnectButtonClicked))]
+        public async void ConnectButtonClicked()
+        {
+            ConnectButtonInteractable = false;
+            OBSController controller = OBSController.instance;
+            if (controller != null)
+            {
+                try
+                {
+                    if (IsConnected)
+                        controller.Obs.Disconnect();
+                    else
+                        await controller.TryConnect();
+                }
+                catch (Exception ex)
+                {
+                    Logger.log?.Warn($"Error {(IsConnected ? "disconnecting from " : "connecting to ")} OBS: {ex.Message}");
+                    Logger.log?.Debug(ex);
+                }
+                finally
+                {
+                    ConnectButtonInteractable = true;
+                }
+            }
+        }
+
         #endregion
 
         public void SetConnectionState(bool isConnected)

@@ -8,6 +8,11 @@ namespace OBSControl.Utilities
 {
     public static class Utilities
     {
+        public static bool TryParseColorString(string colorStr, out Color color)
+        {
+            return ColorUtility.TryParseHtmlString(colorStr, out color);
+        }
+
         public static string GetSafeFilename(string fileName, string? substitute = null, string? spaceReplacement = null)
         {
             _ = fileName ?? throw new ArgumentNullException(nameof(fileName), "fileName cannot be null for GetSafeFilename");

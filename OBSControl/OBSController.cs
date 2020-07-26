@@ -42,31 +42,6 @@ namespace OBSControl
         private DateTime LastHeartbeat = DateTime.MinValue;
         private bool HeartbeatTimerActive = false;
 
-        //private static float PlayerHeight;
-
-        //        private PlayerSpecificSettings _playerSettings;
-        //        private PlayerSpecificSettings PlayerSettings
-        //        {
-        //            get
-        //            {
-        //                if (_playerSettings == null)
-        //                {
-        //                    _playerSettings = GameStatus.gameSetupData?.playerSpecificSettings;
-        //                    if (_playerSettings != null)
-        //                    {
-        //                        Logger.log?.Debug("Found PlayerSettings");
-        //                    }
-        //                    else
-        //                        Logger.log?.Warn($"Unable to find PlayerSettings");
-        //                }
-        //#if DEBUG
-        //                else
-        //                    Logger.log?.Debug("PlayerSettings already exists, don't need to find it");
-        //#endif
-        //                return _playerSettings;
-        //            }
-        //        }
-
         private PlayerDataModel? _playerData;
         public PlayerDataModel? PlayerData
         {
@@ -98,26 +73,28 @@ namespace OBSControl
 
         private PluginConfig Config => Plugin.config;
         public event EventHandler? DestroyingObs;
-        private WaitForSeconds HeartbeatTimeout = new WaitForSeconds(10);
-        private TimeSpan HeartbeatTimespan = new TimeSpan(0, 0, 30);
+        private readonly WaitForSeconds HeartbeatCheckInterval = new WaitForSeconds(10);
+        private TimeSpan HeartbeatTimeout = new TimeSpan(0, 0, 30);
         private IEnumerator<WaitForSeconds> HeartbeatCoroutine()
         {
             while (wasConnected)
             {
-                yield return HeartbeatTimeout;
-                if ((DateTime.UtcNow - LastHeartbeat) > HeartbeatTimespan)
+                yield return HeartbeatCheckInterval;
+                if ((DateTime.UtcNow - LastHeartbeat) > HeartbeatTimeout)
                 {
                     Logger.log?.Error($"Lost connection to OBS, did not receive heartbeat.");
                     Obs?.Disconnect();
                     HeartbeatTimerActive = false;
                     break;
                 }
+#if DEBUG
                 else
                     Logger.log?.Debug($"Last heartbeat {(DateTime.UtcNow - LastHeartbeat).TotalSeconds} sec ago.");
+#endif
             }
 
         }
-        #region Setup/Teardown
+#region Setup/Teardown
 
         private void CreateObsInstance()
         {
@@ -130,15 +107,31 @@ namespace OBSControl
 
         protected void SetEvents(OBSWebsocket obs)
         {
+            if (obs == null)
+                return;
+            RemoveEvents(obs);
             obs.Connected += OnConnect;
             obs.Disconnected += OnDisconnect;
             obs.StreamingStateChanged += Obs_StreamingStateChanged;
             obs.StreamStatus += Obs_StreamStatus;
             obs.SceneListChanged += OnObsSceneListChanged;
+            obs.Heartbeat += OnHeartbeat;
+        }
+
+        protected void RemoveEvents(OBSWebsocket obs)
+        {
+            if (obs == null)
+                return;
+            obs.Connected -= OnConnect;
+            obs.RecordingStateChanged -= OnRecordingStateChanged;
+            obs.StreamingStateChanged -= Obs_StreamingStateChanged;
+            obs.StreamStatus -= Obs_StreamStatus;
+            obs.SceneListChanged -= OnObsSceneListChanged;
+            obs.Heartbeat -= OnHeartbeat;
         }
 
         private bool wasConnected = false;
-        #region Events
+#region Events
 
         private HashSet<EventHandler<OutputState>> _recordingStateChangedHandlers = new HashSet<EventHandler<OutputState>>();
 
@@ -159,25 +152,7 @@ namespace OBSControl
             }
         }
 
-
-        private HashSet<EventHandler<Heartbeat>> _heartBeatHandlers = new HashSet<EventHandler<Heartbeat>>();
-
-        public event EventHandler<Heartbeat> Heartbeat
-        {
-            add
-            {
-                bool firstSubscriber = _heartBeatHandlers.Count == 0;
-                _heartBeatHandlers.Add(value);
-                if (firstSubscriber && _heartBeatHandlers != null && _obs != null)
-                    _obs.Heartbeat += OnHeartbeat;
-            }
-            remove
-            {
-                _heartBeatHandlers.Remove(value);
-                if (_heartBeatHandlers.Count == 0 && _obs != null)
-                    _obs.Heartbeat -= OnHeartbeat;
-            }
-        }
+        public event EventHandler<Heartbeat>? Heartbeat;
 
 
         private HashSet<EventHandler<bool>> _connectionStateChangedHandlers
@@ -205,7 +180,7 @@ namespace OBSControl
                 }
             }
         }
-        #endregion
+#endregion
         private void DestroyObsInstance(OBSWebsocket? target)
         {
             if (target == null)
@@ -217,11 +192,7 @@ namespace OBSControl
                 //target.Api.SetFilenameFormatting(DefaultFileFormat);
                 target.Disconnect();
             }
-            target.Connected -= OnConnect;
-            target.RecordingStateChanged -= OnRecordingStateChanged;
-            target.StreamingStateChanged -= Obs_StreamingStateChanged;
-            target.StreamStatus -= Obs_StreamStatus;
-            target.SceneListChanged -= OnObsSceneListChanged;
+            RemoveEvents(target);
         }
 
         public string? lastTryConnectMessage;
@@ -312,10 +283,10 @@ namespace OBSControl
             }
         }
 
-        #endregion
+#endregion
 
 
-        #region Event Handlers
+#region Event Handlers
 
         protected void OnDisconnect(object sender, EventArgs _)
         {
@@ -333,13 +304,11 @@ namespace OBSControl
 
         protected void OnHeartbeat(OBSWebsocket sender, Heartbeat heartbeat)
         {
+#if DEBUG
             Logger.log?.Debug("Heartbeat Received");
-            var handlers = _heartBeatHandlers?.ToArray() ?? Array.Empty<EventHandler<Heartbeat>>();
+#endif
             LastHeartbeat = DateTime.UtcNow;
-            foreach (var handler in handlers)
-            {
-                handler.Invoke(this, heartbeat);
-            }
+            Heartbeat?.Invoke(this, heartbeat);
         }
 
         protected void OnRecordingStateChanged(OBSWebsocket sender, OutputState outputState)
@@ -365,6 +334,8 @@ namespace OBSControl
                 await obs.SetHeartbeat(true);
                 if (!HeartbeatTimerActive)
                 {
+                    Logger.log?.Debug($"Enabling HeartBeat check.");
+                    LastHeartbeat = DateTime.UtcNow;
                     HeartbeatTimerActive = true;
                     StartCoroutine(HeartbeatCoroutine());
                 }
@@ -422,9 +393,9 @@ namespace OBSControl
             Logger.log?.Info($"TotalFrames: {status.TotalFrames.ToString()} frames");
         }
 
-        #endregion
+#endregion
 
-        #region Monobehaviour Messages
+#region Monobehaviour Messages
         /// <summary>
         /// Only ever called once, mainly used to initialize variables.
         /// </summary>
@@ -480,6 +451,6 @@ namespace OBSControl
             }
             DestroyObsInstance(Obs);
         }
-        #endregion
+#endregion
     }
 }

@@ -13,6 +13,7 @@
 """UI.dll?alias=Beat Saber_Data\Managed\UnityEngine.UI.dll
 """UIModule.dll?alias=Beat Saber_Data\Managed\UnityEngine.UIModule.dll
 """UIElementsModule.dll?alias=Beat Saber_Data\Managed\UnityEngine.UIElementsModule.dll
+""VRUI.dll?alias=Beat Saber_Data\Managed\VRUI.dll
 
 "Plugins/
 ""BSML.dll?alias=Plugins\BSML.dll
