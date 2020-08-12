@@ -67,6 +67,7 @@ namespace OBSControl.HarmonyPatches
             Button playButton = levelView.playButton;
             if (playButton != null)
             {
+                PreviousText = GetButtonText(playButton);
                 levelView.playButton.interactable = false;
                 RecordStateChangedAction = new EventHandler<OutputState>((e, OutputState) =>
                 {
@@ -84,6 +85,14 @@ namespace OBSControl.HarmonyPatches
             }
             SharedCoroutineStarter.instance.StartCoroutine(DelayedLevelStart(__instance, difficultyBeatmap, beforeSceneSwitchCallback, practice, playButton));
             return false;
+        }
+        private static string? PreviousText;
+        private static string? GetButtonText(Button button)
+        {
+            TextMeshProUGUI? tmp = button?.GetComponentInChildren<TextMeshProUGUI>();
+            if (tmp != null)
+                return tmp.text;
+            return null;
         }
 
         private static void SetButtonText(Button button, string text)
@@ -139,7 +148,8 @@ namespace OBSControl.HarmonyPatches
             StartLevel(coordinator, difficultyBeatmap, beforeSceneSwitchCallback, practice);
             if (playButton != null)
             {
-                SetButtonText(playButton, DefaultText);
+                SetButtonText(playButton, PreviousText ?? DefaultText);
+                PreviousText = null;
             }
             RecordStateChangedAction = null;
             if (RecordingController.instance != null)
