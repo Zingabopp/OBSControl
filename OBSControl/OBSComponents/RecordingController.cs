@@ -111,6 +111,16 @@ namespace OBSControl.OBSComponents
             {
                 Logger.log?.Error($"Error starting recording in OBS: {ex.Message}");
                 Logger.log?.Debug(ex);
+                try
+                {
+                    if(gameScene != null && gameScene.Length > 0)
+                        await obs.SetCurrentScene(gameScene).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Logger.log?.Error($"Error switching to scene '{gameScene}' in OBS: {e.Message}");
+                    Logger.log?.Debug(e);
+                }
             }
 #pragma warning restore CA1031 // Do not catch general exception types
         }
@@ -200,7 +210,7 @@ namespace OBSControl.OBSComponents
                 await obs.StopRecording().ConfigureAwait(false);
                 if (!stopImmediate && validOutro)
                 {
-		    await Task.Delay(100).ConfigureAwait(false); // To ensure recording has fully stopped.
+                    await Task.Delay(100).ConfigureAwait(false); // To ensure recording has fully stopped.
                     Logger.log?.Info($"Setting game OBS scene to '{gameScene}'");
                     await obs.SetCurrentScene(gameScene).ConfigureAwait(false);
                 }
@@ -332,7 +342,7 @@ namespace OBSControl.OBSComponents
                 if (GameStatus.DifficultyBeatmap != null)
                 {
                     newFileName = Utilities.FileRenaming.GetFilenameString(Plugin.config.RecordingFileFormat,
-                        new BeatmapLevelWrapper(GameStatus.DifficultyBeatmap), resultsWrapper, 
+                        new BeatmapLevelWrapper(GameStatus.DifficultyBeatmap), resultsWrapper,
                         Plugin.config.InvalidCharacterSubstitute, Plugin.config.ReplaceSpacesWith);
                 }
             }
