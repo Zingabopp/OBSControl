@@ -32,7 +32,7 @@ namespace OBSControl.UI
 
         private List<Tab> Tabs = new List<Tab>();
         protected FloatingScreen? ControlScreen;
-        protected ControlScreen? ControlScreen_Main;
+        protected ControlScreen? ControlScreenView;
 
         protected ControlScreenCoordinator()
         {
@@ -40,6 +40,12 @@ namespace OBSControl.UI
             BSEvents.gameSceneActive += OnGameSceneActive;
             BSEvents.menuSceneActive += OnMenuSceneActive;
 
+        }
+
+        public void SetControlScreenLock(bool locked)
+        {
+            if (ControlScreen != null)
+                ControlScreen.ShowHandle = !locked;
         }
 
         private void OnMenuSceneActive()
@@ -58,7 +64,7 @@ namespace OBSControl.UI
             if (ControlScreen != null && screenMover != null)
             {
                 VRPointer pointer;
-                if(isGameScene)
+                if (isGameScene)
                     pointer = Resources.FindObjectsOfTypeAll<VRPointer>().LastOrDefault();
                 else
                     pointer = Resources.FindObjectsOfTypeAll<VRPointer>().FirstOrDefault();
@@ -96,8 +102,9 @@ namespace OBSControl.UI
             if (ControlScreen == null)
             {
                 ControlScreen = CreateFloatingScreen();
-                ControlScreen_Main = BeatSaberUI.CreateViewController<ControlScreen>();
-                ControlScreen.SetRootViewController(ControlScreen_Main, false);
+                ControlScreenView = BeatSaberUI.CreateViewController<ControlScreen>();
+                ControlScreenView.ParentCoordinator = this;
+                ControlScreen.SetRootViewController(ControlScreenView, false);
                 SetScreenTransform(ControlScreen, Plugin.config);
                 Logger.log?.Critical($"Control screen created: {ControlScreen != null}");
             }
@@ -125,7 +132,7 @@ namespace OBSControl.UI
             if (!config.ShowScreenHandle)
                 screen.ShowHandle = false;
 
-            
+
             GameObject.DontDestroyOnLoad(screen.gameObject);
             return screen;
         }
@@ -161,5 +168,5 @@ namespace OBSControl.UI
         }
 
 
-        }
     }
+}

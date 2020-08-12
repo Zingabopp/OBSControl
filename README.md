@@ -68,3 +68,6 @@ Availble Substitutions:
 |s|ModifiedScore||Score after modifiers (your actual score).|
 |R|Rank||Score rank (`SSS`/`SS`/`S`/`A`/`B`/`C`/`D`/`E`).|
 |%|ScorePercent|| Score percent to two decimal places.|
+
+## Credits
+* Icon images from [Google's Material Design Icons](https://github.com/google/material-design-icons)

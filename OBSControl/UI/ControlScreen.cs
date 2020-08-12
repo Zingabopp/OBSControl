@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Threading;
 using System.Web.UI;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.ViewControllers;
+using HMUI;
 using OBSControl.OBSComponents;
 using OBSControl.UI.Formatters;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace OBSControl.UI
 {
@@ -14,16 +17,66 @@ namespace OBSControl.UI
     public partial class ControlScreen : BSMLAutomaticViewController
     {
         private string connectionState;
+        internal ControlScreenCoordinator ParentCoordinator;
         public ControlScreen()
         {
-            OBSController.instance.ConnectionStateChanged += OnConnectionStateChanged;
-            OBSController.instance.Heartbeat += Instance_Heartbeat;
-            OBSController.instance.RecordingStateChanged += OnRecordingStateChanged;
             SetConnectionState(OBSController.instance.IsConnected);
             Logger.log.Warn($"Created Main: {this.ContentFilePath}");
+            CurrentScene = OBSController.instance.CurrentScene;
         }
 
-        private void Instance_Heartbeat(object sender, OBSWebsocketDotNet.Types.Heartbeat e)
+        protected void SetEvents(OBSController obs)
+        {
+            if (obs == null) return;
+            RemoveEvents(obs);
+            obs.ConnectionStateChanged += OnConnectionStateChanged;
+            obs.Heartbeat += OnHeartbeat;
+            obs.SceneChanged += OnSceneChange;
+            obs.RecordingStateChanged += OnRecordingStateChanged;
+            obs.StreamingStateChanged += OnStreamingStateChanged;
+            obs.StreamStatus += OnStreamStatus;
+        }
+
+        protected void RemoveEvents(OBSController obs)
+        {
+            if (obs == null) return;
+            obs.ConnectionStateChanged -= OnConnectionStateChanged;
+            obs.Heartbeat -= OnHeartbeat;
+            obs.SceneChanged -= OnSceneChange;
+            obs.RecordingStateChanged -= OnRecordingStateChanged;
+            obs.StreamingStateChanged -= OnStreamingStateChanged;
+            obs.StreamStatus -= OnStreamStatus;
+        }
+
+        protected override void DidActivate(bool firstActivation, ActivationType type)
+        {
+            SetEvents(OBSController.instance);
+            base.DidActivate(firstActivation, type);
+        }
+
+        protected override void DidDeactivate(DeactivationType deactivationType)
+        {
+            RemoveEvents(OBSController.instance);
+            base.DidDeactivate(deactivationType);
+        }
+
+        protected override void OnDestroy()
+        {
+            RemoveEvents(OBSController.instance);
+            base.OnDestroy();
+        }
+
+        private void OnConnectionStateChanged(object sender, bool e)
+        {
+            SetConnectionState(e);
+        }
+
+        private void OnSceneChange(object sender, string sceneName)
+        {
+            CurrentScene = sceneName;
+        }
+
+        private void OnHeartbeat(object sender, OBSWebsocketDotNet.Types.Heartbeat e)
         {
             IsRecording = e.Recording;
             IsStreaming = e.Streaming;
@@ -32,11 +85,6 @@ namespace OBSControl.UI
             OutputTotalFrames = e.Stats.OutputTotalFrames;
             OutputSkippedFrames = e.Stats.OutputSkippedFrames;
             FreeDiskSpace = e.Stats.FreeDiskSpace;
-        }
-
-        private void OnConnectionStateChanged(object sender, bool e)
-        {
-            SetConnectionState(e);
         }
 
 
@@ -48,6 +96,42 @@ namespace OBSControl.UI
         #region Properties
         [UIValue(nameof(BoolFormatter))]
         public BoolFormatter BoolFormatter = new BoolFormatter();
+
+        private bool _windowExpanded;
+
+        [UIValue(nameof(WindowExpanded))]
+        public bool WindowExpanded
+        {
+            get { return _windowExpanded; }
+            set
+            {
+                if (_windowExpanded == value) return;
+                _windowExpanded = value;
+                NotifyPropertyChanged();
+                NotifyPropertyChanged(nameof(WindowCollapsed));
+            }
+        }
+
+        [UIValue(nameof(WindowCollapsed))]
+        public bool WindowCollapsed => !WindowExpanded;
+
+        private bool _windowLocked;
+
+        [UIValue(nameof(WindowLocked))]
+        public bool WindowLocked
+        {
+            get { return _windowLocked; }
+            set
+            {
+                if (_windowLocked == value) return;
+                _windowLocked = value;
+                NotifyPropertyChanged();
+                NotifyPropertyChanged(nameof(WindowUnlocked));
+                ParentCoordinator.SetControlScreenLock(value);
+            }
+        }
+        [UIValue(nameof(WindowUnlocked))]
+        public bool WindowUnlocked => !_windowLocked;
 
         private bool _isConnected;
         [UIValue(nameof(IsConnected))]
@@ -155,6 +239,7 @@ namespace OBSControl.UI
                 if (_outputTotalFrames == value)
                     return;
                 _outputTotalFrames = value;
+                RecordingOutputFrames = value - StreamingOutputFrames;
                 NotifyPropertyChanged();
             }
         }
@@ -174,6 +259,20 @@ namespace OBSControl.UI
             }
         }
 
+        private string _currentScene;
+        [UIValue(nameof(CurrentScene))]
+        public string CurrentScene
+        {
+            get { return _currentScene; }
+            set
+            {
+                if (_currentScene == value) return;
+                _currentScene = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+
         #endregion
 
         #region Actions
@@ -189,7 +288,7 @@ namespace OBSControl.UI
                     if (IsConnected)
                         controller.Obs.Disconnect();
                     else
-                        await controller.TryConnect();
+                        await controller.TryConnect(CancellationToken.None);
                 }
                 catch (Exception ex)
                 {
@@ -203,6 +302,29 @@ namespace OBSControl.UI
             }
         }
 
+        [UIAction(nameof(LockWindow))]
+        public void LockWindow()
+        {
+            WindowLocked = true;
+        }
+
+        [UIAction(nameof(UnlockWindow))]
+        public void UnlockWindow()
+        {
+            WindowLocked = false;
+        }
+
+        [UIAction(nameof(ExpandWindow))]
+        public void ExpandWindow()
+        {
+            WindowExpanded = true;
+        }
+
+        [UIAction(nameof(CollapseWindow))]
+        public void CollapseWindow()
+        {
+            WindowExpanded = false;
+        }
         #endregion
 
         public void SetConnectionState(bool isConnected)
@@ -214,5 +336,6 @@ namespace OBSControl.UI
                 false => "Disconnected"
             };
         }
+
     }
 }

@@ -51,21 +51,6 @@ namespace OBSControl.UI
             set => IsRecording = !value;
         }
 
-        private bool _isStreaming;
-
-        [UIValue(nameof(IsStreaming))]
-        public bool IsStreaming
-        {
-            get { return _isStreaming; }
-            set
-            {
-                if (_isStreaming == value)
-                    return;
-                _isStreaming = value;
-                NotifyPropertyChanged();
-            }
-        }
-
         private double _freeDiskSpace;
         [UIValue(nameof(FreeDiskSpace))]
         public double FreeDiskSpace
@@ -80,6 +65,20 @@ namespace OBSControl.UI
             }
         }
 
+        private int _recordingOutputFrames;
+
+        public int RecordingOutputFrames
+        {
+            get { return _recordingOutputFrames; }
+            set
+            {
+                if (_recordingOutputFrames == value) return;
+                _recordingOutputFrames = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+
         private bool _recordButtonInteractable = true;
         [UIValue(nameof(RecordButtonInteractable))]
         public bool RecordButtonInteractable
@@ -89,8 +88,9 @@ namespace OBSControl.UI
             {
                 if (_recordButtonInteractable == value) return;
                 _recordButtonInteractable = value;
-
-                Logger.log.Info($"Record Interactable Changed: {value}");
+#if DEBUG
+                Logger.log?.Debug($"Record Interactable Changed: {value}");
+#endif
                 NotifyPropertyChanged();
             }
         }
@@ -99,15 +99,20 @@ namespace OBSControl.UI
         private WaitForSeconds RecordInteractableDelay = new WaitForSeconds(2f);
         protected IEnumerator<WaitForSeconds> DelayedRecordInteractableEnable()
         {
+            if (RecordInteractableDelay == null)
+            {
+                Logger.log?.Warn("RecordInteractableDelay was null.");
+                RecordInteractableDelay = new WaitForSeconds(2f);
+            }
             if (CoroutineRunning) yield break;
             CoroutineRunning = true;
             yield return RecordInteractableDelay;
             RecordButtonInteractable = true;
             CoroutineRunning = false;
         }
-        #endregion
+#endregion
 
-        #region Actions
+#region Actions
 
         [UIAction(nameof(StartRecording))]
         public async void StartRecording()
@@ -142,7 +147,7 @@ namespace OBSControl.UI
             if (GetOutputStateIsSettled(RecordingController.instance.OutputState))
                 StartCoroutine(DelayedRecordInteractableEnable());
         }
-        #endregion
+#endregion
 
         public static bool GetOutputStateIsSettled(OBSWebsocketDotNet.Types.OutputState state)
         {
@@ -158,7 +163,7 @@ namespace OBSControl.UI
             };
         }
 
-        #region Event Handlers
+#region Event Handlers
         private void OnRecordingStateChanged(object sender, OBSWebsocketDotNet.Types.OutputState e)
         {
             HMMainThreadDispatcher.instance.Enqueue(() =>
@@ -170,6 +175,6 @@ namespace OBSControl.UI
                     RecordButtonInteractable = false;
             });
         }
-        #endregion
+#endregion
     }
 }

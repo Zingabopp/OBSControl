@@ -18,7 +18,18 @@ namespace OBSControl
         public void Log(Exception ex, OBSLogLevel level)
         {
             var ipaLevel = level.ToIPALogLevel();
-            Logger.log?.Log(ipaLevel, "Exception in OBSWebSocket:");
+            if(ex is System.Net.Sockets.SocketException sockEx)
+            {
+                switch (sockEx.SocketErrorCode)
+                {
+                    case System.Net.Sockets.SocketError.ConnectionRefused: 
+                        // Likely OBS/OBSWebsocket not running, don't log.
+                        return;
+                    default:
+                        break;
+                }
+            }
+            Logger.log?.Log(ipaLevel, "[OBSWebSocket] Exception in OBSWebSocket:");
             Logger.log?.Log(ipaLevel, ex);
         }
     }

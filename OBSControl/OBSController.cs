@@ -6,12 +6,9 @@ using UnityEngine;
 using OBSWebsocketDotNet;
 using OBSWebsocketDotNet.Types;
 using System.Threading.Tasks;
-using System.Diagnostics;
-using System.IO;
-using System.Globalization;
-using BeatSaberMarkupLanguage.FloatingScreen;
-using OBSControl.UI;
-using System.Timers;
+using System.Net.Sockets;
+using System.Threading;
+
 #nullable enable
 namespace OBSControl
 {
@@ -22,6 +19,7 @@ namespace OBSControl
 	public class OBSController
         : MonoBehaviour
     {
+        private const string Error_OBSWebSocketNotRunning = "No connection could be made because the target machine actively refused it.";
         private OBSWebsocket? _obs;
         public OBSWebsocket? Obs
         {
@@ -88,13 +86,31 @@ namespace OBSControl
                     break;
                 }
 #if DEBUG
-                else
-                    Logger.log?.Debug($"Last heartbeat {(DateTime.UtcNow - LastHeartbeat).TotalSeconds} sec ago.");
+                //else
+                //    Logger.log?.Debug($"Last heartbeat {(DateTime.UtcNow - LastHeartbeat).TotalSeconds} sec ago.");
 #endif
             }
 
         }
-#region Setup/Teardown
+
+        #region OBS Properties
+        private string? _currentScene;
+
+        public string? CurrentScene
+        {
+            get { return _currentScene; }
+            set
+            {
+                if (_currentScene == value) return;
+                _currentScene = value;
+                if (value != null)
+                    SceneChanged?.Invoke(this, value);
+            }
+        }
+
+        #endregion
+
+        #region Setup/Teardown
 
         private void CreateObsInstance()
         {
@@ -105,82 +121,8 @@ namespace OBSControl
             Logger.log?.Debug("CreateObsInstance finished");
         }
 
-        protected void SetEvents(OBSWebsocket obs)
-        {
-            if (obs == null)
-                return;
-            RemoveEvents(obs);
-            obs.Connected += OnConnect;
-            obs.Disconnected += OnDisconnect;
-            obs.StreamingStateChanged += Obs_StreamingStateChanged;
-            obs.StreamStatus += Obs_StreamStatus;
-            obs.SceneListChanged += OnObsSceneListChanged;
-            obs.Heartbeat += OnHeartbeat;
-        }
-
-        protected void RemoveEvents(OBSWebsocket obs)
-        {
-            if (obs == null)
-                return;
-            obs.Connected -= OnConnect;
-            obs.RecordingStateChanged -= OnRecordingStateChanged;
-            obs.StreamingStateChanged -= Obs_StreamingStateChanged;
-            obs.StreamStatus -= Obs_StreamStatus;
-            obs.SceneListChanged -= OnObsSceneListChanged;
-            obs.Heartbeat -= OnHeartbeat;
-        }
-
         private bool wasConnected = false;
-#region Events
 
-        private HashSet<EventHandler<OutputState>> _recordingStateChangedHandlers = new HashSet<EventHandler<OutputState>>();
-
-        public event EventHandler<OutputState> RecordingStateChanged
-        {
-            add
-            {
-                bool firstSubscriber = _recordingStateChangedHandlers.Count == 0;
-                _recordingStateChangedHandlers.Add(value);
-                if (firstSubscriber && _recordingStateChangedHandlers != null && _obs != null)
-                    _obs.RecordingStateChanged += OnRecordingStateChanged;
-            }
-            remove
-            {
-                _recordingStateChangedHandlers.Remove(value);
-                if (_recordingStateChangedHandlers.Count == 0 && _obs != null)
-                    _obs.RecordingStateChanged -= OnRecordingStateChanged;
-            }
-        }
-
-        public event EventHandler<Heartbeat>? Heartbeat;
-
-
-        private HashSet<EventHandler<bool>> _connectionStateChangedHandlers
-            = new HashSet<EventHandler<bool>>();
-
-        public event EventHandler<bool> ConnectionStateChanged
-        {
-            add
-            {
-                bool firstSubscriber = _connectionStateChangedHandlers.Count == 0;
-                _connectionStateChangedHandlers.Add(value);
-                if (firstSubscriber && _connectionStateChangedHandlers != null && _obs != null)
-                {
-                    _obs.Connected += OnConnect;
-                    _obs.Disconnected += OnDisconnect;
-                }
-            }
-            remove
-            {
-                _connectionStateChangedHandlers.Remove(value);
-                if (_connectionStateChangedHandlers.Count == 0 && _obs != null)
-                {
-                    _obs.Connected -= OnConnect;
-                    _obs.Disconnected -= OnDisconnect;
-                }
-            }
-        }
-#endregion
         private void DestroyObsInstance(OBSWebsocket? target)
         {
             if (target == null)
@@ -196,8 +138,13 @@ namespace OBSControl
         }
 
         public string? lastTryConnectMessage;
-        public async Task<bool> TryConnect()
+        public enum TryConnectResponse
         {
+            Connected, Retry, NoRetry
+        }
+        public async Task<TryConnectResponse> TryConnect(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
             string message;
 
             if (Obs != null && !Obs.IsConnected)
@@ -220,18 +167,43 @@ namespace OBSControl
                         Logger.log?.Info(message);
                         lastTryConnectMessage = message;
                     }
-                    return false;
+                    return TryConnectResponse.NoRetry;
+                }
+                catch (SocketErrorResponseException ex)
+                {
+                    bool logException = true;
+                    IPA.Logging.Logger.Level logLevel = IPA.Logging.Logger.Level.Info;
+                    TryConnectResponse response = TryConnectResponse.Retry;
+                    switch (ex.SocketErrorCode)
+                    {
+                        case SocketError.ConnectionRefused:
+                            message = $"Failed to connect to server {Config.ServerAddress}, OBSWebsocket not running?";
+                            logLevel = IPA.Logging.Logger.Level.Warning;
+                            logException = false;
+                            response = TryConnectResponse.Retry;
+                            break;
+                        default:
+                            message = $"Failed to connect to server {Config.ServerAddress}: {ex.Message}.";
+                            break;
+                    }
+                    Logger.log?.Log(logLevel, message);
+                    if (logException && message != lastTryConnectMessage)
+                    {
+                        Logger.log?.Debug(ex);
+                        lastTryConnectMessage = message;
+                    }
+                    return response;
                 }
                 catch (ErrorResponseException ex)
                 {
                     message = $"Failed to connect to server {Config.ServerAddress}: {ex.Message}.";
+                    Logger.log?.Info(message);
                     if (message != lastTryConnectMessage)
                     {
-                        Logger.log?.Info(message);
+                        Logger.log?.Debug(ex);
                         lastTryConnectMessage = message;
                     }
-                    Logger.log?.Debug(ex);
-                    return false;
+                    return TryConnectResponse.Retry;
                 }
                 catch (Exception ex)
                 {
@@ -242,17 +214,20 @@ namespace OBSControl
                         Logger.log?.Debug(ex);
                         lastTryConnectMessage = message;
                     }
-                    return false;
+                    return TryConnectResponse.Retry;
                 }
                 if (Obs.IsConnected)
                     Logger.log?.Info($"Connected to OBS @ {Config.ServerAddress}");
             }
             else
                 Logger.log?.Info("TryConnect: OBS is already connected.");
-            return Obs?.IsConnected ?? false;
+            if (Obs == null)
+                return TryConnectResponse.Retry;
+            else
+                return Obs.IsConnected ? TryConnectResponse.Connected : TryConnectResponse.Retry;
         }
 
-        private async Task RepeatTryConnect()
+        private async Task RepeatTryConnect(CancellationToken cancellationToken)
         {
             OBSWebsocket? obs = Obs;
             if (obs == null)
@@ -267,14 +242,27 @@ namespace OBSControl
                     Logger.log?.Error("The ServerAddress in the config is null or empty. Unable to connect to OBS.");
                     return;
                 }
+                int connectAttempts = 0;
                 Logger.log?.Info($"Attempting to connect to {Config.ServerAddress}");
-                while (!(await TryConnect().ConfigureAwait(false)))
+                TryConnectResponse connectResponse = TryConnectResponse.Retry;
+                while (connectResponse == TryConnectResponse.Retry && connectAttempts < 5)
                 {
-                    await Task.Delay(5000).ConfigureAwait(false);
+                    if (connectAttempts > 0)
+                        await Task.Delay(5000, cancellationToken).ConfigureAwait(false);
+                    connectAttempts++;
+                    connectResponse = await TryConnect(cancellationToken).ConfigureAwait(false);
                 }
-
-                Logger.log?.Info($"OBS {(await obs.GetVersion().ConfigureAwait(false)).OBSStudioVersion} is connected.");
-                Logger.log?.Info($"OnConnectTriggered: {OnConnectTriggered}");
+                if (obs.IsConnected)
+                {
+                    Logger.log?.Info($"OBS {(await obs.GetVersion().ConfigureAwait(false)).OBSStudioVersion} is connected.");
+                    Logger.log?.Info($"OnConnectTriggered: {OnConnectTriggered}");
+                }
+                else
+                    Logger.log?.Warn($"OBS is not connected, automatic connect aborted after {connectAttempts} {(connectAttempts == 1 ? "attempt" : "attempts")}.");
+            }
+            catch (OperationCanceledException)
+            {
+                Logger.log?.Warn($"OBS connection aborted.");
             }
             catch (Exception ex)
             {
@@ -283,54 +271,64 @@ namespace OBSControl
             }
         }
 
-#endregion
-
-
-#region Event Handlers
-
-        protected void OnDisconnect(object sender, EventArgs _)
+        protected void SetEvents(OBSWebsocket obs)
         {
-            StopCoroutine(HeartbeatCoroutine());
-            if (!wasConnected)
+            if (obs == null)
                 return;
-            Logger.log?.Warn("Disconnected from OBS.");
-            wasConnected = false;
-            var handlers = _connectionStateChangedHandlers?.ToArray() ?? Array.Empty<EventHandler<bool>>();
-            foreach (var handler in handlers)
-            {
-                handler.Invoke(this, false);
-            }
+            RemoveEvents(obs);
+            obs.Connected += OnConnect;
+            obs.Disconnected += OnDisconnect;
+
+            obs.RecordingStateChanged += OnRecordingStateChanged;
+            obs.StreamingStateChanged += OnStreamingStateChanged;
+            obs.StreamStatus += OnStreamStatus;
+            obs.SceneListChanged += OnObsSceneListChanged;
+            obs.Heartbeat += OnHeartbeat;
+            obs.SceneChanged += OnSceneChanged;
         }
 
-        protected void OnHeartbeat(OBSWebsocket sender, Heartbeat heartbeat)
+        protected void RemoveEvents(OBSWebsocket obs)
         {
-#if DEBUG
-            Logger.log?.Debug("Heartbeat Received");
-#endif
-            LastHeartbeat = DateTime.UtcNow;
-            Heartbeat?.Invoke(this, heartbeat);
-        }
+            if (obs == null)
+                return;
+            obs.Connected -= OnConnect;
+            obs.Disconnected -= OnDisconnect;
 
-        protected void OnRecordingStateChanged(OBSWebsocket sender, OutputState outputState)
-        {
-            var handlers = _recordingStateChangedHandlers?.ToArray() ?? Array.Empty<EventHandler<OutputState>>();
-            foreach (var handler in handlers)
-            {
-                handler.Invoke(this, outputState);
-            }
+            obs.Heartbeat -= OnHeartbeat;
+            obs.RecordingStateChanged -= OnRecordingStateChanged;
+            obs.StreamingStateChanged -= OnStreamingStateChanged;
+            obs.StreamStatus -= OnStreamStatus;
+            obs.SceneListChanged -= OnObsSceneListChanged;
+            obs.SceneChanged -= OnSceneChanged;
         }
+        #endregion
+        #region Events
+        public event EventHandler<bool>? ConnectionStateChanged;
+        public event EventHandler<Heartbeat>? Heartbeat;
+        public event EventHandler<OutputState>? RecordingStateChanged;
+        public event EventHandler<OutputState>? StreamingStateChanged;
+        public event EventHandler<StreamStatus>? StreamStatus;
 
+        public event EventHandler<string>? SceneChanged;
+        #endregion
+
+
+
+        #region Event Handlers
         private async void OnConnect(object sender, EventArgs e)
         {
             OBSWebsocket? obs = _obs;
-            if (obs == null) return;
+            if (obs == null)
+            {
+                Logger.log?.Error($"OnConnect was triggered, but OBSController._obs is null (this shouldn't happen). OBSControl may be broken :'(");
+                return;
+            }
             OnConnectTriggered = true;
             wasConnected = true;
             Logger.log?.Info($"OnConnect: Connected to OBS.");
             try
             {
 
-                string[] availableScenes = (await obs.GetSceneList().ConfigureAwait(false)).Scenes.Select(s => s.Name).ToArray();
                 await obs.SetHeartbeat(true);
                 if (!HeartbeatTimerActive)
                 {
@@ -339,23 +337,58 @@ namespace OBSControl
                     HeartbeatTimerActive = true;
                     StartCoroutine(HeartbeatCoroutine());
                 }
+                string[] availableScenes;
+                try
+                {
+                    availableScenes = (await obs.GetSceneList().ConfigureAwait(false)).Scenes.Select(s => s.Name).ToArray();
+                    CurrentScene = (await obs.GetCurrentScene().ConfigureAwait(false)).Name;
+                }
+                catch (Exception ex)
+                {
+                    availableScenes = Array.Empty<string>();
+                    Logger.log?.Error($"Error getting scene list: {ex.Message}");
+                    Logger.log?.Debug(ex);
+                }
                 HMMainThreadDispatcher.instance.Enqueue(() =>
                 {
-                    Plugin.config.UpdateSceneOptions(availableScenes);
+                    try
+                    {
+                        Plugin.config.UpdateSceneOptions(availableScenes);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.log?.Error($"Error setting scene list: {ex.Message}");
+                        Logger.log?.Debug(ex);
+                    }
                 });
-
-                var handlers = _connectionStateChangedHandlers?.ToArray() ?? Array.Empty<EventHandler<bool>>();
-                foreach (var handler in handlers)
-                {
-                    handler.Invoke(this, true);
-                }
+                ConnectionStateChanged?.Invoke(this, true);
             }
             catch (Exception ex)
             {
-                Logger.log?.Error($"Error getting scene list: {ex.Message}");
+                Logger.log?.Error($"Error in OBSController.OnConnect: {ex.Message}");
                 Logger.log?.Debug(ex);
             }
         }
+        protected void OnDisconnect(object sender, EventArgs _)
+        {
+            StopCoroutine(HeartbeatCoroutine());
+            if (!wasConnected)
+                return;
+            Logger.log?.Warn("Disconnected from OBS.");
+            wasConnected = false;
+            ConnectionStateChanged?.Invoke(this, false);
+        }
+
+        protected void OnHeartbeat(OBSWebsocket sender, Heartbeat heartbeat)
+        {
+#if DEBUG
+           // Logger.log?.Debug("Heartbeat Received");
+#endif
+            LastHeartbeat = DateTime.UtcNow;
+            Heartbeat?.Invoke(this, heartbeat);
+        }
+
+        protected void OnRecordingStateChanged(OBSWebsocket sender, OutputState outputState) => RecordingStateChanged?.Invoke(this, outputState);
 
         private async void OnObsSceneListChanged(object sender, EventArgs e)
         {
@@ -377,25 +410,29 @@ namespace OBSControl
             }
         }
 
-        private void Obs_StreamingStateChanged(OBSWebsocket sender, OutputState type)
-        {
-            Logger.log?.Info($"Streaming State Changed: {type.ToString()}");
-        }
+        private void OnStreamingStateChanged(OBSWebsocket sender, OutputState outputState) => StreamingStateChanged?.Invoke(this, outputState);
 
-
-        private void Obs_StreamStatus(OBSWebsocket sender, StreamStatus status)
+        private void OnStreamStatus(OBSWebsocket sender, StreamStatus status)
         {
+#if DEBUG
             Logger.log?.Info($"Stream Time: {status.TotalStreamTime.ToString()} sec");
             Logger.log?.Info($"Bitrate: {(status.KbitsPerSec / 1024f).ToString("N2")} Mbps");
             Logger.log?.Info($"FPS: {status.FPS.ToString()} FPS");
             Logger.log?.Info($"Strain: {(status.Strain * 100).ToString()} %");
             Logger.log?.Info($"DroppedFrames: {status.DroppedFrames.ToString()} frames");
             Logger.log?.Info($"TotalFrames: {status.TotalFrames.ToString()} frames");
+#endif
+            StreamStatus?.Invoke(this, status);
         }
 
-#endregion
+        private void OnSceneChanged(OBSWebsocket sender, string newSceneName)
+        {
+            CurrentScene = newSceneName;
+        }
 
-#region Monobehaviour Messages
+        #endregion
+
+        #region Monobehaviour Messages
         /// <summary>
         /// Only ever called once, mainly used to initialize variables.
         /// </summary>
@@ -419,7 +456,7 @@ namespace OBSControl
         {
             Logger.log?.Debug("OBSController Start()");
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-            RepeatTryConnect();
+            RepeatTryConnect(CancellationToken.None);
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         }
 
@@ -451,6 +488,6 @@ namespace OBSControl
             }
             DestroyObsInstance(Obs);
         }
-#endregion
+        #endregion
     }
 }

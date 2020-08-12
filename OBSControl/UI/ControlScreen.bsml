@@ -1,27 +1,41 @@
-﻿<bg background="round-rect-panel"  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
+﻿<bg background="round-rect-panel" background-color="#FFFFFF00"  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
   <bg>
-    <macro.define id='LabelWidth' value='35' />
+    <macro.define id='LabelWidth' value='32' />
     <macro.define id='ValueWidth' value='25' />
+    <macro.define id='ValueDoubleWidth' value='50' />
     <horizontal anchor-max-y='1' anchor-min-y='.855' anchor-max-x='.99' anchor-min-x='.04'
               min-width='95' preferred-height='7' child-expand-height='true' child-expand-width='false'
               background='round-rect-panel' background-color='#00000055' >
-      <tab-selector id='TabSelector' tab-tag='new-tag'  />
+      <horizontal child-align='MiddleLeft' preferred-height='7' preferred-width='80' background='round-rect-panel' child-control-width='true'
+                  child-control-height='true' child-expand-height='false' child-expand-width='false' >
+        <tab-selector id='TabSelector' tab-tag='new-tag' />
+      </horizontal>
+      <horizontal child-align='MiddleRight' preferred-height='7' min-width='15' child-control-width='true' 
+                  child-control-height='true' child-expand-height='false' child-expand-width='false' >
+        <clickable-image on-click='UnlockWindow' source='OBSControl.Icons.lock.png' active='~WindowLocked' preferred-height='6' preferred-width='10' preserve-aspect='true' />
+        <clickable-image on-click='LockWindow' source='OBSControl.Icons.lock_open.png' active='~WindowUnlocked' preferred-height='6' preferred-width='10' preserve-aspect='true' />
+        <!--
+        <clickable-image source='OBSControl.Icons.unfold_less.png' active='~WindowCollapsed' preferred-height='6' preferred-width='8' preserve-aspect='true' />
+        <clickable-image source='OBSControl.Icons.unfold_more.png' active='~WindowExpanded' preferred-height='6' preferred-width='8' preserve-aspect='true' />
+        -->
+      </horizontal>
     </horizontal>
     <vertical anchor-max-y='0.85' anchor-min-y='0' anchor-max-x='1' anchor-min-x='.03'
               min-width='95' child-align='UpperLeft' child-expand-height='true'
               background='round-rect-panel' >
+
       <tab id='MainTab' tags='new-tag' tab-name='Main'
                background='round-rect-panel' >
-        <vertical  child-align='UpperLeft' pad-left='1' pad-right='1' child-expand-height='false'
+        <vertical  child-align='UpperLeft' child-expand-height='false'
                    min-width='95' preferred-width='95' horizontal-fit='PreferredSize'
-                   background='round-rect-panel'
+                   background='round-rect-panel'  pad-left='3' pad-right='-3'
                    child-control-height='false' child-control-width='true'>
           <horizontal background='round-rect-panel' preferred-height='6' >
             <horizontal min-width='50' child-expand-width='false' child-control-width='false'
                         child-align='MiddleLeft'>
               <text text='Connection State:'  align='MidlineLeft' size-delta-x='~LabelWidth' />
               <text data='IsConnected' data-formatter='BoolFormatter' data-format='Connected|Disconnected' color='~ConnectedTextColor'
-                    align='MidlineLeft' size-delta-x='~ValueWidth' />
+                    align='MidlineLeft' size-delta-x='18' />
             </horizontal>
             <button text='~ConnectButtonText' interactable='~ConnectButtonInteractable' on-click='ConnectButtonClicked'
                     align='Midline' preferred-height='5' min-width='34' preferred-width='34' />
@@ -36,8 +50,88 @@
           <horizontal background='round-rect-panel'
                       preferred-height='6' min-width='50'
                       child-control-width='false' child-expand-width='false'>
+            <text text='Streaming State:'  align='MidlineLeft' size-delta-x='~LabelWidth' />
+            <text data='IsStreaming' data-formatter='BoolFormatter' data-format='Recording|Stopped' color='~StreamingTextColor'
+                  align='MidlineLeft' size-delta-x='~ValueWidth' />
+          </horizontal>
+          <horizontal background='round-rect-panel'
+                      preferred-height='6' min-width='50'
+                      child-control-width='false' child-expand-width='false'>
+            <text text='Current Scene:'  align='MidlineLeft' size-delta-x='~LabelWidth' />
+            <text data='CurrentScene' overflow-mode='Ellipsis' rich-text='false'
+                  align='MidlineLeft' size-delta-x='~ValueDoubleWidth' />
+          </horizontal>
+          <horizontal background='round-rect-panel'
+                      preferred-height='6' min-width='50'
+                      child-control-width='false' child-expand-width='false'>
             <text text='Render Missed Frames:'  align='MidlineLeft' size-delta-x='~LabelWidth' />
             <text data='RenderMissedFrames' data-format='#,0 Frames' align='MidlineLeft' size-delta-x='~ValueWidth' />
+          </horizontal>
+        </vertical>
+      </tab>
+      
+      <tab id='StreamingTab' tags='new-tag' tab-name='Streaming'
+                   background='round-rect-panel'>
+        <vertical  child-align='UpperLeft' child-expand-height='false'
+                     min-width='95' preferred-width='95' horizontal-fit='PreferredSize'
+                     background='round-rect-panel'  pad-left='3' pad-right='-3'
+                     child-control-height='false' child-control-width='true'>
+          <horizontal background='round-rect-panel'
+                      preferred-height='6'
+                      child-control-width='false' child-expand-width='false'>
+            <text text='Streaming State:' font-size='4'  align='MidlineLeft' size-delta-x='~LabelWidth' />
+            <text data='IsStreaming' data-formatter='BoolFormatter' data-format='Streaming|Stopped' color='~StreamingTextColor'
+                  align='MidlineLeft' size-delta-x='~ValueWidth' />
+            <button text='Start' active='~IsNotStreaming' interactable='~StreamButtonInteractable'
+                    on-click='StartStreaming' preferred-height='5' min-width='30' preferred-width='30'/>
+            <button text='Stop' active='~IsStreaming' interactable='~StreamButtonInteractable'
+                    on-click='StopStreaming' preferred-height='5' min-width='30' preferred-width='30'/>
+          </horizontal>
+          <horizontal background='round-rect-panel'
+                      preferred-height='6'
+                      child-control-width='false' child-expand-width='false'>
+            <text text='Stream Time:'  align='MidlineLeft' size-delta-x='~LabelWidth' />
+            <text data='StreamTime' data-format='%h\h\:%m\m\:%s\s' data-formatter='TimeFormatter' overflow-mode='Overflow' align='MidlineLeft' size-delta-x='~ValueWidth' />
+          </horizontal>
+          <horizontal background='round-rect-panel'
+                      preferred-height='6'
+                      child-control-width='false' child-expand-width='false'>
+            <text text='Bitrate:'  align='MidlineLeft' size-delta-x='~LabelWidth' />
+            <text data='Bitrate' data-format='#,0.00 Mbps' overflow-mode='Overflow' align='MidlineLeft' size-delta-x='~ValueWidth' />
+          </horizontal>
+          <horizontal background='round-rect-panel'
+                      preferred-height='6'
+                      child-control-width='false' child-expand-width='false'>
+            <text text='Strain:'  align='MidlineLeft' size-delta-x='~LabelWidth' />
+            <text data='Strain' data-format='P' overflow-mode='Overflow' align='MidlineLeft' size-delta-x='~ValueWidth' />
+          </horizontal>
+          <horizontal background='round-rect-panel'
+                      preferred-height='6' min-width='50'
+                      child-control-width='false' child-expand-width='false'>
+            <text text='Current Scene:'  align='MidlineLeft' size-delta-x='~LabelWidth' />
+            <text data='CurrentScene' overflow-mode='Ellipsis' rich-text='false'
+                  align='MidlineLeft' size-delta-x='~ValueDoubleWidth' />
+          </horizontal>
+          <horizontal background='round-rect-panel' preferred-width='95'
+                          preferred-height='6' horizontal-fit='PreferredSize'
+                      child-expand-width='true' child-control-width='false' >
+            <horizontal background='round-rect-panel'
+              preferred-height='6'  child-expand-width='true' child-control-width='false'
+                        min-width='42' horizontal-fit='MinSize'>
+              <text text='Output Total Frames:'  align='MidlineLeft' size-delta-x='28' />
+              <text data='StreamingOutputFrames' data-format='#,0' align='MidlineLeft' size-delta-x='17' />
+            </horizontal>
+            <text text=' | ' size-delta-x='2' overflow-mode='Truncate'/>
+            <horizontal background='round-rect-panel'
+                         child-expand-width='true' child-control-width='false'
+                        preferred-height='6' min-width='42' horizontal-fit='MinSize'>
+              <text text='Dropped Frames:'  align='MidlineLeft' size-delta-x='30' />
+              <text data='StreamingDroppedFrames' data-format='#,0' align='MidlineLeft' size-delta-x='17' />
+            </horizontal>
+          </horizontal>
+          <horizontal background='round-rect-panel'
+                      preferred-height='6' min-width='50'
+                      child-control-width='false' child-expand-width='false'>
           </horizontal>
         </vertical>
       </tab>
@@ -46,38 +140,45 @@
              background='round-rect-panel'>
         <vertical  child-align='UpperLeft' child-expand-height='false'
                      min-width='95' preferred-width='95' horizontal-fit='PreferredSize'
-                     background='round-rect-panel'
+                     background='round-rect-panel' pad-left='3' pad-right='-3'
                      child-control-height='false' child-control-width='true'>
           <horizontal background='round-rect-panel'
-                      preferred-height='6' pad-left='3' pad-right='-3'
+                      preferred-height='6'
                       child-control-width='false' child-expand-width='false'>
             <text text='Recording State:' font-size='4'  align='MidlineLeft' size-delta-x='~LabelWidth' />
             <text data='IsRecording' data-formatter='BoolFormatter' data-format='Recording|Stopped' color='~RecordingTextColor'
-                  align='MidlineLeft' size-delta-x='25' />
+                  align='MidlineLeft' size-delta-x='~ValueWidth' />
             <button text='Start' active='~IsNotRecording' interactable='~RecordButtonInteractable'
                     on-click='StartRecording' preferred-height='5' min-width='30' preferred-width='30'/>
             <button text='Stop' active='~IsRecording' interactable='~RecordButtonInteractable'
                     on-click='StopRecording' preferred-height='5' min-width='30' preferred-width='30'/>
           </horizontal>
           <horizontal background='round-rect-panel'
-                        preferred-height='6' pad-left='3' pad-right='-3'
+                        preferred-height='6'
                         child-control-width='false' child-expand-width='false'>
             <checkbox text='Enable AutoRecord:' font-size='4' size-delta-x='41' align='MidlineLeft' />
           </horizontal>
           <horizontal background='round-rect-panel'
-                      preferred-height='6' pad-left='3' pad-right='-3'
+                      preferred-height='6'
                       child-control-width='false' child-expand-width='false'>
-            <text text='Free Disk Space:'  align='MidlineLeft' size-delta-x='35' />
-            <text data='FreeDiskSpace' data-format='#,0 MB' overflow-mode='Overflow' align='MidlineLeft' size-delta-x='25' />
+            <text text='Free Disk Space:'  align='MidlineLeft' size-delta-x='~LabelWidth' />
+            <text data='FreeDiskSpace' data-format='#,0 MB' overflow-mode='Overflow' align='MidlineLeft' size-delta-x='~ValueDoubleWidth' />
+          </horizontal>
+          <horizontal background='round-rect-panel'
+                      preferred-height='6' min-width='50'
+                      child-control-width='false' child-expand-width='false'>
+            <text text='Current Scene:'  align='MidlineLeft' size-delta-x='~LabelWidth' />
+            <text data='CurrentScene' overflow-mode='Ellipsis' rich-text='false'
+                  align='MidlineLeft' size-delta-x='~ValueDoubleWidth' />
           </horizontal>
           <horizontal background='round-rect-panel' preferred-width='95'
-                          preferred-height='6' pad-left='3' pad-right='-3' horizontal-fit='PreferredSize'
+                          preferred-height='6' horizontal-fit='PreferredSize'
                       child-expand-width='true' child-control-width='false' >
             <horizontal background='round-rect-panel'
               preferred-height='6'  child-expand-width='true' child-control-width='false'
                         min-width='42' horizontal-fit='MinSize'>
               <text text='Output Total Frames:'  align='MidlineLeft' size-delta-x='28' />
-              <text data='OutputTotalFrames' data-format='#,0' align='MidlineLeft' size-delta-x='17' />
+              <text data='RecordingOutputFrames' data-format='#,0' align='MidlineLeft' size-delta-x='17' />
             </horizontal>
             <text text=' | ' size-delta-x='2' overflow-mode='Truncate'/>
             <horizontal background='round-rect-panel'
@@ -88,12 +189,11 @@
             </horizontal>
           </horizontal>
           <horizontal background='round-rect-panel'
-                      preferred-height='6' min-width='50' pad-left='3' pad-right='-3'
+                      preferred-height='6' min-width='50'
                       child-control-width='false' child-expand-width='false'>
           </horizontal>
         </vertical>
       </tab>
-
 
     </vertical>
   </bg>

@@ -56,6 +56,7 @@ namespace OBSControl
             Logger.log?.Debug("OnEnable()");
             new GameObject("OBSControl_OBSController").AddComponent<OBSController>();
             new GameObject("OBSControl_RecordingController").AddComponent<RecordingController>();
+            new GameObject("OBSControl_StreamingController").AddComponent<StreamingController>();
             ApplyHarmonyPatches();
             Enabled = true;
         }
