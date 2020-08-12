@@ -68,7 +68,8 @@ namespace OBSControl
 
         public static OBSController? instance { get; private set; }
         public bool IsConnected => Obs?.IsConnected ?? false;
-
+        private readonly object _availableSceneLock = new object();
+        
         private PluginConfig Config => Plugin.config;
         public event EventHandler? DestroyingObs;
         private readonly WaitForSeconds HeartbeatCheckInterval = new WaitForSeconds(10);
@@ -108,6 +109,16 @@ namespace OBSControl
             }
         }
 
+        protected readonly List<string> AvailableScenes = new List<string>();
+        public string[] GetAvailableScenes()
+        {
+            string[] scenes;
+            lock (_availableSceneLock)
+            {
+                scenes = AvailableScenes.ToArray();
+            }
+            return scenes;
+        }
         #endregion
 
         #region Setup/Teardown
@@ -308,8 +319,8 @@ namespace OBSControl
         public event EventHandler<OutputState>? RecordingStateChanged;
         public event EventHandler<OutputState>? StreamingStateChanged;
         public event EventHandler<StreamStatus>? StreamStatus;
-
         public event EventHandler<string>? SceneChanged;
+        public event EventHandler? SceneListUpdated;
         #endregion
 
 
@@ -341,6 +352,7 @@ namespace OBSControl
                 try
                 {
                     availableScenes = (await obs.GetSceneList().ConfigureAwait(false)).Scenes.Select(s => s.Name).ToArray();
+                    UpdateScenes(availableScenes);
                     CurrentScene = (await obs.GetCurrentScene().ConfigureAwait(false)).Name;
                 }
                 catch (Exception ex)
@@ -349,18 +361,6 @@ namespace OBSControl
                     Logger.log?.Error($"Error getting scene list: {ex.Message}");
                     Logger.log?.Debug(ex);
                 }
-                HMMainThreadDispatcher.instance.Enqueue(() =>
-                {
-                    try
-                    {
-                        Plugin.config.UpdateSceneOptions(availableScenes);
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.log?.Error($"Error setting scene list: {ex.Message}");
-                        Logger.log?.Debug(ex);
-                    }
-                });
                 ConnectionStateChanged?.Invoke(this, true);
             }
             catch (Exception ex)
@@ -397,11 +397,8 @@ namespace OBSControl
             try
             {
                 string[] availableScenes = (await obs.GetSceneList().ConfigureAwait(false)).Scenes.Select(s => s.Name).ToArray();
-                Logger.log?.Info($"OBS scene list changed: {string.Join(", ", availableScenes)}");
-                HMMainThreadDispatcher.instance.Enqueue(() =>
-                {
-                    Plugin.config.UpdateSceneOptions(availableScenes);
-                });
+                Logger.log?.Info($"OBS scene list updated: {string.Join(", ", availableScenes)}");
+                UpdateScenes(availableScenes);
             }
             catch (Exception ex)
             {
@@ -431,6 +428,28 @@ namespace OBSControl
         }
 
         #endregion
+
+        private void UpdateScenes(IEnumerable<string> scenes)
+        {
+            lock (_availableSceneLock)
+            {
+                AvailableScenes.Clear();
+                AvailableScenes.AddRange(scenes);
+            }
+            HMMainThreadDispatcher.instance.Enqueue(() =>
+            {
+                try
+                {
+                    Plugin.config.UpdateSceneOptions(scenes);
+                }
+                catch (Exception ex)
+                {
+                    Logger.log?.Error($"Error setting scene list for config: {ex.Message}");
+                    Logger.log?.Debug(ex);
+                }
+            });
+            SceneListUpdated?.Invoke(this, null);
+        }
 
         #region Monobehaviour Messages
         /// <summary>
