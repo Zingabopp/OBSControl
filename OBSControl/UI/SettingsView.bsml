@@ -22,6 +22,8 @@
                              apply-on-change='true' hover-hint='Name of the scene to show after the Recording Stop Delay.' />
       <slider-setting text='End Scene Duration' value='EndSceneDuration' integer-only='false' min='0' max='20' increment='0.1' 
                       formatter='formatter-seconds' hover-hint='How long the End Scene is shown before the recording is stopped.' />
+      <dropdown-list-setting id='RestingSceneDropdown' text='Resting Scene Name' value='RestingSceneName' options='SceneSelectOptions'
+                             apply-on-change='true' hover-hint='Name of the scene to switch to after recording stops (default is GameScene).' />
     </scrollable-settings-container>
   </settings-submenu>
 </settings-container>

@@ -113,7 +113,7 @@ namespace OBSControl.OBSComponents
                 Logger.log?.Debug(ex);
                 try
                 {
-                    if(gameScene != null && gameScene.Length > 0)
+                    if (gameScene != null && gameScene.Length > 0)
                         await obs.SetCurrentScene(gameScene).ConfigureAwait(false);
                 }
                 catch (Exception e)
@@ -151,7 +151,23 @@ namespace OBSControl.OBSComponents
         {
             if (availableScenes == null || scenes == null || scenes.Length == 0)
                 return false;
-            return scenes.All(s => !string.IsNullOrEmpty(s) && availableScenes.Contains(s));
+            bool valid = true;
+            foreach (var scene in availableScenes)
+            {
+                if (string.IsNullOrEmpty(scene))
+                {
+                    valid = false;
+                    continue;
+                }
+                else if (!availableScenes.Contains(scene))
+                {
+                    valid = false;
+                    Logger.log?.Warn($"Scene '{scene}' is not available.");
+                    continue;
+                }
+
+            }
+            return valid;
         }
 
         public async Task<bool> ValidateScenesAsync(params string[] scenes)
@@ -184,12 +200,16 @@ namespace OBSControl.OBSComponents
             }
             string endScene = Plugin.config.EndSceneName ?? string.Empty;
             string gameScene = Plugin.config.GameSceneName ?? string.Empty;
+            string restingScene = Plugin.config.RestingSceneName ?? string.Empty;
             string[] availableScenes = await GetAvailableScenes().ConfigureAwait(false);
             if (!availableScenes.Contains(endScene))
                 endScene = string.Empty;
             if (!availableScenes.Contains(gameScene))
                 gameScene = string.Empty;
+            if (!ValidateScenes(availableScenes, restingScene))
+                restingScene = gameScene;
             bool validOutro = ValidateScenes(availableScenes, endScene, gameScene);
+
             try
             {
                 WaitingToStop = true;
@@ -211,8 +231,8 @@ namespace OBSControl.OBSComponents
                 if (!stopImmediate && validOutro)
                 {
                     await Task.Delay(100).ConfigureAwait(false); // To ensure recording has fully stopped.
-                    Logger.log?.Info($"Setting game OBS scene to '{gameScene}'");
-                    await obs.SetCurrentScene(gameScene).ConfigureAwait(false);
+                    Logger.log?.Info($"Setting game OBS scene to '{restingScene}'");
+                    await obs.SetCurrentScene(restingScene).ConfigureAwait(false);
                 }
                 recordingCurrentLevel = false;
             }

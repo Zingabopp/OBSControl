@@ -83,6 +83,10 @@ namespace OBSControl
         [UIValue(nameof(EndSceneName))]
         public virtual string EndSceneName { get; set; } = string.Empty;
 
+        [NonNullable]
+        [UIValue(nameof(RestingSceneName))]
+        public virtual string RestingSceneName { get; set; } = string.Empty;
+
         #region Floating Screen
         public virtual float ScreenPosX { get; set; } = 0f;
         public virtual float ScreenPosY { get; set; } = 2.9f;
@@ -99,7 +103,7 @@ namespace OBSControl
         /// </summary>
         public virtual void OnReload()
         {
-            TryAddCurrentNames(StartSceneName, GameSceneName, EndSceneName);
+            TryAddCurrentNames(StartSceneName, GameSceneName, EndSceneName, RestingSceneName);
         }
 
         /// <summary>
@@ -108,7 +112,7 @@ namespace OBSControl
         public virtual void Changed()
         {
             // Do stuff when the config is changed.
-            TryAddCurrentNames(StartSceneName, GameSceneName, EndSceneName);
+            TryAddCurrentNames(StartSceneName, GameSceneName, EndSceneName, RestingSceneName);
             RefreshDropdowns();
             OBSController.instance?.gameObject.SetActive(Enabled);
         }
@@ -122,7 +126,7 @@ namespace OBSControl
             SceneSelectOptions.Clear();
             SceneSelectOptions.Add(string.Empty);
             SceneSelectOptions.AddRange(newOptions);
-            TryAddCurrentNames(StartSceneName, GameSceneName, EndSceneName);
+            TryAddCurrentNames(StartSceneName, GameSceneName, EndSceneName, RestingSceneName);
             RefreshDropdowns();
         }
 
@@ -139,7 +143,7 @@ namespace OBSControl
         public void RefreshDropdowns()
         {
 #pragma warning disable CS8601 // Possible null reference assignment.
-            DropDownListSetting[]? dropDowns = new DropDownListSetting[] { StartSceneDropDown, GameSceneDropdown, EndSceneDropdown };
+            DropDownListSetting[]? dropDowns = new DropDownListSetting[] { StartSceneDropDown, GameSceneDropdown, EndSceneDropdown, RestingSceneDropdown };
 #pragma warning restore CS8601 // Possible null reference assignment.
             foreach (DropDownListSetting dropDown in dropDowns)
             {
@@ -168,6 +172,9 @@ namespace OBSControl
         [Ignore]
         [UIComponent("EndSceneDropdown")]
         public DropDownListSetting? EndSceneDropdown;
+        [Ignore]
+        [UIComponent("RestingSceneDropdown")]
+        public DropDownListSetting? RestingSceneDropdown;
 
         #region Backing Fields
         private float _levelStartDelay = 3f;
