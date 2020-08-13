@@ -139,7 +139,7 @@
                   align='MidlineLeft' size-delta-x='~ValueWidth' />
             <button text='Start' active='~IsNotRecording' interactable='~RecordButtonInteractable'
                     on-click='StartRecording' preferred-height='5' min-width='30' preferred-width='30'/>
-            <button text='Stop' active='~IsRecording' interactable='~RecordButtonInteractable'
+            <button text='Stop' active='~IsRecording' interactable='~RecordButtonInteractable' overflow-mode='Overflow'
                     on-click='StopRecording' preferred-height='5' min-width='30' preferred-width='30'/>
           </horizontal>
           <horizontal background='round-rect-panel' pad-left='3' pad-right='-3'
