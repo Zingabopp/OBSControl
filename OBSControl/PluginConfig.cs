@@ -19,6 +19,8 @@ namespace OBSControl
         public virtual string? ServerAddress { get; set; } = "ws://127.0.0.1:4444";
         [UIValue(nameof(ServerPassword))]
         public virtual string? ServerPassword { get; set; } = string.Empty;
+        [UIValue(nameof(EnableAutoRecord))]
+        public virtual bool EnableAutoRecord { get; set; } = true;
         [UIValue(nameof(LevelStartDelay))]
         public virtual float LevelStartDelay
         {
@@ -87,6 +89,16 @@ namespace OBSControl
         [UIValue(nameof(RestingSceneName))]
         public virtual string RestingSceneName { get; set; } = string.Empty;
 
+        [NonNullable]
+        public virtual string MaterialName { get; set; } = string.Empty;
+
+        [NonNullable]
+        public virtual string ShaderName { get; set; } = string.Empty;
+        [NonNullable]
+        public virtual string ColorName { get; set; } = string.Empty;
+        [NonNullable]
+        public virtual float ColorAlpha { get; set; } = 1f;
+
         #region Floating Screen
         public virtual float ScreenPosX { get; set; } = 0f;
         public virtual float ScreenPosY { get; set; } = 2.9f;
@@ -98,12 +110,18 @@ namespace OBSControl
 
         #endregion
 
+        public virtual float ObsTimeout { get; set; } = 5000f;
+
         /// <summary>
         /// This is called whenever BSIPA reads the config from disk (including when file changes are detected).
         /// </summary>
         public virtual void OnReload()
         {
             TryAddCurrentNames(StartSceneName, GameSceneName, EndSceneName, RestingSceneName);
+            HMMainThreadDispatcher.instance.Enqueue(() =>
+            {
+                Plugin.instance.SetThings(MaterialName, ShaderName, ColorName, ColorAlpha);
+            });
         }
 
         /// <summary>

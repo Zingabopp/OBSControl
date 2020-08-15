@@ -6,8 +6,10 @@ using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.ViewControllers;
 using OBSControl.OBSComponents;
 using OBSControl.UI.Formatters;
+using OBSWebsocketDotNet;
 using OBSWebsocketDotNet.Types;
 using UnityEngine;
+#nullable enable
 
 namespace OBSControl.UI
 {
@@ -93,16 +95,16 @@ namespace OBSControl.UI
             StreamButtonInteractable = false;
             try
             {
-                await OBSController.instance.Obs.StartStreaming();
+                await StreamingController.instance.StartStreaming();
             }
             catch (Exception ex)
             {
-                Logger.log?.Warn($"Error stopping streaming: {ex.Message}");
+                Logger.log?.Warn($"Error starting streaming: {ex.Message}");
                 Logger.log?.Debug(ex);
             }
             if (GetOutputStateIsSettled(StreamingController.instance.OutputState))
                 StartCoroutine(DelayedStreamInteractableEnable(false));
-        }
+        } 
 
         [UIAction(nameof(StopStreaming))]
         public async void StopStreaming()

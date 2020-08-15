@@ -14,10 +14,11 @@ namespace OBSControl.OBSComponents
     /// Monobehaviours (scripts) are added to GameObjects.
     /// For a full list of Messages a Monobehaviour can receive from the game, see https://docs.unity3d.com/ScriptReference/MonoBehaviour.html.
     /// </summary>
-	public class RecordingController : MonoBehaviour
+    [DisallowMultipleComponent]
+    public class RecordingController : OBSComponent
     {
-        public static RecordingController? instance { get; private set; }
-        private OBSWebsocket? _obs => OBSController.instance?.Obs;
+        public static RecordingController instance { get; private set; } = null!;
+        private OBSWebsocket? _obs => OBSController.instance?.GetConnectedObs();
         internal readonly HarmonyPatches.HarmonyPatchInfo LevelDelayPatch = HarmonyPatches.HarmonyManager.GetLevelDelayPatch();
         private const string DefaultFileFormat = "%CCYY-%MM-%DD %hh-%mm-%ss";
         public const string DefaultDateTimeFormat = "yyyyMMddHHmmss";
@@ -406,31 +407,35 @@ namespace OBSControl.OBSComponents
 
         #endregion
 
+        #region Setup/Teardown
+        protected override void SetEvents(OBSController obs)
+        {
+            base.SetEvents(obs);
+            obs.RecordingStateChanged += Obs_RecordingStateChanged;
+            BS_Utils.Plugin.LevelDidFinishEvent += OnLevelFinished;
+        }
+        protected override void SetEvents(OBSWebsocket obs)
+        {
+        }
+
+        protected override void RemoveEvents(OBSController obs)
+        {
+            base.RemoveEvents(obs);
+            BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
+            obs.RecordingStateChanged -= Obs_RecordingStateChanged;
+        }
+        protected override void RemoveEvents(OBSWebsocket obs)
+        {
+        }
+        #endregion
 
         #region Monobehaviour Messages
         /// <summary>
-        /// Only ever called once, mainly used to initialize variables.
-        /// </summary>
-        private void Awake()
-        {
-            if (instance != null)
-            {
-                GameObject.DestroyImmediate(this);
-                return;
-            }
-            GameObject.DontDestroyOnLoad(this);
-            instance = this;
-            if (OBSController.instance != null)
-                OBSController.instance.RecordingStateChanged += Obs_RecordingStateChanged;
-        }
-
-        /// <summary>
         /// Called when the script becomes enabled and active
         /// </summary>
-        private void OnEnable()
+        protected override void OnEnable()
         {
-            BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
-            BS_Utils.Plugin.LevelDidFinishEvent += OnLevelFinished;
+            SetEvents(Obs);
             if (!LevelDelayPatch.IsApplied)
                 LevelDelayPatch.ApplyPatch();
         }
@@ -438,21 +443,12 @@ namespace OBSControl.OBSComponents
         /// <summary>
         /// Called when the script becomes disabled or when it is being destroyed.
         /// </summary>
-        private void OnDisable()
+        protected override void OnDisable()
         {
-            if (recordingCurrentLevel)
-                StopRecordingTask = TryStopRecordingAsync(string.Empty, true);
-            BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
+            base.OnDisable();
+            RemoveEvents(Obs);
             if (LevelDelayPatch?.IsApplied ?? false)
                 LevelDelayPatch.RemovePatch();
-        }
-
-        /// <summary>
-        /// Called when the script is being destroyed.
-        /// </summary>
-        private void OnDestroy()
-        {
-            instance = null;
         }
         #endregion
     }

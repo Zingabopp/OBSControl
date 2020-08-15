@@ -137,6 +137,8 @@
     <Compile Include="HarmonyPatches\HarmonyManager.cs" />
     <Compile Include="HarmonyPatches\HarmonyPatchInfo.cs" />
     <Compile Include="HarmonyPatches\LevelSelectionFlowCoordinator_StartLevel.cs" />
+    <Compile Include="OBSComponents\OBSComponent.cs" />
+    <Compile Include="OBSComponents\SceneController.cs" />
     <Compile Include="OBSComponents\StreamingController.cs" />
     <Compile Include="OBSController.cs" />
     <Compile Include="OBSLogger.cs" />
@@ -151,6 +153,7 @@
     <Compile Include="UI\ControlScreen.cs" />
     <Compile Include="UI\Formatters\TimeFormatter.cs" />
     <Compile Include="UI\Formatters\BoolFormatter.cs" />
+    <Compile Include="Utilities\AsyncEventListener.cs" />
     <Compile Include="Utilities\FileRenaming.cs" />
     <Compile Include="Wrappers\BeatmapLevelWrapper.cs" />
     <Compile Include="Wrappers\ConversionExtensions.cs" />

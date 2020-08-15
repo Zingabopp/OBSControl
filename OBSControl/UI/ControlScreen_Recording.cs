@@ -6,13 +6,14 @@ using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.ViewControllers;
 using OBSControl.OBSComponents;
 using OBSControl.UI.Formatters;
+using OBSWebsocketDotNet;
 using UnityEngine;
 
 namespace OBSControl.UI
 {
     public partial class ControlScreen
     {
-
+        protected OBSController OBSController => OBSController.instance;
         #region Properties
         private bool _isRecording;
 
@@ -117,10 +118,16 @@ namespace OBSControl.UI
         [UIAction(nameof(StartRecording))]
         public async void StartRecording()
         {
+            OBSWebsocket? obs = OBSController.GetConnectedObs();
+            if (obs == null)
+            {
+                Logger.log?.Warn("Unable to update current scene. OBS not connected.");
+                return;
+            }
             RecordButtonInteractable = false;
             try
             {
-                await OBSController.instance.Obs.StartRecording();
+                await obs.StartRecording();
             }
             catch (Exception ex)
             {
