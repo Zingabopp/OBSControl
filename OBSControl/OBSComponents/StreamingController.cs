@@ -68,7 +68,7 @@ namespace OBSControl.OBSComponents
         /// <returns></returns>
         /// <exception cref="ErrorResponseException"></exception>
         /// <exception cref="OperationCanceledException"></exception>
-        public async Task<bool> StartStreaming(CancellationToken cancellationToken)
+        public async Task<bool> StartStreaming(CancellationToken cancellationToken = default)
         {
             using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, AllTasksCancelSource.Token);
             cts.Token.ThrowIfCancellationRequested();
@@ -139,7 +139,7 @@ namespace OBSControl.OBSComponents
         /// <returns></returns>
         /// <exception cref="ErrorResponseException"></exception>
         /// <exception cref="OperationCanceledException"></exception>
-        public async Task<bool> StopStreaming(CancellationToken cancellationToken)
+        public async Task<bool> StopStreaming(CancellationToken cancellationToken = default)
         {
             using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, AllTasksCancelSource.Token);
             cts.Token.ThrowIfCancellationRequested();
@@ -172,7 +172,7 @@ namespace OBSControl.OBSComponents
 
         private void OnStreamingStateChanged(object sender, OutputState type)
         {
-            Logger.log?.Info($"Streaming State Changed: {type}");
+            Logger.log?.Debug($"Streaming State Changed: {type}");
             StreamingState = type;
             TaskCompletionSource<bool>? startCompletion = StartCompletion;
             TaskCompletionSource<bool>? stopCompletion = StopCompletion;
@@ -180,6 +180,7 @@ namespace OBSControl.OBSComponents
             {
                 if (type == OutputState.Stopped)
                 {
+                    Logger.log?.Debug($"Setting streaming stop completion.");
                     stopCompletion?.TrySetResult(true);
                 }
                 lock (startLock)
@@ -193,6 +194,7 @@ namespace OBSControl.OBSComponents
             {
                 if (type == OutputState.Started)
                 {
+                    Logger.log?.Debug($"Setting streaming start completion.");
                     startCompletion?.TrySetResult(true);
                 }
                 lock (stopLock)

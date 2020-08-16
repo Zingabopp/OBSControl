@@ -19,6 +19,7 @@
     <RuntimeIdentifiers>win</RuntimeIdentifiers>
     <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
+    <DisableCopyToPlugins>false</DisableCopyToPlugins>
   </PropertyGroup>
   <PropertyGroup Condition="'$(NCrunch)' == '1' ">
     <DisableCopyToPlugins>True</DisableCopyToPlugins>

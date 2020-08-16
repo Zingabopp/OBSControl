@@ -165,13 +165,21 @@ namespace OBSControl.OBSComponents
             Connected = false;
         }
 
+        protected virtual void Awake()
+        {
+        }
+
+        protected virtual void Start() { }
+
         protected virtual void OnEnable()
         {
+            Logger.log?.Debug($"Enabling '{gameObject.name}'.");
             lock (_allCancelLock)
             {
                 CancellationTokenSource? lastSource = _allTasksCancelSource;
                 if (lastSource == null || lastSource.IsCancellationRequested)
                 {
+                    lastSource?.Dispose();
                     _allTasksCancelSource = new CancellationTokenSource();
                 }
             }
@@ -179,11 +187,11 @@ namespace OBSControl.OBSComponents
 
         protected virtual void OnDisable()
         {
+            Logger.log?.Debug($"Disabling '{gameObject.name}'.");
             CancellationTokenSource? lastSource = AllTasksCancelSource;
             if (lastSource != null)
             {
                 lastSource.Cancel();
-                lastSource.Dispose();
             }
         }
 

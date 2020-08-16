@@ -21,6 +21,7 @@ namespace OBSControl
         : MonoBehaviour
     {
         private const string Error_OBSWebSocketNotRunning = "No connection could be made because the target machine actively refused it.";
+        public static OBSController instance { get; private set; } = null!;
         private OBSWebsocket? _obs;
         public OBSWebsocket? Obs
         {
@@ -50,6 +51,8 @@ namespace OBSControl
                 }
             }
         }
+
+        public readonly Dictionary<Type, OBSComponent> OBSComponents = new Dictionary<Type, OBSComponent>();
 
         public OBSWebsocket? GetConnectedObs()
         {
@@ -87,7 +90,6 @@ namespace OBSControl
         private bool OnConnectTriggered = false;
         public string? RecordingFolder;
 
-        public static OBSController instance { get; private set; } = null!;
         public bool IsConnected => Obs?.IsConnected ?? false;
 
         private PluginConfig Config => Plugin.config;
@@ -117,28 +119,34 @@ namespace OBSControl
 
         public T? GetOBSComponent<T>() where T : OBSComponent, new()
         {
-            T? comp = gameObject.GetComponent<T>();
-            return comp;
+            if (OBSComponents.TryGetValue(typeof(T), out OBSComponent component))
+                return component as T;
+            return null;
         }
 
         public async Task<T> AddOBSComponentAsync<T>() where T : OBSComponent, new()
         {
             //if (OBSComponents.ContainsKey(typeof(T)))
             //    throw new InvalidOperationException($"OBSController already has an instance of type '{typeof(T).Name}'.");
-            T comp = new GameObject().AddComponent<T>();
+            GameObject go = new GameObject($"OBSControl_{typeof(T).Name}");
+            go.SetActive(false);
+            DontDestroyOnLoad(go);
+            T comp = go.AddComponent<T>();
             try
             {
                 await comp.InitializeAsync(this);
+                OBSComponents.Add(typeof(T), comp);
+                go.gameObject.SetActive(true);
             }
 #pragma warning disable CA1031 // Do not catch general exception types
             catch (Exception ex)
             {
                 Logger.log?.Error($"Error initializing {typeof(T).Name}: {ex.Message}.");
                 Logger.log?.Debug(ex);
-                Destroy(comp);
+                Destroy(go);
             }
 #pragma warning restore CA1031 // Do not catch general exception types
-            return comp;
+            return null;
         }
         #region OBS Properties
 
@@ -160,7 +168,7 @@ namespace OBSControl
         private void DestroyObsInstance(OBSWebsocket? target)
         {
             if (target == null)
-                return; 
+                return;
             try
             {
                 Logger.log?.Debug("Disconnecting from obs instance.");
@@ -516,7 +524,10 @@ namespace OBSControl
         /// </summary>
         private void OnEnable()
         {
-            OBSComponents.RecordingController.instance?.gameObject.SetActive(true);
+            foreach (OBSComponent component in OBSComponents.Values.ToArray())
+            {
+                component.gameObject.SetActive(true);
+            }
         }
 
         /// <summary>
@@ -524,7 +535,11 @@ namespace OBSControl
         /// </summary>
         private void OnDisable()
         {
-            OBSComponents.RecordingController.instance?.gameObject.SetActive(false);
+            foreach (OBSComponent component in OBSComponents.Values.ToArray())
+            {
+                if (component != null)
+                    component.gameObject.SetActive(false);
+            }
         }
 
         /// <summary>
@@ -533,9 +548,9 @@ namespace OBSControl
         private void OnDestroy()
         {
             instance = null;
-            if (OBSComponents.RecordingController.instance != null)
+            foreach (OBSComponent component in OBSComponents.Values.ToArray())
             {
-                Destroy(OBSComponents.RecordingController.instance);
+                Destroy(component);
             }
             DestroyObsInstance(Obs);
         }

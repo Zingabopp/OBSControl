@@ -17,7 +17,6 @@ namespace OBSControl.OBSComponents
     [DisallowMultipleComponent]
     public class RecordingController : OBSComponent
     {
-        public static RecordingController instance { get; private set; } = null!;
         private OBSWebsocket? _obs => OBSController.instance?.GetConnectedObs();
         internal readonly HarmonyPatches.HarmonyPatchInfo LevelDelayPatch = HarmonyPatches.HarmonyManager.GetLevelDelayPatch();
         private const string DefaultFileFormat = "%CCYY-%MM-%DD %hh-%mm-%ss";
@@ -410,6 +409,7 @@ namespace OBSControl.OBSComponents
         #region Setup/Teardown
         protected override void SetEvents(OBSController obs)
         {
+            if (obs == null) return;
             base.SetEvents(obs);
             obs.RecordingStateChanged += Obs_RecordingStateChanged;
             BS_Utils.Plugin.LevelDidFinishEvent += OnLevelFinished;
@@ -420,6 +420,7 @@ namespace OBSControl.OBSComponents
 
         protected override void RemoveEvents(OBSController obs)
         {
+            if (obs == null) return;
             base.RemoveEvents(obs);
             BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
             obs.RecordingStateChanged -= Obs_RecordingStateChanged;
@@ -435,6 +436,7 @@ namespace OBSControl.OBSComponents
         /// </summary>
         protected override void OnEnable()
         {
+            base.OnEnable();
             SetEvents(Obs);
             if (!LevelDelayPatch.IsApplied)
                 LevelDelayPatch.ApplyPatch();

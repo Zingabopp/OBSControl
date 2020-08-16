@@ -9,6 +9,7 @@ using OBSControl.OBSComponents;
 using OBSControl.UI.Formatters;
 using UnityEngine;
 using UnityEngine.UI;
+#nullable enable
 
 namespace OBSControl.UI
 {
@@ -18,11 +19,19 @@ namespace OBSControl.UI
     {
         private string connectionState;
         internal ControlScreenCoordinator ParentCoordinator;
+        protected OBSController OBSController;
+        protected SceneController SceneController;
+        protected RecordingController RecordingController;
+        protected StreamingController StreamingController;
         public ControlScreen()
         {
+            OBSController = OBSController.instance;
+            SceneController = OBSController.GetOBSComponent<SceneController>()!;
+            RecordingController = OBSController.GetOBSComponent<RecordingController>()!;
+            StreamingController = OBSController.GetOBSComponent<StreamingController>()!;
             SetConnectionState(OBSController.instance.IsConnected);
-            Logger.log.Warn($"Created Main: {this.ContentFilePath}");
-            CurrentScene = OBSController.instance.CurrentScene;
+            Logger.log?.Warn($"Created Main: {this.ContentFilePath}");
+            CurrentScene = SceneController.CurrentScene ?? string.Empty;
         }
 
         protected void SetEvents(OBSController obs)
@@ -35,6 +44,7 @@ namespace OBSControl.UI
             obs.RecordingStateChanged += OnRecordingStateChanged;
             obs.StreamingStateChanged += OnStreamingStateChanged;
             obs.StreamStatus += OnStreamStatus;
+            obs.SceneChanged += OnSceneChange;
         }
 
         protected void RemoveEvents(OBSController obs)
@@ -46,6 +56,7 @@ namespace OBSControl.UI
             obs.RecordingStateChanged -= OnRecordingStateChanged;
             obs.StreamingStateChanged -= OnStreamingStateChanged;
             obs.StreamStatus -= OnStreamStatus;
+            obs.SceneChanged -= OnSceneChange;
         }
 
         protected override void DidActivate(bool firstActivation, ActivationType type)
@@ -76,7 +87,7 @@ namespace OBSControl.UI
             CurrentScene = sceneName;
         }
 
-        private void OnHeartbeat(object sender, OBSWebsocketDotNet.Types.Heartbeat e)
+        private void OnHeartbeat(object sender, OBSWebsocketDotNet.HeartBeatEventArgs e)
         {
             IsRecording = e.Recording;
             IsStreaming = e.Streaming;

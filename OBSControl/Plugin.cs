@@ -152,7 +152,6 @@ namespace OBSControl
             Logger.log?.Debug("OnDisable()");
             RemoveHarmonyPatches();
             GameObject.Destroy(OBSController.instance?.gameObject);
-            GameObject.Destroy(RecordingController.instance?.gameObject);
             Enabled = false;
         }
         #endregion
@@ -178,8 +177,6 @@ namespace OBSControl
         public void OnApplicationQuit()
         {
             Logger.log?.Debug("OnApplicationQuit");
-            if (RecordingController.instance != null)
-                GameObject.Destroy(RecordingController.instance);
             if (OBSController.instance != null)
                 GameObject.Destroy(OBSController.instance);
         }

@@ -7,13 +7,13 @@ using BeatSaberMarkupLanguage.ViewControllers;
 using OBSControl.OBSComponents;
 using OBSControl.UI.Formatters;
 using OBSWebsocketDotNet;
+using OBSWebsocketDotNet.Types;
 using UnityEngine;
 
 namespace OBSControl.UI
 {
     public partial class ControlScreen
     {
-        protected OBSController OBSController => OBSController.instance;
         #region Properties
         private bool _isRecording;
 
@@ -134,7 +134,7 @@ namespace OBSControl.UI
                 Logger.log?.Warn($"Error stopping recording: {ex.Message}");
                 Logger.log?.Debug(ex);
             }
-            if (GetOutputStateIsSettled(RecordingController.instance.OutputState))
+            if (GetOutputStateIsSettled(RecordingController.OutputState))
                 StartCoroutine(DelayedRecordInteractableEnable());
         }
 
@@ -144,34 +144,34 @@ namespace OBSControl.UI
             RecordButtonInteractable = false;
             try
             {
-                await RecordingController.instance.TryStopRecordingAsync(null, true);
+                await RecordingController.TryStopRecordingAsync(null, true);
             }
             catch (Exception ex)
             {
                 Logger.log?.Warn($"Error stopping recording: {ex.Message}");
                 Logger.log?.Debug(ex);
             }
-            if (GetOutputStateIsSettled(RecordingController.instance.OutputState))
+            if (GetOutputStateIsSettled(RecordingController.OutputState))
                 StartCoroutine(DelayedRecordInteractableEnable());
         }
 #endregion
 
-        public static bool GetOutputStateIsSettled(OBSWebsocketDotNet.Types.OutputState state)
+        public static bool GetOutputStateIsSettled(OutputState state)
         {
             return state switch
             {
-                OBSWebsocketDotNet.Types.OutputState.Starting => false,
-                OBSWebsocketDotNet.Types.OutputState.Started => true,
-                OBSWebsocketDotNet.Types.OutputState.Stopping => false,
-                OBSWebsocketDotNet.Types.OutputState.Stopped => true,
-                OBSWebsocketDotNet.Types.OutputState.Paused => true,
-                OBSWebsocketDotNet.Types.OutputState.Resumed => true,
+                OutputState.Starting => false,
+                OutputState.Started => true,
+                OutputState.Stopping => false,
+                OutputState.Stopped => true,
+                OutputState.Paused => true,
+                OutputState.Resumed => true,
                 _ => true
             };
         }
 
 #region Event Handlers
-        private void OnRecordingStateChanged(object sender, OBSWebsocketDotNet.Types.OutputState e)
+        private void OnRecordingStateChanged(object sender, OutputState e)
         {
             HMMainThreadDispatcher.instance.Enqueue(() =>
             {
@@ -180,6 +180,10 @@ namespace OBSControl.UI
                     StartCoroutine(DelayedRecordInteractableEnable());
                 else
                     RecordButtonInteractable = false;
+                if (e == OutputState.Started)
+                    IsRecording = true;
+                else if (e == OutputState.Stopped)
+                    IsRecording = false;
             });
         }
 #endregion
