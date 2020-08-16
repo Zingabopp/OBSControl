@@ -333,7 +333,6 @@ namespace OBSControl
             obs.StreamingStateChanged += OnStreamingStateChanged;
             obs.StreamStatus += OnStreamStatus;
             obs.Heartbeat += OnHeartbeat;
-            obs.SceneChanged += OnSceneChanged;
         }
 
         protected void RemoveEvents(OBSWebsocket obs)
@@ -347,15 +346,14 @@ namespace OBSControl
             obs.RecordingStateChanged -= OnRecordingStateChanged;
             obs.StreamingStateChanged -= OnStreamingStateChanged;
             obs.StreamStatus -= OnStreamStatus;
-            obs.SceneChanged -= OnSceneChanged;
         }
         #endregion
         #region Events
         public event EventHandler<bool>? ConnectionStateChanged;
-        public event EventHandler<Heartbeat>? Heartbeat;
+        public event EventHandler<HeartBeatEventArgs>? Heartbeat;
         public event EventHandler<OutputState>? RecordingStateChanged;
         public event EventHandler<OutputState>? StreamingStateChanged;
-        public event EventHandler<StreamStatus>? StreamStatus;
+        public event EventHandler<StreamStatusEventArgs>? StreamStatus;
         public event EventHandler<string>? SceneChanged;
         #endregion
 
@@ -418,7 +416,7 @@ namespace OBSControl
             }
         }
 
-        protected void OnHeartbeat(OBSWebsocket sender, Heartbeat heartbeat)
+        protected void OnHeartbeat(object sender, HeartBeatEventArgs heartbeat)
         {
 #if DEBUG
             // Logger.log?.Debug("Heartbeat Received");
@@ -435,11 +433,11 @@ namespace OBSControl
             }
         }
 
-        protected void OnRecordingStateChanged(OBSWebsocket sender, OutputState outputState)
+        protected void OnRecordingStateChanged(object sender, OutputStateChangedEventArgs e)
         {
             try
             {
-                RecordingStateChanged?.Invoke(this, outputState);
+                RecordingStateChanged?.Invoke(this, e.OutputState);
             }
             catch (Exception ex)
             {
@@ -448,11 +446,11 @@ namespace OBSControl
             }
         }
 
-        private void OnStreamingStateChanged(OBSWebsocket sender, OutputState outputState)
+        private void OnStreamingStateChanged(object sender, OutputStateChangedEventArgs e)
         {
             try
             {
-                StreamingStateChanged?.Invoke(this, outputState);
+                StreamingStateChanged?.Invoke(this, e.OutputState);
             }
             catch (Exception ex)
             {
@@ -461,7 +459,7 @@ namespace OBSControl
             }
         }
 
-        private void OnStreamStatus(OBSWebsocket sender, StreamStatus status)
+        private void OnStreamStatus(object sender, StreamStatusEventArgs status)
         {
 #if DEBUG
             Logger.log?.Info($"Stream Time: {status.TotalStreamTime.ToString()} sec");
@@ -480,11 +478,6 @@ namespace OBSControl
                 Logger.log?.Error($"Error in 'StreamStatus' event: {ex.Message}");
                 Logger.log?.Debug(ex);
             }
-        }
-
-        private void OnSceneChanged(OBSWebsocket sender, string newSceneName)
-        {
-
         }
 
         #endregion

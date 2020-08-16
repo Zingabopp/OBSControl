@@ -82,12 +82,11 @@ namespace OBSControl.OBSComponents
         {
             OBSWebsocket obs = Obs.Obs ?? throw new InvalidOperationException("OBSWebsocket is unavailable.");
 
-            AsyncEventListener<bool,string> SceneListener = new AsyncEventListener<bool,string>((s, name) =>
-            {
-                if (sceneName == name)
-                    return true;
-                return false;
-            }, 0, AllTasksCancelSource.Token);
+            AsyncEventListener<bool, SceneChangeEventArgs> SceneListener = new AsyncEventListener<bool, SceneChangeEventArgs>((s, name) =>
+              {
+                  bool result = sceneName == name.NewSceneName;
+                  return new EventListenerResult<bool>(result, true);
+              }, 5000, AllTasksCancelSource.Token);
             try
             {
                 obs.SceneChanged += SceneListener.OnEvent;
@@ -96,7 +95,8 @@ namespace OBSControl.OBSComponents
                 if (current == sceneName)
                     return;
                 await SceneListener.Task.ConfigureAwait(false);
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 Logger.log?.Error($"Error setting scene to '{sceneName}': {ex.Message}");
                 Logger.log?.Debug(ex);
@@ -208,9 +208,9 @@ namespace OBSControl.OBSComponents
                 Logger.log?.Debug(ex);
             }
         }
-        private void OnObsSceneChanged(OBSWebsocket sender, string newSceneName)
+        private void OnObsSceneChanged(object sender, SceneChangeEventArgs e)
         {
-            CurrentScene = newSceneName;
+            CurrentScene = e.NewSceneName;
         }
         #endregion
 
