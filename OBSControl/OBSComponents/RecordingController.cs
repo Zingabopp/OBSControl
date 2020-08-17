@@ -515,6 +515,9 @@ namespace OBSControl.OBSComponents
                 StartCoroutine(GameStatusSetup());
             else if (sceneStage == SceneStage.Outro)
             {
+                TimeSpan recordStopDelay = TimeSpan.FromSeconds(Plugin.config?.RecordingStopDelay ?? 0);
+                if (recordStopDelay > TimeSpan.Zero)
+                    await Task.Delay(recordStopDelay); // TODO: this also forces scene sequence to wait, do I even need this with the scene settings?
                 await TryStopRecordingAsync(RenameString, false);
             }
         }
