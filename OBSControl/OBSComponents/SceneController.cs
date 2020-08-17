@@ -156,6 +156,22 @@ namespace OBSControl.OBSComponents
                     return false;
                 }
                 Logger.log?.Info($"Beginning Intro Scene Sequence '{startScene}' => {startSceneDuration.TotalMilliseconds}ms => '{gameScene}'");
+                try
+                {
+                    SongPreviewPlayer? previewPlayer = GameObject.FindObjectsOfType<SongPreviewPlayer>().FirstOrDefault();
+                    if (previewPlayer != null)
+                    {
+                        previewPlayer.FadeOut();
+                        await Task.Delay(1000);
+                    }
+                    else
+                        Logger.log?.Debug($"Couldn't find SongPreviewPlayer.");
+                }
+                catch (Exception ex)
+                {
+                    Logger.log?.Error($"Error fading out song preview: {ex.Message}");
+                    Logger.log?.Debug(ex);
+                }
                 SceneChanged += StartSceneSequenceListener.OnEvent;
                 StartSceneSequenceListener.Reset(startScene);
                 StartSceneSequenceListener.StartListening();
