@@ -36,7 +36,27 @@ namespace OBSControl.HarmonyPatches
         {
             SceneManager.activeSceneChanged += OnActiveSceneChanged;
         }
-
+        private static object _ctsLock = new object();
+        static CancellationTokenSource _cts = new CancellationTokenSource();
+        static CancellationTokenSource CTS
+        {
+            get
+            {
+                lock (_ctsLock)
+                {
+                    return _cts;
+                }
+            }
+        }
+        public static void Cancel()
+        {
+            lock (_ctsLock)
+            {
+                _cts.Cancel();
+                _cts.Dispose();
+                _cts = new CancellationTokenSource();
+            }
+        }
         private static void OnActiveSceneChanged(Scene arg0, Scene arg1)
         {
             Button? playButton = PlayButton;
@@ -63,6 +83,7 @@ namespace OBSControl.HarmonyPatches
                 WaitingToStart = false;
                 return true;
             }
+            CancellationToken cancellationToken = CTS.Token;
             WaitingToStart = true;
             Logger.log?.Debug("LevelSelectionNavigationController_StartLevel");
             OBSController? obs = OBSController.instance;
@@ -129,14 +150,14 @@ namespace OBSControl.HarmonyPatches
                 }
                 // Do delayed level start
                 Logger.log?.Info($"Starting delayed level start sequence.");
-                _ = sceneController.StartIntroSceneSequence(CancellationToken.None).ContinueWith(result =>
+                _ = sceneController.StartIntroSceneSequence(cancellationToken).ContinueWith(result =>
                 {
                     LevelStartEventArgs levelStartInfo = args;
                     StartLevel(levelStartInfo.Coordinator, levelStartInfo.DifficultyBeatmap, levelStartInfo.BeforeSceneSwitchCallback, levelStartInfo.Practice);
                     if (levelStartInfo.PlayButton != null)
                     {
                         levelStartInfo.PlayButton.interactable = true;
-                        string prevText = PreviousText;
+                        string? prevText = PreviousText;
                         if (prevText != null && prevText.Length > 0)
                         {
                             levelStartInfo.PlayButton.SetButtonText(PreviousText);
