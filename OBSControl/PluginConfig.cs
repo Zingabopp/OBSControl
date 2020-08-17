@@ -43,6 +43,10 @@ namespace OBSControl
                 _recordingStopDelay = (float)Math.Round(value, 1);
             }
         }
+
+        [UIValue(nameof(AutoStopOnManual))]
+        public virtual bool AutoStopOnManual { get; set; } = true;
+
         [UIValue(nameof(RecordingFileFormat))]
         public virtual string? RecordingFileFormat { get; set; } = "?N{20}-?A{20}_?%<_[?M]><-?F><-?e>";
 
@@ -61,6 +65,19 @@ namespace OBSControl
                 if (value < 0)
                     value = 0;
                 _startSceneDuration = (float)Math.Round(value, 1);
+            }
+        }
+
+        private float _endSceneStartDelay;
+        [UIValue(nameof(EndSceneStartDelay))]
+        public float EndSceneStartDelay
+        {
+            get { return _endSceneStartDelay; }
+            set
+            {
+                if (value < 0)
+                    value = 0;
+                _endSceneStartDelay = (float)Math.Round(value, 1);
             }
         }
 

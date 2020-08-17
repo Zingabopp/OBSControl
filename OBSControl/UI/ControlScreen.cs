@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Web.UI;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
@@ -17,34 +18,60 @@ namespace OBSControl.UI
 
     public partial class ControlScreen : BSMLAutomaticViewController
     {
-        private string connectionState;
+        private string? connectionState;
         internal ControlScreenCoordinator ParentCoordinator;
-        protected OBSController OBSController;
+        private OBSController? _obsController;
+        protected OBSController OBSController
+        {
+            get => _obsController ??= OBSController.instance!;
+            set
+            {
+                if (value != null)
+                {
+                    if (value != _obsController)
+                    {
+                        if (_obsController != null)
+                            RemoveEvents(_obsController);
+                        _obsController = value;
+                    }
+                }
+                else
+                    _obsController = value;
+            }
+        }
         protected SceneController SceneController;
         protected RecordingController RecordingController;
         protected StreamingController StreamingController;
         public ControlScreen()
         {
-            OBSController = OBSController.instance;
-            SceneController = OBSController.GetOBSComponent<SceneController>()!;
-            RecordingController = OBSController.GetOBSComponent<RecordingController>()!;
-            StreamingController = OBSController.GetOBSComponent<StreamingController>()!;
-            SetConnectionState(OBSController.instance.IsConnected);
+            OBSController = OBSController.instance!;
+            SetComponents(OBSController);
+            SetConnectionState(OBSController.IsConnected);
             Logger.log?.Warn($"Created Main: {this.ContentFilePath}");
             CurrentScene = SceneController.CurrentScene ?? string.Empty;
+        }
+
+        protected void SetComponents(OBSController obs)
+        {
+            SceneController = obs.GetOBSComponent<SceneController>()!;
+            RecordingController = obs.GetOBSComponent<RecordingController>()!;
+            StreamingController = obs.GetOBSComponent<StreamingController>()!;
         }
 
         protected void SetEvents(OBSController obs)
         {
             if (obs == null) return;
             RemoveEvents(obs);
+            SetComponents(obs);
             obs.ConnectionStateChanged += OnConnectionStateChanged;
             obs.Heartbeat += OnHeartbeat;
-            obs.SceneChanged += OnSceneChange;
             obs.RecordingStateChanged += OnRecordingStateChanged;
             obs.StreamingStateChanged += OnStreamingStateChanged;
             obs.StreamStatus += OnStreamStatus;
-            obs.SceneChanged += OnSceneChange;
+            if (SceneController != null)
+            {
+                SceneController.SceneChanged += OnSceneChange;
+            }
         }
 
         protected void RemoveEvents(OBSController obs)
@@ -52,28 +79,30 @@ namespace OBSControl.UI
             if (obs == null) return;
             obs.ConnectionStateChanged -= OnConnectionStateChanged;
             obs.Heartbeat -= OnHeartbeat;
-            obs.SceneChanged -= OnSceneChange;
             obs.RecordingStateChanged -= OnRecordingStateChanged;
             obs.StreamingStateChanged -= OnStreamingStateChanged;
             obs.StreamStatus -= OnStreamStatus;
-            obs.SceneChanged -= OnSceneChange;
+            if (SceneController != null)
+            {
+                SceneController.SceneChanged -= OnSceneChange;
+            }
         }
 
         protected override void DidActivate(bool firstActivation, ActivationType type)
         {
-            SetEvents(OBSController.instance);
+            SetEvents(OBSController);
             base.DidActivate(firstActivation, type);
         }
 
         protected override void DidDeactivate(DeactivationType deactivationType)
         {
-            RemoveEvents(OBSController.instance);
+            RemoveEvents(OBSController);
             base.DidDeactivate(deactivationType);
         }
 
         protected override void OnDestroy()
         {
-            RemoveEvents(OBSController.instance);
+            RemoveEvents(OBSController);
             base.OnDestroy();
         }
 
@@ -158,7 +187,7 @@ namespace OBSControl.UI
                 NotifyPropertyChanged(nameof(ConnectedTextColor));
                 NotifyPropertyChanged(nameof(ConnectButtonText));
                 NotifyPropertyChanged(nameof(RecordButtonInteractable));
-                
+
             }
         }
         private bool _connectButtonInteractable = true;
@@ -291,8 +320,8 @@ namespace OBSControl.UI
         public async void ConnectButtonClicked()
         {
             ConnectButtonInteractable = false;
-            OBSController controller = OBSController.instance;
-            if (controller != null)
+            OBSController? controller = OBSController.instance ?? throw new InvalidOperationException("OBSController does not exist.");
+            if (controller != null && controller.Obs != null)
             {
                 try
                 {
@@ -301,15 +330,24 @@ namespace OBSControl.UI
                     else
                         await controller.TryConnect(CancellationToken.None);
                 }
+#pragma warning disable CA1031 // Do not catch general exception types
                 catch (Exception ex)
                 {
                     Logger.log?.Warn($"Error {(IsConnected ? "disconnecting from " : "connecting to ")} OBS: {ex.Message}");
                     Logger.log?.Debug(ex);
                 }
+#pragma warning restore CA1031 // Do not catch general exception types
                 finally
                 {
+                    await Task.Delay(2000);
                     ConnectButtonInteractable = true;
                 }
+            }
+            else
+            {
+                Logger.log?.Warn($"Cannot connect to OBS: {(controller == null ? "OBSController" : "OBS Websocket")} is null.");
+                await Task.Delay(2000);
+                ConnectButtonInteractable = true;
             }
         }
 

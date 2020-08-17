@@ -72,7 +72,7 @@ namespace OBSControl.HarmonyPatches
             if(LevelDelayPatch == null)
             {
                 MethodInfo original = typeof(LevelSelectionFlowCoordinator).GetMethod("StartLevel", allBindingFlags);
-                HarmonyMethod prefix = new HarmonyMethod(typeof(LevelSelectionNavigationController_StartLevel).GetMethod("Prefix", allBindingFlags));
+                HarmonyMethod prefix = new HarmonyMethod(typeof(StartLevelPatch).GetMethod("Prefix", allBindingFlags));
                 LevelDelayPatch = new HarmonyPatchInfo(Harmony, original, prefix, null);
             }
             return LevelDelayPatch;

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Threading;
 using OBSControl.OBSComponents;
+using OBSControl.Utilities;
 
 #nullable enable
 namespace OBSControl
@@ -20,8 +21,18 @@ namespace OBSControl
 	public class OBSController
         : MonoBehaviour
     {
+        #region Exposed Events
+        public event EventHandler<bool>? ConnectionStateChanged;
+        public event EventHandler<HeartBeatEventArgs>? Heartbeat;
+        public event EventHandler<OutputState>? RecordingStateChanged;
+        public event EventHandler<OutputState>? StreamingStateChanged;
+        public event EventHandler<StreamStatusEventArgs>? StreamStatus;
+        public event EventHandler<OBSComponentChangedEventArgs>? OBSComponentChanged;
+        #endregion
+
+        public static int ConnectTimeout = 10000;
         private const string Error_OBSWebSocketNotRunning = "No connection could be made because the target machine actively refused it.";
-        public static OBSController instance { get; private set; } = null!;
+        public static OBSController? instance { get; private set; } = null;
         private OBSWebsocket? _obs;
         public OBSWebsocket? Obs
         {
@@ -87,7 +98,6 @@ namespace OBSControl
             }
         }
 
-        private bool OnConnectTriggered = false;
         public string? RecordingFolder;
 
         public bool IsConnected => Obs?.IsConnected ?? false;
@@ -124,7 +134,8 @@ namespace OBSControl
             return null;
         }
 
-        public async Task<T> AddOBSComponentAsync<T>() where T : OBSComponent, new()
+
+        public async Task<T?> AddOBSComponentAsync<T>() where T : OBSComponent, new()
         {
             //if (OBSComponents.ContainsKey(typeof(T)))
             //    throw new InvalidOperationException($"OBSController already has an instance of type '{typeof(T).Name}'.");
@@ -146,6 +157,7 @@ namespace OBSControl
                 Destroy(go);
             }
 #pragma warning restore CA1031 // Do not catch general exception types
+            RaiseOBSComponentChanged(comp, null);
             return null;
         }
         #region OBS Properties
@@ -200,6 +212,7 @@ namespace OBSControl
         {
             Connected, Retry, NoRetry
         }
+
         public async Task<TryConnectResponse> TryConnect(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -209,13 +222,22 @@ namespace OBSControl
             {
                 try
                 {
-                    await Obs.Connect(Config.ServerAddress, Config.ServerPassword).ConfigureAwait(false);
-                    message = $"Finished attempting to connect to {Config.ServerAddress}";
+                    string? address = Config.ServerAddress;
+                    if (address == null || address.Length == 0)
+                    {
+                        Logger.log?.Warn($"Unable to connect to OBS, a server address was not specified.");
+                        return TryConnectResponse.NoRetry;
+                    }
+                    await Obs.Connect(address, Config.ServerPassword).ConfigureAwait(false);
+
+                    message = $"Finished attempting to connect to {Config.ServerAddress}.";
                     if (message != lastTryConnectMessage)
                     {
                         Logger.log?.Info(message);
                         lastTryConnectMessage = message;
                     }
+                    if (Obs.IsConnected)
+                        Logger.log?.Info($"OBS {(await Obs.GetVersion().ConfigureAwait(false)).OBSStudioVersion} is connected.");
                 }
                 catch (AuthFailureException)
                 {
@@ -275,14 +297,19 @@ namespace OBSControl
                     return TryConnectResponse.Retry;
                 }
                 if (Obs.IsConnected)
+                {
+                    lastTryConnectMessage = null;
                     Logger.log?.Info($"Connected to OBS @ {Config.ServerAddress}");
+                }
+            }
+            else if (Obs == null)
+            {
+                Logger.log?.Warn($"Unable to connection, Obs is null.");
+                return TryConnectResponse.NoRetry;
             }
             else
                 Logger.log?.Info("TryConnect: OBS is already connected.");
-            if (Obs == null)
-                return TryConnectResponse.Retry;
-            else
-                return Obs.IsConnected ? TryConnectResponse.Connected : TryConnectResponse.Retry;
+            return Obs.IsConnected ? TryConnectResponse.Connected : TryConnectResponse.Retry;
         }
 
         private async Task RepeatTryConnect(CancellationToken cancellationToken)
@@ -310,12 +337,7 @@ namespace OBSControl
                     connectAttempts++;
                     connectResponse = await TryConnect(cancellationToken).ConfigureAwait(false);
                 }
-                if (obs.IsConnected)
-                {
-                    Logger.log?.Info($"OBS {(await obs.GetVersion().ConfigureAwait(false)).OBSStudioVersion} is connected.");
-                    Logger.log?.Info($"OnConnectTriggered: {OnConnectTriggered}");
-                }
-                else
+                if (!obs.IsConnected)
                     Logger.log?.Warn($"OBS is not connected, automatic connect aborted after {connectAttempts} {(connectAttempts == 1 ? "attempt" : "attempts")}.");
             }
             catch (OperationCanceledException)
@@ -356,14 +378,6 @@ namespace OBSControl
             obs.StreamStatus -= OnStreamStatus;
         }
         #endregion
-        #region Events
-        public event EventHandler<bool>? ConnectionStateChanged;
-        public event EventHandler<HeartBeatEventArgs>? Heartbeat;
-        public event EventHandler<OutputState>? RecordingStateChanged;
-        public event EventHandler<OutputState>? StreamingStateChanged;
-        public event EventHandler<StreamStatusEventArgs>? StreamStatus;
-        public event EventHandler<string>? SceneChanged;
-        #endregion
 
 
 
@@ -376,9 +390,8 @@ namespace OBSControl
                 Logger.log?.Error($"OnConnect was triggered, but OBSController._obs is null (this shouldn't happen). OBSControl may be broken :'(");
                 return;
             }
-            OnConnectTriggered = true;
             wasConnected = true;
-            Logger.log?.Info($"OnConnect: Connected to OBS.");
+            Logger.log?.Debug($"OnConnect: Connected to OBS.");
             try
             {
 
@@ -550,10 +563,46 @@ namespace OBSControl
             instance = null;
             foreach (OBSComponent component in OBSComponents.Values.ToArray())
             {
+                RaiseOBSComponentChanged(null, component);
                 Destroy(component);
             }
             DestroyObsInstance(Obs);
         }
         #endregion
+
+        protected void RaiseOBSComponentChanged(OBSComponent? added, OBSComponent? removed)
+        {
+            EventHandler<OBSComponentChangedEventArgs>[]? handlers =
+                OBSComponentChanged?.GetInvocationList().Select(d => (EventHandler<OBSComponentChangedEventArgs>)d).ToArray();
+            if (handlers != null && handlers.Length > 0)
+            {
+                OBSComponentChangedEventArgs args = new OBSComponentChangedEventArgs(added, removed);
+                for (int i = 0; i < handlers.Length; i++)
+                {
+                    try
+                    {
+                        handlers[i].Invoke(this, args);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.log?.Error($"Error in OBSComponentChanged handler: {ex.Message}");
+                        Logger.log?.Debug(ex);
+                    }
+                }
+            }
+        }
+
+    }
+
+
+    public class OBSComponentChangedEventArgs : EventArgs
+    {
+        public readonly OBSComponent? RemovedComponent;
+        public readonly OBSComponent? AddedComponent;
+        public OBSComponentChangedEventArgs(OBSComponent? added, OBSComponent? removed)
+        {
+            AddedComponent = added;
+            RemovedComponent = removed;
+        }
     }
 }

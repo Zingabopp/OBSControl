@@ -11,12 +11,15 @@ namespace OBSControl.OBSComponents
 {
     public abstract class OBSComponent : MonoBehaviour
     {
+        public event EventHandler<bool>? ActiveChanged;
+        public event EventHandler? Destroyed;
         public bool ActiveAndConnected => isActiveAndEnabled && Connected;
         public bool Connected { get; private set; }
         private OBSController? _obs;
+        protected T? GetService<T>() where T : OBSComponent, new() => _obs?.GetOBSComponent<T>();
         protected OBSController Obs
         {
-            get => _obs ?? throw new InvalidOperationException("This component has not been initialized with an OBSController.");
+            get => _obs ??= OBSController.instance ?? throw new InvalidOperationException("This component has not been initialized with an OBSController.");
             private set
             {
                 if (value == _obs) return;
@@ -56,7 +59,7 @@ namespace OBSControl.OBSComponents
         private void ConnectionStateChanged(object sender, bool connected)
         {
             OBSController? obs = _obs;
-            if (obs != null && obs == sender)
+            if (obs != null && obs == (System.Object)sender)
             {
                 if (connected)
                 {
@@ -105,9 +108,11 @@ namespace OBSControl.OBSComponents
         /// </summary>
         /// <param name="obs"></param>
         /// <returns></returns>
-        public virtual async Task InitializeAsync(OBSController obs)
+        public virtual Task InitializeAsync(OBSController obs)
         {
+            Logger.log?.Debug($"Initializing {this.GetType().Name}.");
             Obs = obs ?? throw new ArgumentNullException(nameof(obs), "Cannot initialize an OBSComponent with a null OBSController.");
+            return Task.FromResult(true);
         }
 
         protected virtual void SetEvents(OBSController obs)
@@ -147,18 +152,23 @@ namespace OBSControl.OBSComponents
         }
 
         /// <summary>
-        /// 
+        /// Run when an <see cref="OBSController"/> that is connected is assigned to this <see cref="OBSComponent"/>
+        /// and when the assigned <see cref="OBSController"/> reports that it has connected to OBS.
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         /// <exception cref="OperationCanceledException"></exception>
-        protected virtual async Task OnConnectAsync(CancellationToken cancellationToken)
+        protected virtual Task OnConnectAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (Connected) return;
-            Connected = true;
+            if (!Connected)
+                Connected = true;
+            return Task.FromResult(string.Empty);
         }
 
+        /// <summary>
+        /// Run when OBSController reports it has disconnected from OBS.
+        /// </summary>
         protected virtual void OnDisconnect()
         {
             CancelAll();
@@ -183,6 +193,7 @@ namespace OBSControl.OBSComponents
                     _allTasksCancelSource = new CancellationTokenSource();
                 }
             }
+            ActiveChanged?.Invoke(this, true);
         }
 
         protected virtual void OnDisable()
@@ -193,6 +204,13 @@ namespace OBSControl.OBSComponents
             {
                 lastSource.Cancel();
             }
+            ActiveChanged?.Invoke(this, false);
+        }
+
+        protected virtual void OnDestroy()
+        {
+            Logger.log?.Debug($"Destroying '{gameObject.name}'.");
+            Destroyed?.Invoke(this, EventArgs.Empty);
         }
 
         public static EventHandler CreateWaitHandler(Func<object, EventArgs, bool> resultHandler, CancellationToken cancellationToken, out Task<bool> waitTask)

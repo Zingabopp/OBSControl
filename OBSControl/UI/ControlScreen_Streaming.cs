@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web.UI;
 using BeatSaberMarkupLanguage.Attributes;
@@ -16,7 +17,7 @@ namespace OBSControl.UI
 {
     public partial class ControlScreen
     {
-        protected StreamStatusEventArgs CurrentStreamStatus;
+        protected StreamStatusEventArgs? CurrentStreamStatus;
         [UIValue(nameof(TimeFormatter))]
         public readonly TimeFormatter TimeFormatter = new TimeFormatter();
         #region Properties
@@ -96,8 +97,10 @@ namespace OBSControl.UI
             StreamButtonInteractable = false;
             try
             {
-                await StreamingController.StartStreaming();
-                await Task.Delay(2000);
+
+                await SceneController.StartIntroSceneSequence(CancellationToken.None);
+                //await StreamingController.StartStreaming();
+                //await Task.Delay(2000);
             }
             catch (Exception ex)
             {

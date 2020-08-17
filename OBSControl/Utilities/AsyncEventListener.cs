@@ -40,11 +40,11 @@ namespace OBSControl.Utilities
     /// <typeparam name="TEventArgs">Type of the event arguments in the <see cref="EventHandler"/></typeparam>
     public class AsyncEventListener<TResult, TEventArgs>
     {
-        private readonly Func<object, TEventArgs, EventListenerResult<TResult>> _function;
+        protected Func<object, TEventArgs, EventListenerResult<TResult>> Function;
         private CancellationToken _cancellationToken;
         private CancellationTokenRegistration _tokenRegistration;
 
-        private readonly int _timeout;
+        protected int _timeout;
         private CancellationTokenSource? TimeoutSource;
         private CancellationToken _timeoutToken;
         private CancellationTokenRegistration _timeoutRegistration;
@@ -67,6 +67,8 @@ namespace OBSControl.Utilities
         /// is subscribed to is raised and the function returns a <see cref="EventListenerResult{TResult}"/> 
         /// where <see cref="EventListenerResult{TResult}.IsFinished"/> is true, the <see cref="CancellationToken"/> is cancelled, or the event listener times out.
         /// </summary>
+        /// <exception cref="TimeoutException"></exception>
+        /// <exception cref="OperationCanceledException"></exception>
         public Task<TResult> Task
         {
             get
@@ -116,6 +118,11 @@ namespace OBSControl.Utilities
                 _tokenRegistration = _cancellationToken.Register(CancelInternal);
         }
 
+        protected virtual EventListenerResult<TResult> ExecuteFunction(object sender, TEventArgs eventArgs)
+        {
+            return Function(sender, eventArgs);
+        }
+
         /// <summary>
         /// Subscribe this method to the event it should listen to.
         /// </summary>
@@ -123,11 +130,11 @@ namespace OBSControl.Utilities
         /// <param name="eventArgs"></param>
         public void OnEvent(object sender, TEventArgs eventArgs)
         {
-            bool finished = true;
             if (!Listening) return;
+            bool finished = true;
             try
             {
-                EventListenerResult<TResult> result = _function(sender, eventArgs);
+                EventListenerResult<TResult> result = ExecuteFunction(sender, eventArgs);
                 if (result.IsFinished)
                     _taskCompletion.TrySetResult(result.Result);
                 else
@@ -164,7 +171,7 @@ namespace OBSControl.Utilities
         {
             _timeout = timeout;
             Reset(cancellationToken);
-            _function = function;
+            Function = function;
         }
 
         /// <summary>
@@ -175,15 +182,23 @@ namespace OBSControl.Utilities
         public AsyncEventListener(Func<object, TEventArgs, EventListenerResult<TResult>> function, CancellationToken cancellationToken = default)
             : this(function, 0, cancellationToken)
         { }
-        public void SetResult(TResult result)
+        public bool TrySetResult(TResult result)
         {
-            _taskCompletion.TrySetResult(result);
+            bool ret = _taskCompletion.TrySetResult(result);
             Cleanup();
+            return ret;
         }
-        public void SetException(Exception exception)
+        public bool TrySetCanceled(CancellationToken cancellationToken = default)
         {
+            bool ret = _taskCompletion.TrySetCanceled(cancellationToken);
             Cleanup();
-            _taskCompletion.TrySetException(exception);
+            return ret;
+        }
+        public bool TrySetException(Exception exception)
+        {
+            bool ret = _taskCompletion.TrySetException(exception);
+            Cleanup();
+            return ret;
         }
 
         private void Timeout()
@@ -198,17 +213,6 @@ namespace OBSControl.Utilities
             Cleanup();
         }
 
-        public void Cancel()
-        {
-            _taskCompletion.TrySetCanceled();
-            Cleanup();
-        }
-        public void Cancel(CancellationToken cancelSource)
-        {
-            _taskCompletion.TrySetCanceled(cancelSource);
-            Cleanup();
-        }
-
         private void Cleanup()
         {
             Listening = false;
@@ -217,5 +221,46 @@ namespace OBSControl.Utilities
             TimeoutSource?.Dispose();
             TimeoutSource = null;
         }
+    }
+
+    public class AsyncEventListenerWithArg<TResult, TEventArgs, TArg> : AsyncEventListener<TResult, TEventArgs>
+    {
+        public TArg Argument { get; protected set; }
+
+        public void Reset(TArg argument, CancellationToken cancellationToken = default)
+        {
+            Reset(cancellationToken);
+            Argument = argument;
+        }
+
+        protected override EventListenerResult<TResult> ExecuteFunction(object sender, TEventArgs eventArgs)
+        {
+
+            return FunctionWithArg(sender, eventArgs, Argument);
+        }
+
+        Func<object, TEventArgs, TArg, EventListenerResult<TResult>> FunctionWithArg;
+        /// <summary>
+        /// Creates a new <see cref="AsyncEventListener{TResult, TEventArgs}"/> with an optional timeout (in milliseconds) and <see cref="CancellationToken"/>.
+        /// </summary>
+        /// <param name="function">Function that will operate on the parameters given by the raised event.</param>
+        /// <param name="timeout">Timeout in milliseconds (0 for none). The clock starts when <see cref="StartListening"/> is called.</param>
+        /// <param name="cancellationToken"></param>
+        public AsyncEventListenerWithArg(Func<object, TEventArgs, TArg, EventListenerResult<TResult>> function, TArg arg, int timeout, CancellationToken cancellationToken = default)
+            : base((s, e) => function(s, e, arg), timeout, cancellationToken)
+        {
+            FunctionWithArg = function;
+            Argument = arg;
+            Reset(cancellationToken);
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="AsyncEventListener{TResult, TEventArgs}"/> with an optional <see cref="CancellationToken"/>.
+        /// </summary>
+        /// <param name="function">Function that will operate on the parameters given by the raised event.</param>
+        /// <param name="cancellationToken"></param>
+        public AsyncEventListenerWithArg(Func<object, TEventArgs, TArg, EventListenerResult<TResult>> function, TArg arg, CancellationToken cancellationToken = default)
+            : this(function, arg, 0, cancellationToken)
+        { }
     }
 }

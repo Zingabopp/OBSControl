@@ -6,27 +6,48 @@ using OBSControl.OBSComponents;
 using OBSWebsocketDotNet.Types;
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 #nullable enable
 namespace OBSControl.HarmonyPatches
 {
+
     [HarmonyPatch(typeof(LevelSelectionFlowCoordinator), "StartLevel",
         new Type[] {
         typeof(IDifficultyBeatmap),
         typeof(Action),
         typeof(bool)
         })]
-    internal class LevelSelectionNavigationController_StartLevel
+    internal class StartLevelPatch
     {
         internal static FieldAccessor<LevelSelectionNavigationController, StandardLevelDetailViewController>.Accessor AccessDetailViewController =
             FieldAccessor<LevelSelectionNavigationController, StandardLevelDetailViewController>.GetAccessor("_levelDetailViewController");
         internal static FieldAccessor<StandardLevelDetailViewController, StandardLevelDetailView>.Accessor AccessDetailView =
             FieldAccessor<StandardLevelDetailViewController, StandardLevelDetailView>.GetAccessor("_standardLevelDetailView");
+        static StartLevelPatch()
+        {
+            SceneManager.activeSceneChanged += OnActiveSceneChanged;
+        }
+
+        private static void OnActiveSceneChanged(Scene arg0, Scene arg1)
+        {
+            Button? playButton = PlayButton;
+            if (playButton != null)
+                playButton.interactable = true;
+        }
+
         public static bool DelayedStartActive { get; private set; }
+        public static event EventHandler<LevelStartEventArgs>? LevelStarting;
+        public static event EventHandler? DelayedLevelStarting;
+        public static Button? PlayButton;
 
         /// <summary>
         /// Coroutine to start the level is active.
@@ -36,6 +57,101 @@ namespace OBSControl.HarmonyPatches
             ref Action beforeSceneSwitchCallback, ref bool practice,
             LevelSelectionNavigationController ____levelSelectionNavigationController)
         {
+
+            if (WaitingToStart)
+            {
+                WaitingToStart = false;
+                return true;
+            }
+            WaitingToStart = true;
+            Logger.log?.Debug("LevelSelectionNavigationController_StartLevel");
+            OBSController? obs = OBSController.instance;
+            SceneController? sceneController = obs?.GetOBSComponent<SceneController>();
+            if (obs == null || !obs.IsConnected)
+            {
+                Logger.log?.Warn($"Skipping StartLevel sequence, OBS is unavailable.");
+                return true;
+            }
+            if (sceneController == null || !sceneController.ActiveAndConnected)
+            {
+                Logger.log?.Warn($"Skipping StartLevel sequence, SceneController is unavailable.");
+                return true;
+            }
+            if(!sceneController.GetSceneSequenceEnabled())
+            {
+                Logger.log?.Warn($"Skipping StartLevel sequence, SceneController SceneSequence is not enabled.");
+                return true;
+            }
+            StandardLevelDetailViewController detailViewController = AccessDetailViewController(ref ____levelSelectionNavigationController);
+            StandardLevelDetailView levelView = AccessDetailView(ref detailViewController);
+            Button playButton = levelView.playButton;
+            PlayButton = playButton;
+            playButton.interactable = false;
+#if DEBUG
+            //void StartingHandler(object sender, LevelStartEventArgs e)
+            //{
+            //    e.SetResponse(LevelStartResponse.Delayed);
+            //    Logger.log?.Info($"Setting LevelStartResponse: {e.StartResponse}");
+            //}
+            //LevelStarting += StartingHandler;
+            try
+            {
+                var handler = LevelStarting;
+                if (handler == null)
+                {
+                    return true;
+                }
+                EventHandler<LevelStartEventArgs>[] invocations = handler.GetInvocationList().Select(d => (EventHandler<LevelStartEventArgs>)d).ToArray();
+                LevelStartResponse response = LevelStartResponse.None;
+                LevelStartEventArgs args = new LevelStartEventArgs(__instance, difficultyBeatmap, beforeSceneSwitchCallback, practice, playButton);
+                for (int i = 0; i < invocations.Length; i++)
+                {
+                    try
+                    {
+                        invocations[i].Invoke(__instance, args);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.log?.Error($"Error invoking handler '{invocations[i]?.Method.Name}': {ex.Message}");
+                        Logger.log?.Debug(ex);
+                    }
+                }
+                response = args.StartResponse;
+                if (response == LevelStartResponse.None)
+                {
+                    Logger.log?.Debug($"No LevelStartResponse, skipping delayed start.");
+                    return true;
+                }
+                if (response == LevelStartResponse.Handled)
+                {
+                    Logger.log?.Debug($"LevelStartResponse is handled, skipping delayed start.");
+                    return false;
+                }
+                // Do delayed level start
+                Logger.log?.Info($"Starting delayed level start sequence.");
+                _ = sceneController.StartIntroSceneSequence(CancellationToken.None).ContinueWith(result =>
+                {
+                    LevelStartEventArgs levelStartInfo = args;
+                    StartLevel(levelStartInfo.Coordinator, levelStartInfo.DifficultyBeatmap, levelStartInfo.BeforeSceneSwitchCallback, levelStartInfo.Practice);
+                    if (levelStartInfo.PlayButton != null)
+                    {
+                        levelStartInfo.PlayButton.interactable = true;
+                        string prevText = PreviousText;
+                        if (prevText != null && prevText.Length > 0)
+                        {
+                            levelStartInfo.PlayButton.SetButtonText(PreviousText);
+                            PreviousText = null;
+                        }
+                    }
+                });
+                return false;
+            }
+            finally
+            {
+                //LevelStarting -= StartingHandler;
+            }
+            return true;
+#else
             RecordingController? recordingController = OBSController.instance.GetOBSComponent<RecordingController>();
             if (recordingController == null)
             {
@@ -62,10 +178,6 @@ namespace OBSControl.HarmonyPatches
             }
             DelayedStartActive = true;
             WaitingToStart = true;
-            Logger.log?.Debug("LevelSelectionNavigationController_StartLevel");
-            StandardLevelDetailViewController detailViewController = AccessDetailViewController(ref ____levelSelectionNavigationController);
-            StandardLevelDetailView levelView = AccessDetailView(ref detailViewController);
-            Button playButton = levelView.playButton;
             if (playButton != null)
             {
                 PreviousText = GetButtonText(playButton);
@@ -86,6 +198,7 @@ namespace OBSControl.HarmonyPatches
             }
             SharedCoroutineStarter.instance.StartCoroutine(DelayedLevelStart(recordingController, __instance, difficultyBeatmap, beforeSceneSwitchCallback, practice, playButton));
             return false;
+#endif
         }
         private static string? PreviousText;
         private static string? GetButtonText(Button button)
@@ -98,7 +211,7 @@ namespace OBSControl.HarmonyPatches
 
         private static void SetButtonText(Button button, string text)
         {
-            if(button == null)
+            if (button == null)
             {
                 Logger.log?.Debug("Button was null when trying to set colors.");
                 return;
@@ -107,7 +220,7 @@ namespace OBSControl.HarmonyPatches
             {
                 button.SetButtonText(text);
             });
-            
+
         }
 
         private static EventHandler<OutputState>? _recordStateChangedAction;
@@ -171,8 +284,58 @@ namespace OBSControl.HarmonyPatches
             }
         }
     }
-    public delegate void StartLevelDelegate(LevelSelectionFlowCoordinator coordinator, IDifficultyBeatmap difficultyBeatmap, Action beforeSceneSwitchCallback, bool practice);
+    public delegate void StartLevelDelegate(LevelSelectionFlowCoordinator coordinator, IDifficultyBeatmap difficultyBeatmap, Action? beforeSceneSwitchCallback, bool practice);
 
+    public class LevelStartEventArgs
+    {
+        public readonly LevelSelectionFlowCoordinator Coordinator;
+        public readonly IDifficultyBeatmap DifficultyBeatmap;
+        public readonly Action? BeforeSceneSwitchCallback;
+        public readonly bool Practice;
+        public readonly Button? PlayButton;
+        /// <summary>
+        /// How the StartLevel patch should behave.
+        /// </summary>
+        public LevelStartResponse StartResponse { get; protected set; }
+        /// <summary>
+        /// Delay in milliseconds.
+        /// </summary>
+        public int Delay { get; protected set; }
+        protected List<LevelStartResponse>? StartResponses;
+        public LevelStartResponse[] GetResponses() => StartResponses?.ToArray() ?? Array.Empty<LevelStartResponse>();
+        public void SetResponse(LevelStartResponse response, int delayMs = 0)
+        {
+            if (StartResponses == null)
+                StartResponses = new List<LevelStartResponse>(1);
+            StartResponses.Add(response);
+            if (StartResponse < response)
+                StartResponse = response;
+        }
 
+        public LevelStartEventArgs(LevelSelectionFlowCoordinator coordinator, IDifficultyBeatmap difficultyBeatmap, Action? beforeSceneSwitchCallback, bool practice, Button? playButton)
+        {
+            Coordinator = coordinator;
+            DifficultyBeatmap = difficultyBeatmap;
+            BeforeSceneSwitchCallback = beforeSceneSwitchCallback;
+            Practice = practice;
+            PlayButton = playButton;
+        }
+    }
+
+    public enum LevelStartResponse
+    {
+        /// <summary>
+        /// Level should start normally.
+        /// </summary>
+        None = 0,
+        /// <summary>
+        /// Level should start after delay.
+        /// </summary>
+        Delayed = 1,
+        /// <summary>
+        /// Another component will handle starting the level.
+        /// </summary>
+        Handled = 2
+    }
 
 }
