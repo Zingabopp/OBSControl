@@ -46,9 +46,13 @@ namespace OBSControl.OBSComponents
         /// </summary>
         Immediate = 2,
         /// <summary>
+        /// Recording should be start/stopped after a delay.
+        /// </summary>
+        Delayed = 3,
+        /// <summary>
         /// Recording should be stopped automatically (by SceneSequence callback).
         /// </summary>
-        Auto = 3
+        Auto = 4
     }
 
     /// <summary>
@@ -63,12 +67,14 @@ namespace OBSControl.OBSComponents
         private const string DefaultFileFormat = "%CCYY-%MM-%DD %hh-%mm-%ss";
         public const string DefaultDateTimeFormat = "yyyyMMddHHmmss";
         private SceneController? _sceneController;
-        protected SceneController? SceneController { get => _sceneController;
+        protected SceneController? SceneController
+        {
+            get => _sceneController;
             set
             {
                 Logger.log?.Debug($"Setting SceneController{(value == null ? " to <NULL>" : "")}.");
                 if (value == _sceneController) return;
-                if(_sceneController != null)
+                if (_sceneController != null)
                 {
                     _sceneController.SceneStageChanged -= OnSceneStageChanged;
                 }
@@ -86,7 +92,35 @@ namespace OBSControl.OBSComponents
         public OutputState OutputState { get; protected set; }
         public bool WaitingToStop { get; private set; }
         public Task? StopRecordingTask { get; private set; }
-        public RecordActionType StopRecordAction { get; protected set; }
+        public RecordActionType StopRecordAction
+        {
+            get
+            {
+                PluginConfig config = Plugin.config;
+                bool stopOnManual = config?.AutoStopOnManual ?? true;
+                bool delayedStop = (config?.RecordingStopDelay ?? 0) > 0;
+                switch (RecordStopType)
+                {
+                    case RecordActionSourceType.None:
+                        break;
+                    case RecordActionSourceType.ManualOBS:
+                        break;
+                    case RecordActionSourceType.Manual:
+                        break;
+                    case RecordActionSourceType.Auto:
+                        break;
+                    default:
+                        break;
+                }
+                return (RecordStopType, stopOnManual, delayedStop) switch
+                {
+                    (RecordActionSourceType.Manual, true, true) => RecordActionType.Delayed,
+                    (RecordActionSourceType.Manual, true, false) => RecordActionType.Immediate,
+                    (RecordActionSourceType.Manual, false, _) => RecordActionType.NoAction,
+
+                };
+            }
+        }
         public RecordActionSourceType RecordStartType { get; protected set; }
         public RecordActionSourceType RecordStopType { get; protected set; }
         private string ToDateTimeFileFormat(DateTime dateTime)
@@ -370,7 +404,7 @@ namespace OBSControl.OBSComponents
             BS_Utils.Plugin.LevelDidFinishEvent += OnLevelFinished;
         }
 
-        private void OnLevelFinished(StandardLevelScenesTransitionSetupDataSO levelScenesTransitionSetupDataSO, LevelCompletionResults levelCompletionResults)
+        private async void OnLevelFinished(StandardLevelScenesTransitionSetupDataSO levelScenesTransitionSetupDataSO, LevelCompletionResults levelCompletionResults)
         {
             BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
             string? newFileName = null;
@@ -387,8 +421,10 @@ namespace OBSControl.OBSComponents
                 if (GameStatus.DifficultyBeatmap != null)
                 {
                     newFileName = Utilities.FileRenaming.GetFilenameString(Plugin.config.RecordingFileFormat,
-                        new BeatmapLevelWrapper(GameStatus.DifficultyBeatmap), resultsWrapper,
-                        Plugin.config.InvalidCharacterSubstitute, Plugin.config.ReplaceSpacesWith);
+                        new BeatmapLevelWrapper(GameStatus.DifficultyBeatmap),
+                        resultsWrapper,
+                        Plugin.config.InvalidCharacterSubstitute,
+                        Plugin.config.ReplaceSpacesWith);
                 }
             }
 #pragma warning disable CA1031 // Do not catch general exception types
@@ -399,14 +435,23 @@ namespace OBSControl.OBSComponents
             }
 #pragma warning restore CA1031 // Do not catch general exception types
             if (ShouldStopRecordingImmediate())
-                StopRecordingTask = TryStopRecordingAsync(newFileName, false);
+                StopRecordingTask = TryStopRecordingAsync(newFileName, true);
+            else
+            {
+                TimeSpan stopDelay = TimeSpan.FromSeconds(Plugin.config?.RecordingStopDelay ?? 0);
+                if (stopDelay > TimeSpan.Zero)
+                    await Task.Delay(stopDelay);
+                await TryStopRecordingAsync(newFileName, false);
+            }
         }
 
         #region OBS Event Handlers
 
         public bool ShouldStopRecordingImmediate()
         {
-            return StopRecordAction switch
+            bool stopImmediate = Plugin.config.RecordingStopDelay <= 0;
+
+            stopImmediate = StopRecordAction switch
             {
                 RecordActionType.None => false,
                 RecordActionType.NoAction => Plugin.config?.AutoStopOnManual ?? true,
@@ -414,6 +459,8 @@ namespace OBSControl.OBSComponents
                 RecordActionType.Auto => true,
                 _ => true
             };
+
+            return stopImmediate;
         }
 
         private void Obs_RecordingStateChanged(object sender, OutputState type)
@@ -456,11 +503,11 @@ namespace OBSControl.OBSComponents
         }
         private void OnOBSComponentChanged(object sender, OBSComponentChangedEventArgs e)
         {
-            if(e.AddedComponent is SceneController addedSceneController)
+            if (e.AddedComponent is SceneController addedSceneController)
             {
                 SceneController = addedSceneController;
             }
-            if(e.RemovedComponent is SceneController removedSceneController 
+            if (e.RemovedComponent is SceneController removedSceneController
                 && removedSceneController == SceneController)
             {
                 SceneController = null;
@@ -494,9 +541,6 @@ namespace OBSControl.OBSComponents
             BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
             StartLevelPatch.LevelStarting -= OnLevelStarting;
         }
-        protected override void SetEvents(OBSWebsocket obs)
-        {
-        }
 
         private void OnLevelStarting(object sender, LevelStartEventArgs e)
         {
@@ -522,6 +566,9 @@ namespace OBSControl.OBSComponents
             }
         }
 
+        protected override void SetEvents(OBSWebsocket obs)
+        {
+        }
         protected override void RemoveEvents(OBSWebsocket obs)
         {
         }
