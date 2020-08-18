@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 #nullable enable
@@ -99,30 +100,24 @@ namespace OBSControl.OBSComponents
                 PluginConfig config = Plugin.config;
                 bool stopOnManual = config?.AutoStopOnManual ?? true;
                 bool delayedStop = (config?.RecordingStopDelay ?? 0) > 0;
-                switch (RecordStopType)
-                {
-                    case RecordActionSourceType.None:
-                        break;
-                    case RecordActionSourceType.ManualOBS:
-                        break;
-                    case RecordActionSourceType.Manual:
-                        break;
-                    case RecordActionSourceType.Auto:
-                        break;
-                    default:
-                        break;
-                }
-                return (RecordStopType, stopOnManual, delayedStop) switch
+                return (RecordStartType, stopOnManual, delayedStop) switch
                 {
                     (RecordActionSourceType.Manual, true, true) => RecordActionType.Delayed,
                     (RecordActionSourceType.Manual, true, false) => RecordActionType.Immediate,
                     (RecordActionSourceType.Manual, false, _) => RecordActionType.NoAction,
+                    (RecordActionSourceType.ManualOBS, true, true) => RecordActionType.Delayed,
+                    (RecordActionSourceType.ManualOBS, true, false) => RecordActionType.Immediate,
+                    (RecordActionSourceType.ManualOBS, false, _) => RecordActionType.NoAction,
+                    (RecordActionSourceType.Auto, _, _) => RecordActionType.Auto,
+                    (RecordActionSourceType.None, true, true) => RecordActionType.Delayed,
+                    (RecordActionSourceType.None, true, false) => RecordActionType.Immediate,
+                    (RecordActionSourceType.None, false, _) => RecordActionType.NoAction,
+                    _ => RecordActionType.None
 
                 };
             }
         }
         public RecordActionSourceType RecordStartType { get; protected set; }
-        public RecordActionSourceType RecordStopType { get; protected set; }
         private string ToDateTimeFileFormat(DateTime dateTime)
         {
             return dateTime.ToString(DefaultDateTimeFormat);
@@ -404,6 +399,102 @@ namespace OBSControl.OBSComponents
             BS_Utils.Plugin.LevelDidFinishEvent += OnLevelFinished;
         }
 
+        public async Task<RecordingSettings> SetupRecording(string? fileFormat, string? outputDirectory, CancellationToken cancellationToken)
+        {
+            OBSWebsocket? obs = Obs.Obs;
+            RecordingSettings settings = new RecordingSettings();
+            if (obs == null || !obs.IsConnected)
+            {
+                Logger.log?.Error($"Unable to setup recording, OBSWebsocket is not connected.");
+                return settings;
+            }
+            try
+            {
+                if (fileFormat != null && fileFormat.Length > 0)
+                {
+                    string? previousFileFormat = await obs.GetFilenameFormatting(cancellationToken).ConfigureAwait(false);
+                    settings.PreviousFileFormat = previousFileFormat;
+                    await obs.SetFilenameFormatting(fileFormat, cancellationToken);
+                    settings.FileFormatSet = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.log?.Error($"Error setting up recording file format: {ex.Message}");
+                Logger.log?.Debug(ex);
+
+            }
+            try
+            {
+                if (outputDirectory != null && outputDirectory.Length > 0)
+                {
+                    string? previousOutputDir = await obs.GetRecordingFolder(cancellationToken);
+                    settings.PreviousOutputDirectory = previousOutputDir;
+                    outputDirectory = Path.GetFullPath(outputDirectory);
+                    Directory.CreateDirectory(outputDirectory);
+                    await obs.SetRecordingFolder(outputDirectory).ConfigureAwait(false);
+                    settings.OutputDirectorySet = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.log?.Error($"Error setting recording directory path: {ex.Message}");
+                Logger.log?.Debug(ex);
+            }
+            return settings;
+        }
+
+        public async Task<Output[]> GetOutputsAsync(CancellationToken cancellationToken = default)
+        {
+            OBSWebsocket? obs = Obs.Obs;
+            if (obs == null || !obs.IsConnected)
+            {
+                Logger.log?.Error($"Unable to get output list, OBSWebsocket is not connected.");
+                return Array.Empty<Output>();
+            }
+            try
+            {
+                Output[]? outputList = await obs.ListOutputs(cancellationToken).ConfigureAwait(false);
+                if (outputList == null || outputList.Length == 0)
+                    Logger.log?.Warn("No Outputs listed");
+                return outputList ?? Array.Empty<Output>();
+            }
+            catch (Exception ex)
+            {
+                Logger.log?.Error($"Error getting list of outputs: {ex.Message}");
+                Logger.log?.Debug(ex);
+                return Array.Empty<Output>();
+            }
+        }
+
+        public async Task<string?> GetCurrentRecordFile(CancellationToken cancellationToken = default)
+        {
+            Output[] outputList = await GetOutputsAsync(cancellationToken).ConfigureAwait(false);
+            FileOutput[] fileOutputs = outputList.Where(o => o is FileOutput).Select(fo => (FileOutput)fo).ToArray();
+            if (fileOutputs.Length > 1)
+            {
+                FileOutput chosenOutput = fileOutputs.FirstOrDefault(f => f.Active && !string.IsNullOrEmpty(f.Settings.Path));
+                if (chosenOutput != null)
+                {
+                    Logger.log?.Warn($"Multiple file outputs received: {string.Join(", ", fileOutputs.Select(f => f.Name))}, getting the first active one with a path.");
+                    return chosenOutput.Settings.Path;
+                }
+                chosenOutput = fileOutputs.FirstOrDefault(f => !string.IsNullOrEmpty(f.Settings.Path));
+                if (chosenOutput != null)
+                {
+                    Logger.log?.Warn($"Multiple file outputs received: {string.Join(", ", fileOutputs.Select(f => f.Name))}, getting the first one with a path.");
+                    return chosenOutput.Settings.Path;
+                }
+                else
+                    return null;
+            }
+            string? path = fileOutputs[0].Settings.Path;
+            if (string.IsNullOrEmpty(path))
+                return null;
+            else
+                return path;
+        }
+
         private async void OnLevelFinished(StandardLevelScenesTransitionSetupDataSO levelScenesTransitionSetupDataSO, LevelCompletionResults levelCompletionResults)
         {
             BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
@@ -593,5 +684,16 @@ namespace OBSControl.OBSComponents
             RemoveEvents(Obs);
         }
         #endregion
+    }
+
+    public struct RecordingSettings
+    {
+        public static RecordingSettings None => new RecordingSettings();
+
+        public string? PreviousOutputDirectory;
+        public bool OutputDirectorySet;
+
+        public string? PreviousFileFormat;
+        public bool FileFormatSet;
     }
 }
