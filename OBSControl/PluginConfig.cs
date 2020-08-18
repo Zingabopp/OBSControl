@@ -153,7 +153,11 @@ namespace OBSControl
         }
 
 #pragma warning disable CS8603 // Possible null reference return.
-        public IDisposable ChangeTransaction() => null;
+        /// <summary>
+        /// Call this when you want to do multiple changes before saving the file, dispose to save.
+        /// </summary>
+        /// <returns></returns>
+        public virtual IDisposable ChangeTransaction() => null;
 #pragma warning restore CS8603 // Possible null reference return.
 
         public void UpdateSceneOptions(IEnumerable<string> newOptions)

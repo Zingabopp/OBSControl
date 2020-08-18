@@ -72,7 +72,7 @@ namespace OBSControl
                 return obs;
             return null;
         }
-        private DateTime LastHeartbeat = DateTime.MinValue;
+        private DateTime LastHeartbeatTime = DateTime.MinValue;
         private bool HeartbeatTimerActive = false;
 
         private PlayerDataModel? _playerData;
@@ -112,7 +112,7 @@ namespace OBSControl
             while (wasConnected)
             {
                 yield return HeartbeatCheckInterval;
-                if ((DateTime.UtcNow - LastHeartbeat) > HeartbeatTimeout)
+                if ((DateTime.UtcNow - LastHeartbeatTime) > HeartbeatTimeout)
                 {
                     Logger.log?.Error($"Lost connection to OBS, did not receive heartbeat.");
                     Obs?.Disconnect();
@@ -399,7 +399,7 @@ namespace OBSControl
                 if (!HeartbeatTimerActive)
                 {
                     Logger.log?.Debug($"Enabling HeartBeat check.");
-                    LastHeartbeat = DateTime.UtcNow;
+                    LastHeartbeatTime = DateTime.UtcNow;
                     HeartbeatTimerActive = true;
                     StartCoroutine(HeartbeatCoroutine());
                 }
@@ -437,6 +437,8 @@ namespace OBSControl
             }
         }
 
+        public HeartBeat? LastHeartbeat { get; protected set; }
+
         protected void OnHeartbeat(object sender, HeartBeatEventArgs heartbeat)
         {
 #if DEBUG
@@ -444,7 +446,8 @@ namespace OBSControl
 #endif
             try
             {
-                LastHeartbeat = DateTime.UtcNow;
+                LastHeartbeatTime = DateTime.UtcNow;
+                LastHeartbeat = new HeartBeat(heartbeat);
                 Heartbeat?.Invoke(this, heartbeat);
             }
             catch (Exception ex)
@@ -526,10 +529,10 @@ namespace OBSControl
         private async void Start()
         {
             Logger.log?.Debug("OBSController Start()");
-            await RepeatTryConnect(CancellationToken.None);
             await AddOBSComponentAsync<SceneController>();
             await AddOBSComponentAsync<RecordingController>();
             await AddOBSComponentAsync<StreamingController>();
+            await RepeatTryConnect(CancellationToken.None);
         }
 
         /// <summary>
@@ -591,7 +594,6 @@ namespace OBSControl
                 }
             }
         }
-
     }
 
 

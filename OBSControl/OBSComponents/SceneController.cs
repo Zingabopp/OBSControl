@@ -1,4 +1,5 @@
-﻿using BS_Utils.Utilities;
+﻿using BeatSaberMarkupLanguage;
+using BS_Utils.Utilities;
 using OBSControl.HarmonyPatches;
 using OBSControl.Utilities;
 using OBSWebsocketDotNet;
@@ -18,9 +19,10 @@ namespace OBSControl.OBSComponents
     public enum SceneStage
     {
         Resting = 0,
-        Intro = 1,
-        Game = 2,
-        Outro = 3,
+        IntroStarted = 1,
+        Game = 3,
+        OutroStarted = 4,
+        OutroFinished = 5,
         Aborted = 100
     }
     /// <summary>
@@ -33,7 +35,7 @@ namespace OBSControl.OBSComponents
         internal readonly HarmonyPatchInfo LevelDelayPatch = HarmonyManager.GetLevelDelayPatch();
         private readonly object _availableSceneLock = new object();
         #region Exposed Events
-        public event EventHandler<string>? SceneChanged;
+        public event EventHandler<string?>? SceneChanged;
         public event EventHandler? SceneListUpdated;
         public event EventHandler<SceneStageChangedEventArgs>? SceneStageChanged;
         #endregion
@@ -183,7 +185,7 @@ namespace OBSControl.OBSComponents
                 }
                 else
                     StartSceneSequenceListener.TrySetResult(startScene);
-                currentStage = SceneStage.Intro;
+                currentStage = SceneStage.IntroStarted;
                 callbacks = RaiseSceneStageChanged(currentStage);
                 if (callbacks.Length > 0)
                     await ExecuteCallbacks(callbacks, currentStage);
@@ -336,7 +338,7 @@ namespace OBSControl.OBSComponents
                 }
                 else
                     StopSceneSequenceListener.TrySetResult(endScene);
-                currentStage = SceneStage.Outro;
+                currentStage = SceneStage.OutroStarted;
                 callbacks = RaiseSceneStageChanged(currentStage);
                 if (callbacks.Length > 0)
                     await ExecuteCallbacks(callbacks, currentStage);
@@ -345,6 +347,10 @@ namespace OBSControl.OBSComponents
                     Logger.log?.Info($"Delaying resting scene '{restingScene}' by {endSceneStartDelay.TotalMilliseconds}ms.");
                     await Task.Delay(endSceneDuration);
                 }
+                currentStage = SceneStage.OutroFinished;
+                callbacks = RaiseSceneStageChanged(currentStage);
+                if (callbacks.Length > 0)
+                    await ExecuteCallbacks(callbacks, currentStage);
                 StopSceneSequenceListener.Reset(restingScene);
                 StopSceneSequenceListener.StartListening();
                 if (restingScene != null && CurrentScene != restingScene)
@@ -408,8 +414,7 @@ namespace OBSControl.OBSComponents
             {
                 if (_currentScene == value) return;
                 _currentScene = value;
-                if (value != null)
-                    SceneChanged?.Invoke(this, value);
+                SceneChanged?.Invoke(this, value);
             }
         }
 
@@ -556,6 +561,19 @@ namespace OBSControl.OBSComponents
             await UpdateScenes().ConfigureAwait(false);
         }
 
+        protected override async Task OnConnectAsync(CancellationToken cancellationToken)
+        {
+            await base.OnConnectAsync(cancellationToken);
+            await UpdateScenes().ConfigureAwait(false);
+
+        }
+
+        protected override void OnDisconnect()
+        {
+            base.OnDisconnect();
+            CurrentScene = null;
+        }
+
         private void OnLevelDidFinish(StandardLevelScenesTransitionSetupDataSO levelScenesTransitionSetupDataSO, LevelCompletionResults levelCompletionResults)
         {
             if (GetOutroSequenceEnabled())
@@ -568,12 +586,14 @@ namespace OBSControl.OBSComponents
         {
             base.SetEvents(obs);
             BS_Utils.Plugin.LevelDidFinishEvent += OnLevelDidFinish;
+            StartLevelPatch.LevelStarting += OnLevelStarting;
         }
 
         protected override void RemoveEvents(OBSController obs)
         {
             base.RemoveEvents(obs);
             BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelDidFinish;
+            StartLevelPatch.LevelStarting -= OnLevelStarting;
         }
         protected override void SetEvents(OBSWebsocket obs)
         {
@@ -589,6 +609,27 @@ namespace OBSControl.OBSComponents
         }
         #endregion
 
+
+        private void OnLevelStarting(object sender, LevelStartEventArgs e)
+        {
+            Logger.log?.Debug($"RecordingController OnLevelStarting.");
+            e.SetResponse(LevelStartResponse.Handled);
+            StartIntroSceneSequence(AllTasksCancelSource?.Token ?? CancellationToken.None).ContinueWith(result =>
+            {
+                LevelStartEventArgs levelStartInfo = e;
+                e.StartLevel(levelStartInfo.Coordinator, levelStartInfo.DifficultyBeatmap, levelStartInfo.BeforeSceneSwitchCallback, levelStartInfo.Practice);
+                if (levelStartInfo.PlayButton != null)
+                {
+                    levelStartInfo.PlayButton.interactable = true;
+                    string? prevText = e.PreviousPlayButtonText;
+                    if (prevText != null && prevText.Length > 0)
+                    {
+                        levelStartInfo.PlayButton.SetButtonText(prevText);
+                        prevText = null;
+                    }
+                }
+            });
+        }
         #region OBS Websocket Event Handlers
         private async void OnObsSceneListChanged(object sender, EventArgs? e)
         {

@@ -200,13 +200,17 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Icons\lock.png" />
-    <EmbeddedResource Include="Icons\lock.svg" />
+    <None Include="Icons\lock.svg" />
     <EmbeddedResource Include="Icons\lock_open.png" />
-    <EmbeddedResource Include="Icons\lock_open.svg" />
+    <None Include="Icons\lock_open.svg" />
     <EmbeddedResource Include="Icons\unfold_less.png" />
-    <EmbeddedResource Include="Icons\unfold_less.svg" />
+    <None Include="Icons\unfold_less.svg" />
     <EmbeddedResource Include="Icons\unfold_more.png" />
-    <EmbeddedResource Include="Icons\unfold_more.svg" />
+    <None Include="Icons\unfold_more.svg" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Icons\reset.png" />
+    <None Include="Icons\reset.svg" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="ILRepack.targets" />

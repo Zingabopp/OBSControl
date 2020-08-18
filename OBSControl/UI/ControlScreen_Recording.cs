@@ -144,7 +144,7 @@ namespace OBSControl.UI
             RecordButtonInteractable = false;
             try
             {
-                await RecordingController.TryStopRecordingAsync(null, true);
+                await RecordingController.TryStopRecordingAsync();
             }
             catch (Exception ex)
             {

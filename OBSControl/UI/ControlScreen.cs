@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web.UI;
@@ -48,7 +49,7 @@ namespace OBSControl.UI
             SetComponents(OBSController);
             SetConnectionState(OBSController.IsConnected);
             Logger.log?.Warn($"Created Main: {this.ContentFilePath}");
-            CurrentScene = SceneController.CurrentScene ?? string.Empty;
+            CurrentScene = SceneController?.CurrentScene ?? string.Empty;
         }
 
         protected void SetComponents(OBSController obs)
@@ -127,6 +128,26 @@ namespace OBSControl.UI
             FreeDiskSpace = e.Stats.FreeDiskSpace;
         }
 
+        private int _renderMissedFramesOffset;
+
+        public int RenderMissedFramesOffset
+        {
+            get { return _renderMissedFramesOffset; }
+            set
+            {
+                if (_renderMissedFramesOffset == value) return;
+                _renderMissedFramesOffset = value;
+                NotifyPropertyChanged();
+                NotifyPropertyChanged(nameof(RenderMissedFrames));
+            }
+        }
+
+
+        [UIAction(nameof(ResetRenderMissedFrames))]
+        public void ResetRenderMissedFrames()
+        {
+            RenderMissedFramesOffset = _renderMissedFrames;
+        }
 
         // For this method of setting the ResourceName, this class must be the first class in the file.
         //public override string ResourceName => string.Join(".", GetType().Namespace, GetType().Name);
@@ -258,7 +279,7 @@ namespace OBSControl.UI
         [UIValue(nameof(RenderMissedFrames))]
         public int RenderMissedFrames
         {
-            get { return _renderMissedFrames; }
+            get { return _renderMissedFrames - _renderMissedFramesOffset; }
             set
             {
                 if (_renderMissedFrames == value)

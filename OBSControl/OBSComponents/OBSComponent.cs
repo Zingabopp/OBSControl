@@ -115,6 +115,11 @@ namespace OBSControl.OBSComponents
             return Task.FromResult(true);
         }
 
+        /// <summary>
+        /// Sets events for this OBSComponent. Calls <see cref="RemoveEvents(OBSController)"/> first.
+        /// Overrides must call 'base.SetEvents(OBSController)' before setting any events.
+        /// </summary>
+        /// <param name="obs"></param>
         protected virtual void SetEvents(OBSController obs)
         {
             RemoveEvents(obs);
@@ -133,11 +138,14 @@ namespace OBSControl.OBSComponents
 
         protected virtual void OnObsCreated(object sender, OBSWebsocket obs)
         {
+#if DEBUG
+            Logger.log?.Debug($"{GetType().Name}: OnObsCreated.");
+#endif
             CancelAll();
             SetEvents(obs);
             try
             {
-
+                
             }
             catch (Exception ex)
             {
@@ -147,6 +155,9 @@ namespace OBSControl.OBSComponents
 
         protected virtual void OnDestroyingObs(object sender, OBSWebsocket obs)
         {
+#if DEBUG
+            Logger.log?.Debug($"{GetType().Name}: OnDestroyingObs.");
+#endif
             CancelAll();
             RemoveEvents(obs);
         }
@@ -160,6 +171,9 @@ namespace OBSControl.OBSComponents
         /// <exception cref="OperationCanceledException"></exception>
         protected virtual Task OnConnectAsync(CancellationToken cancellationToken)
         {
+#if DEBUG
+            Logger.log?.Debug($"{GetType().Name}: OnConnectAsync.");
+#endif
             cancellationToken.ThrowIfCancellationRequested();
             if (!Connected)
                 Connected = true;
@@ -171,6 +185,9 @@ namespace OBSControl.OBSComponents
         /// </summary>
         protected virtual void OnDisconnect()
         {
+#if DEBUG
+            Logger.log?.Debug($"{GetType().Name}: OnDisconnect.");
+#endif
             CancelAll();
             Connected = false;
         }

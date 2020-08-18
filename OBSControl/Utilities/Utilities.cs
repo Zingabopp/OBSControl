@@ -14,6 +14,24 @@ namespace OBSControl.Utilities
             return ColorUtility.TryParseHtmlString(colorStr, out color);
         }
 
+        public static void RaiseEventSafe<TArgs>(EventHandler<TArgs>? e, object sender, TArgs args, string eventName)
+        {
+            EventHandler<TArgs>[] handlers = e?.GetInvocationList().Select(d => (EventHandler<TArgs>)d).ToArray()
+                ?? Array.Empty<EventHandler<TArgs>>();
+            for (int i = 0; i < handlers.Length; i++)
+            {
+                try
+                {
+                    handlers[i].Invoke(sender, args);
+                }
+                catch (Exception ex)
+                {
+                    Logger.log?.Error($"Error in {eventName} handlers '{handlers[i]?.Method.Name}': {ex.Message}");
+                    Logger.log?.Debug(ex);
+                }
+            }
+        }
+
         public static string GetSafeFilename(string fileName, string? substitute = null, string? spaceReplacement = null)
         {
             _ = fileName ?? throw new ArgumentNullException(nameof(fileName), "fileName cannot be null for GetSafeFilename");
