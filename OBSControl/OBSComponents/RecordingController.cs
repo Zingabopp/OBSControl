@@ -619,7 +619,7 @@ namespace OBSControl.OBSComponents
             StartLevelPatch.LevelStarting -= OnLevelStarting;
         }
 
-        private void OnLevelStarting(object sender, LevelStartEventArgs e)
+        private void OnLevelStarting(object sender, LevelStartingEventArgs e)
         {
             Logger.log?.Debug($"RecordingController OnLevelStarting.");
             e.SetResponse(LevelStartResponse.Delayed);

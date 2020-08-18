@@ -610,13 +610,13 @@ namespace OBSControl.OBSComponents
         #endregion
 
 
-        private void OnLevelStarting(object sender, LevelStartEventArgs e)
+        private void OnLevelStarting(object sender, LevelStartingEventArgs e)
         {
             Logger.log?.Debug($"RecordingController OnLevelStarting.");
             e.SetResponse(LevelStartResponse.Handled);
             StartIntroSceneSequence(AllTasksCancelSource?.Token ?? CancellationToken.None).ContinueWith(result =>
             {
-                LevelStartEventArgs levelStartInfo = e;
+                LevelStartingEventArgs levelStartInfo = e;
                 e.StartLevel(levelStartInfo.Coordinator, levelStartInfo.DifficultyBeatmap, levelStartInfo.BeforeSceneSwitchCallback, levelStartInfo.Practice);
                 if (levelStartInfo.PlayButton != null)
                 {

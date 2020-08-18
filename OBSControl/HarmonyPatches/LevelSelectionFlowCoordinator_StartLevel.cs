@@ -64,7 +64,12 @@ namespace OBSControl.HarmonyPatches
                 playButton.interactable = true;
         }
 
-        public static event EventHandler<LevelStartEventArgs>? LevelStarting;
+        public static event EventHandler<LevelStartingEventArgs>? LevelStarting;
+        /// <summary>
+        /// 
+        /// </summary>
+        public static event EventHandler<LevelStartEventArgs>? LevelStart;
+
         public static Button? PlayButton;
 
         /// <summary>
@@ -121,9 +126,9 @@ namespace OBSControl.HarmonyPatches
                 {
                     return true;
                 }
-                EventHandler<LevelStartEventArgs>[] invocations = handler.GetInvocationList().Select(d => (EventHandler<LevelStartEventArgs>)d).ToArray();
+                EventHandler<LevelStartingEventArgs>[] invocations = handler.GetInvocationList().Select(d => (EventHandler<LevelStartingEventArgs>)d).ToArray();
                 LevelStartResponse response = LevelStartResponse.None;
-                LevelStartEventArgs args = new LevelStartEventArgs(StartLevel, __instance, difficultyBeatmap,
+                LevelStartingEventArgs args = new LevelStartingEventArgs(StartLevel, __instance, difficultyBeatmap,
                     beforeSceneSwitchCallback, practice, playButton, PreviousText ?? DefaultText);
                 for (int i = 0; i < invocations.Length; i++)
                 {
@@ -138,25 +143,26 @@ namespace OBSControl.HarmonyPatches
                     }
                 }
                 response = args.StartResponse;
+                LevelStartEventArgs startEventArgs = new LevelStartEventArgs(response);
                 if (response == LevelStartResponse.None)
                 {
                     Logger.log?.Debug($"No LevelStartResponse, skipping delayed start.");
-                    Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, response, nameof(LevelStart));
+                    Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, startEventArgs, nameof(LevelStart));
                     return true;
                 }
                 if (response == LevelStartResponse.Handled)
                 {
                     Logger.log?.Debug($"LevelStartResponse is handled, skipping delayed start.");
-                    Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, response, nameof(LevelStart));
+                    Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, startEventArgs, nameof(LevelStart));
                     return false;
                 }
                 if (response == LevelStartResponse.Delayed)
                 {
                     Logger.log?.Info($"Starting delayed level start sequence.");
-                    Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, response, nameof(LevelStart));
+                    Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, startEventArgs, nameof(LevelStart));
                     _ = StartDelayedLevelStart(() =>
                     {
-                        LevelStartEventArgs levelStartInfo = args;
+                        LevelStartingEventArgs levelStartInfo = args;
                         StartLevel(levelStartInfo.Coordinator, levelStartInfo.DifficultyBeatmap, levelStartInfo.BeforeSceneSwitchCallback, levelStartInfo.Practice);
                         if (levelStartInfo.PlayButton != null)
                         {
@@ -179,8 +185,6 @@ namespace OBSControl.HarmonyPatches
             }
             return true;
         }
-        public static event EventHandler<LevelStartResponse>? LevelStart;
-
         private async static Task StartDelayedLevelStart(Action continuation)
         {
             TimeSpan levelStartDelay = TimeSpan.FromSeconds(Plugin.config.LevelStartDelay);
@@ -274,8 +278,19 @@ namespace OBSControl.HarmonyPatches
         }
     }
     public delegate void StartLevelDelegate(LevelSelectionFlowCoordinator coordinator, IDifficultyBeatmap difficultyBeatmap, Action? beforeSceneSwitchCallback, bool practice);
-
-    public class LevelStartEventArgs
+    public class LevelStartEventArgs : EventArgs
+    {
+        public readonly LevelStartResponse StartResponseType;
+        public readonly string? StartHandlerName;
+        public readonly int StartDelay;
+        public LevelStartEventArgs(LevelStartResponse responseType, string? startHandlerName, int startDelay)
+        {
+            StartResponseType = responseType;
+            StartHandlerName = startHandlerName;
+            StartDelay = startDelay;
+        }
+    }
+    public class LevelStartingEventArgs : EventArgs
     {
         public readonly StartLevelDelegate StartLevel;
         public readonly LevelSelectionFlowCoordinator Coordinator;
@@ -303,7 +318,9 @@ namespace OBSControl.HarmonyPatches
                 StartResponse = response;
         }
 
-        public LevelStartEventArgs(StartLevelDelegate startLevelDelegate, LevelSelectionFlowCoordinator coordinator, IDifficultyBeatmap difficultyBeatmap, Action? beforeSceneSwitchCallback, bool practice, Button? playButton, string previousPlayText)
+        public void SetHandledResponse()
+
+        public LevelStartingEventArgs(StartLevelDelegate startLevelDelegate, LevelSelectionFlowCoordinator coordinator, IDifficultyBeatmap difficultyBeatmap, Action? beforeSceneSwitchCallback, bool practice, Button? playButton, string previousPlayText)
         {
             StartLevel = startLevelDelegate;
             Coordinator = coordinator;
