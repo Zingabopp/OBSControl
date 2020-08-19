@@ -34,12 +34,21 @@ namespace OBSControl.OBSComponents
     {
         internal readonly HarmonyPatchInfo LevelDelayPatch = HarmonyManager.GetLevelDelayPatch();
         private readonly object _availableSceneLock = new object();
+
+
         #region Exposed Events
         public event EventHandler<string?>? SceneChanged;
         public event EventHandler? SceneListUpdated;
         public event EventHandler<SceneStageChangedEventArgs>? SceneStageChanged;
         #endregion
-
+        #region Options
+        /// <summary>
+        /// Wait for song start before switching to GameScene.
+        /// </summary>
+        public bool GameSceneOnSongStart
+        {
+            get => false;
+        }
         public bool GetSceneSequenceEnabled()
         {
             if (!Connected)
@@ -51,7 +60,7 @@ namespace OBSControl.OBSComponents
         {
             return GetSceneSequenceEnabled();
         }
-
+        #endregion
         protected Func<SceneStage, Task>[] RaiseSceneStageChanged(SceneStage sceneStage)
         {
             EventHandler<SceneStageChangedEventArgs>[] handlers = SceneStageChanged?.GetInvocationList().Select(d => (EventHandler<SceneStageChangedEventArgs>)d).ToArray()
@@ -72,7 +81,7 @@ namespace OBSControl.OBSComponents
             return args.GetCallbacks() ?? Array.Empty<Func<SceneStage, Task>>();
         }
 
-        private AsyncEventListenerWithArg<string?, string, string?> StartSceneSequenceListener { get; } = new AsyncEventListenerWithArg<string?, string, string?>((s, sceneName, expectedScene) =>
+        private AsyncEventListenerWithArg<string?, string?, string?> StartSceneSequenceListener { get; } = new AsyncEventListenerWithArg<string?, string?, string?>((s, sceneName, expectedScene) =>
         {
             if (string.IsNullOrEmpty(expectedScene))
                 return new EventListenerResult<string?>(null, true);
@@ -175,7 +184,7 @@ namespace OBSControl.OBSComponents
                     Logger.log?.Debug(ex);
                 }
                 SceneChanged += StartSceneSequenceListener.OnEvent;
-                StartSceneSequenceListener.Reset(startScene);
+                StartSceneSequenceListener.Reset(startScene, cancellationToken);
                 StartSceneSequenceListener.StartListening();
                 if (startScene != null && CurrentScene != startScene)
                 {
@@ -191,7 +200,7 @@ namespace OBSControl.OBSComponents
                     await ExecuteCallbacks(callbacks, currentStage);
                 if (startSceneDuration > TimeSpan.Zero)
                     await Task.Delay(startSceneDuration);
-                StartSceneSequenceListener.Reset(gameScene);
+                StartSceneSequenceListener.Reset(gameScene, cancellationToken);
                 StartSceneSequenceListener.StartListening();
                 if (gameScene.Length > 0 && CurrentScene != gameScene)
                 {
@@ -214,7 +223,7 @@ namespace OBSControl.OBSComponents
                     if (CurrentScene == gameScene)
                     {
                         Logger.log?.Warn($"StartIntroSceneSequence canceled, switching to GameScene.");
-                        await obs.SetCurrentScene(gameScene, cancellationToken);
+                        await obs.SetCurrentScene(gameScene);
                     }
                     else
                         Logger.log?.Warn($"StartIntroSceneSequence canceled and already on GameScene.");
@@ -445,7 +454,7 @@ namespace OBSControl.OBSComponents
             {
                 obs.SceneChanged += SceneListener.OnEvent;
                 await obs.SetCurrentScene(sceneName).ConfigureAwait(false);
-                string? current = await UpdateCurrentScene().ConfigureAwait(false);
+                string? current = await UpdateCurrentScene(AllTasksCancelSource.Token).ConfigureAwait(false);
                 if (current == sceneName)
                     return;
                 await SceneListener.Task.ConfigureAwait(false);
@@ -461,7 +470,7 @@ namespace OBSControl.OBSComponents
             }
         }
 
-        public async Task<string?> UpdateCurrentScene()
+        public async Task<string?> UpdateCurrentScene(CancellationToken cancellationToken)
         {
             OBSWebsocket? obs = Obs.GetConnectedObs();
             if (obs == null)
@@ -471,7 +480,7 @@ namespace OBSControl.OBSComponents
             }
             try
             {
-                string currentScene = (await obs.GetCurrentScene().ConfigureAwait(false)).Name;
+                string currentScene = (await obs.GetCurrentScene(cancellationToken).ConfigureAwait(false)).Name;
                 CurrentScene = currentScene;
                 return currentScene;
             }
@@ -613,7 +622,7 @@ namespace OBSControl.OBSComponents
         private void OnLevelStarting(object sender, LevelStartingEventArgs e)
         {
             Logger.log?.Debug($"RecordingController OnLevelStarting.");
-            e.SetResponse(LevelStartResponse.Handled);
+            e.SetHandledResponse(GetType().Name, LevelStartResponse.Handled);
             StartIntroSceneSequence(AllTasksCancelSource?.Token ?? CancellationToken.None).ContinueWith(result =>
             {
                 LevelStartingEventArgs levelStartInfo = e;

@@ -150,6 +150,12 @@ namespace OBSControl.HarmonyPatches
                     Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, startEventArgs, nameof(LevelStart));
                     return true;
                 }
+                if (response == LevelStartResponse.Immediate)
+                {
+                    Logger.log?.Debug("LevelStartResponse is Immediate, skipping delayed start.");
+                    Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, startEventArgs, nameof(LevelStart));
+                    return true;
+                }
                 if (response == LevelStartResponse.Handled)
                 {
                     Logger.log?.Debug($"LevelStartResponse is handled, skipping delayed start.");
@@ -304,21 +310,26 @@ namespace OBSControl.HarmonyPatches
         /// </summary>
         public LevelStartResponse StartResponse { get; protected set; }
         /// <summary>
-        /// Delay in milliseconds.
+        /// Delay in milliseconds, ignored if there's is a <see cref="LevelStartResponse.Handled"/> response added.
         /// </summary>
         public int Delay { get; protected set; }
-        protected List<LevelStartResponse>? StartResponses;
-        public LevelStartResponse[] GetResponses() => StartResponses?.ToArray() ?? Array.Empty<LevelStartResponse>();
-        public void SetResponse(LevelStartResponse response, int delayMs = 0)
+        protected List<StartResponse>? StartResponses;
+        public StartResponse[] GetResponses() => StartResponses?.ToArray() ?? Array.Empty<StartResponse>();
+        public void SetResponse(string sourceName, int delayMs = 0)
         {
             if (StartResponses == null)
-                StartResponses = new List<LevelStartResponse>(1);
-            StartResponses.Add(response);
+                StartResponses = new List<StartResponse>(1);
+            LevelStartResponse response = delayMs > 0 ? LevelStartResponse.Delayed : LevelStartResponse.Immediate;
+            Delay = delayMs;
+            StartResponses.Add(new StartResponse(sourceName, response));
             if (StartResponse < response)
                 StartResponse = response;
         }
 
-        public void SetHandledResponse()
+        public void SetHandledResponse(string sourceName, Func<SceneStage, Task> OnSceneStageChangeAsyncCallback)
+        {
+
+        }
 
         public LevelStartingEventArgs(StartLevelDelegate startLevelDelegate, LevelSelectionFlowCoordinator coordinator, IDifficultyBeatmap difficultyBeatmap, Action? beforeSceneSwitchCallback, bool practice, Button? playButton, string previousPlayText)
         {
@@ -330,22 +341,37 @@ namespace OBSControl.HarmonyPatches
             PlayButton = playButton;
             PreviousPlayButtonText = previousPlayText;
         }
+
+    }
+    public struct StartResponse
+    {
+        public readonly string SourceName;
+        public readonly LevelStartResponse LevelStartResponse;
+        public StartResponse(string sourceName, LevelStartResponse response)
+        {
+            SourceName = sourceName;
+            LevelStartResponse = response;
+        }
     }
 
     public enum LevelStartResponse
     {
         /// <summary>
-        /// Level should start normally.
+        /// No responses, level should start normally.
         /// </summary>
         None = 0,
         /// <summary>
+        /// Level should start normally.
+        /// </summary>
+        Immediate = 1,
+        /// <summary>
         /// Level should start after delay.
         /// </summary>
-        Delayed = 1,
+        Delayed = 2,
         /// <summary>
         /// Another component will handle starting the level.
         /// </summary>
-        Handled = 2
+        Handled = 3
     }
 
 }

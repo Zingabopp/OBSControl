@@ -56,6 +56,26 @@ namespace OBSControl.OBSComponents
         Auto = 4
     }
 
+    public enum RecordStopOption
+    {
+        /// <summary>
+        /// Recording will not be auto stopped
+        /// </summary>
+        None = 0,
+        /// <summary>
+        /// Recording stopped when triggered by SceneSequence.
+        /// </summary>
+        SceneSequence = 2,
+        /// <summary>
+        /// Recording will be stopped based on when the song ends (paired with stop delay).
+        /// </summary>
+        SongEnd = 3,
+        /// <summary>
+        /// Recording will be stopped based on when the results view is presented (paired with stop delay).
+        /// </summary>
+        ResultsView = 4
+    }
+
     /// <summary>
     /// Monobehaviours (scripts) are added to GameObjects.
     /// For a full list of Messages a Monobehaviour can receive from the game, see https://docs.unity3d.com/ScriptReference/MonoBehaviour.html.
@@ -68,6 +88,68 @@ namespace OBSControl.OBSComponents
         private const string DefaultFileFormat = "%CCYY-%MM-%DD %hh-%mm-%ss";
         public const string DefaultDateTimeFormat = "yyyyMMddHHmmss";
         private SceneController? _sceneController;
+        #region Options
+        public bool AutoStopOnManual => Plugin.config?.AutoStopOnManual ?? true;
+        /// <summary>
+        /// True if delayed stop is enabled, does not affect SceneSequence recordings.
+        /// </summary>
+        public bool DelayedStopEnabled => (Plugin.config?.RecordingStopDelay ?? 0) > 0;
+
+        /// <summary>
+        /// If not recording with SceneSequence, start recording when the song is started.
+        /// </summary>
+        public bool RecordOnSongStart => false;
+
+        private RecordStopOption _recordStopOption;
+        public RecordStopOption RecordStopOption
+        {
+            get
+            {
+                return StopRecordAction switch
+                {
+                    RecordActionType.Auto => RecordStopOption.SceneSequence,
+                    RecordActionType.NoAction => RecordStopOption.None,
+                    RecordActionType.Immediate => _recordStopOption,
+                    RecordActionType.None => _recordStopOption,
+                    _ => _recordStopOption
+                };
+            }
+            set
+            {
+                _recordStopOption = value;
+            }
+        }
+        /// <summary>
+        /// When should record stop be triggered, if at all.
+        /// </summary>
+        public RecordActionType StopRecordAction
+        {
+            get
+            {
+                return (RecordStartSource, AutoStopOnManual, DelayedStopEnabled) switch
+                {
+                    (RecordActionSourceType.Manual, true, true) => RecordActionType.Delayed,
+                    (RecordActionSourceType.Manual, true, false) => RecordActionType.Immediate,
+                    (RecordActionSourceType.Manual, false, _) => RecordActionType.NoAction,
+                    (RecordActionSourceType.ManualOBS, true, true) => RecordActionType.Delayed,
+                    (RecordActionSourceType.ManualOBS, true, false) => RecordActionType.Immediate,
+                    (RecordActionSourceType.ManualOBS, false, _) => RecordActionType.NoAction,
+                    (RecordActionSourceType.Auto, _, _) => RecordActionType.Auto,
+                    (RecordActionSourceType.None, true, true) => RecordActionType.Delayed,
+                    (RecordActionSourceType.None, true, false) => RecordActionType.Immediate,
+                    (RecordActionSourceType.None, false, _) => RecordActionType.NoAction,
+                    _ => RecordActionType.None
+
+                };
+            }
+        }
+
+        /// <summary>
+        /// Directory OBS should record to.
+        /// </summary>
+        public string? RecordingFolder { get; protected set; }
+        #endregion
+
         protected SceneController? SceneController
         {
             get => _sceneController;
@@ -97,37 +179,16 @@ namespace OBSControl.OBSComponents
         public DateTime LastRecordingStateUpdate { get; protected set; }
         public bool WaitingToStop { get; private set; }
         public Task? StopRecordingTask { get; private set; }
-        public RecordActionType StopRecordAction
-        {
-            get
-            {
-                PluginConfig config = Plugin.config;
-                bool stopOnManual = config?.AutoStopOnManual ?? true;
-                bool delayedStop = (config?.RecordingStopDelay ?? 0) > 0;
-                return (RecordStartType, stopOnManual, delayedStop) switch
-                {
-                    (RecordActionSourceType.Manual, true, true) => RecordActionType.Delayed,
-                    (RecordActionSourceType.Manual, true, false) => RecordActionType.Immediate,
-                    (RecordActionSourceType.Manual, false, _) => RecordActionType.NoAction,
-                    (RecordActionSourceType.ManualOBS, true, true) => RecordActionType.Delayed,
-                    (RecordActionSourceType.ManualOBS, true, false) => RecordActionType.Immediate,
-                    (RecordActionSourceType.ManualOBS, false, _) => RecordActionType.NoAction,
-                    (RecordActionSourceType.Auto, _, _) => RecordActionType.Auto,
-                    (RecordActionSourceType.None, true, true) => RecordActionType.Delayed,
-                    (RecordActionSourceType.None, true, false) => RecordActionType.Immediate,
-                    (RecordActionSourceType.None, false, _) => RecordActionType.NoAction,
-                    _ => RecordActionType.None
-
-                };
-            }
-        }
-        public RecordActionSourceType RecordStartType { get; protected set; }
+        
+        /// <summary>
+        /// Source that started current/last recording.
+        /// </summary>
+        public RecordActionSourceType RecordStartSource { get; protected set; }
         private string ToDateTimeFileFormat(DateTime dateTime)
         {
             return dateTime.ToString(DefaultDateTimeFormat);
         }
 
-        public string? RecordingFolder { get; protected set; }
         public async Task TryStartRecordingAsync(RecordActionSourceType startType, string? fileFormat = null)
         {
             OBSWebsocket? obs = Obs.GetConnectedObs();
@@ -181,7 +242,7 @@ namespace OBSControl.OBSComponents
             try
             {
                 await obs.StartRecording().ConfigureAwait(false);
-                RecordStartType = startType;
+                RecordStartSource = startType;
             }
             catch (Exception ex)
             {
