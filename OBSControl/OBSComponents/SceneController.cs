@@ -34,7 +34,7 @@ namespace OBSControl.OBSComponents
     {
         internal readonly HarmonyPatchInfo LevelDelayPatch = HarmonyManager.GetLevelDelayPatch();
         private readonly object _availableSceneLock = new object();
-
+        public const string LevelStartingSourceName = "SceneController";
 
         #region Exposed Events
         public event EventHandler<string?>? SceneChanged;
@@ -518,7 +518,7 @@ namespace OBSControl.OBSComponents
                         CurrentScene = current;
                     else if (forceCurrentUpdate)
                     {
-                        current = await UpdateCurrentScene().ConfigureAwait(false);
+                        current = await UpdateCurrentScene(AllTasksCancelSource.Token).ConfigureAwait(false);
                         if (current != null && current.Length > 0)
                             CurrentScene = current;
                     }
@@ -618,27 +618,27 @@ namespace OBSControl.OBSComponents
         }
         #endregion
 
+        private void OnLevelStart(object sender, LevelStartEventArgs e)
+        {
+            
+            StartIntroSceneSequence(AllTasksCancelSource?.Token ?? CancellationToken.None).ContinueWith(result =>
+            {
+                LevelStartEventArgs levelStartInfo = e;
+                e.StartLevel(levelStartInfo.Coordinator, levelStartInfo.DifficultyBeatmap, levelStartInfo.BeforeSceneSwitchCallback, levelStartInfo.Practice);
+                e.ResetPlayButton();
+            });
+            StartLevelPatch.LevelStart -= OnLevelStart;
+        }
 
         private void OnLevelStarting(object sender, LevelStartingEventArgs e)
         {
-            Logger.log?.Debug($"RecordingController OnLevelStarting.");
-            e.SetHandledResponse(GetType().Name, LevelStartResponse.Handled);
-            StartIntroSceneSequence(AllTasksCancelSource?.Token ?? CancellationToken.None).ContinueWith(result =>
-            {
-                LevelStartingEventArgs levelStartInfo = e;
-                e.StartLevel(levelStartInfo.Coordinator, levelStartInfo.DifficultyBeatmap, levelStartInfo.BeforeSceneSwitchCallback, levelStartInfo.Practice);
-                if (levelStartInfo.PlayButton != null)
-                {
-                    levelStartInfo.PlayButton.interactable = true;
-                    string? prevText = e.PreviousPlayButtonText;
-                    if (prevText != null && prevText.Length > 0)
-                    {
-                        levelStartInfo.PlayButton.SetButtonText(prevText);
-                        prevText = null;
-                    }
-                }
-            });
+            Logger.log?.Debug($"SceneController OnLevelStarting.");
+            
+            e.SetHandledResponse(LevelStartingSourceName);
+            StartLevelPatch.LevelStart -= OnLevelStart;
+            StartLevelPatch.LevelStart += OnLevelStart;
         }
+
         #region OBS Websocket Event Handlers
         private async void OnObsSceneListChanged(object sender, EventArgs? e)
         {

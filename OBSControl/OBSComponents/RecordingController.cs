@@ -1,4 +1,5 @@
-﻿using OBSControl.HarmonyPatches;
+﻿using BS_Utils.Utilities;
+using OBSControl.HarmonyPatches;
 using OBSControl.Wrappers;
 using OBSWebsocketDotNet;
 using OBSWebsocketDotNet.Types;
@@ -6,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -56,6 +58,30 @@ namespace OBSControl.OBSComponents
         Auto = 4
     }
 
+    public enum RecordStartOption
+    {
+        /// <summary>
+        /// Recording will not be auto started
+        /// </summary>
+        None = 0,
+        /// <summary>
+        /// Recording starts when triggered by SceneSequence.
+        /// </summary>
+        SceneSequence = 2,
+        /// <summary>
+        /// Recording will be started in GameCore at the start of the song.
+        /// </summary>
+        SongStart = 3,
+        /// <summary>
+        /// Level start will begin after recording starts and a delay.
+        /// </summary>
+        LevelStartDelay = 4,
+        /// <summary>
+        /// Recording will be started immediately when LevelStarting is triggered.
+        /// </summary>
+        Immediate = 5
+    }
+
     public enum RecordStopOption
     {
         /// <summary>
@@ -85,6 +111,7 @@ namespace OBSControl.OBSComponents
     {
         //private OBSWebsocket? _obs => OBSController.instance?.GetConnectedObs();
 
+        public const string LevelStartingSourceName = "RecordingController";
         private const string DefaultFileFormat = "%CCYY-%MM-%DD %hh-%mm-%ss";
         public const string DefaultDateTimeFormat = "yyyyMMddHHmmss";
         private SceneController? _sceneController;
@@ -93,12 +120,19 @@ namespace OBSControl.OBSComponents
         /// <summary>
         /// True if delayed stop is enabled, does not affect SceneSequence recordings.
         /// </summary>
-        public bool DelayedStopEnabled => (Plugin.config?.RecordingStopDelay ?? 0) > 0;
+        public bool DelayedStopEnabled => RecordingStopDelay > 0;
+        public bool DelayedStartEnabled => RecordingStartDelay > 0;
 
+        public float RecordingStartDelay => Plugin.config?.LevelStartDelay ?? 0;
+
+        public float RecordingStopDelay => Plugin.config?.RecordingStopDelay ?? 0;
         /// <summary>
         /// If not recording with SceneSequence, start recording when the song is started.
         /// </summary>
         public bool RecordOnSongStart => false;
+
+        private RecordStartOption _recordStartOption;
+        public RecordStartOption RecordStartOption => RecordStartOption.SongStart;
 
         private RecordStopOption _recordStopOption;
         public RecordStopOption RecordStopOption
@@ -179,7 +213,7 @@ namespace OBSControl.OBSComponents
         public DateTime LastRecordingStateUpdate { get; protected set; }
         public bool WaitingToStop { get; private set; }
         public Task? StopRecordingTask { get; private set; }
-        
+
         /// <summary>
         /// Source that started current/last recording.
         /// </summary>
@@ -683,7 +717,46 @@ namespace OBSControl.OBSComponents
         private void OnLevelStarting(object sender, LevelStartingEventArgs e)
         {
             Logger.log?.Debug($"RecordingController OnLevelStarting.");
-            e.SetResponse(LevelStartResponse.Delayed);
+            switch (RecordStartOption)
+            {
+                case RecordStartOption.None:
+                    break;
+                case RecordStartOption.SceneSequence:
+                    break;
+                case RecordStartOption.SongStart:
+                    Logger.log?.Debug($"RecordingController OnLevelStarting: Setting SongStart event.");
+                    BSEvents.gameSceneLoaded -= OnGameSceneActive;
+                    BSEvents.gameSceneLoaded += OnGameSceneActive;
+                    break;
+                case RecordStartOption.LevelStartDelay:
+                    e.SetResponse(LevelStartingSourceName, (int)(RecordingStartDelay * 1000));
+                    break;
+                case RecordStartOption.Immediate:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private async void OnGameSceneActive()
+        {
+            //Logger.log?.Debug($"RecordingController OnGameSceneActive.");
+            //var timeControllers = Resources.FindObjectsOfTypeAll<AudioTimeSyncController>();
+            //var songControllers = Resources.FindObjectsOfTypeAll<SongController>();
+            //if (songControllers.Length > 1)
+            //    Logger.log?.Error($"{songControllers.Length} SongControllers exist.");
+            //var songController = songControllers?.FirstOrDefault();
+            //var pauseController = Resources.FindObjectsOfTypeAll<GamePause>().FirstOrDefault();
+            //if (songController != null)
+            //{
+            //    await Task.Delay(500);
+            //    songController.StopSong();
+            //    Logger.log?.Debug($"RecordingController song stopped? delaying by 10s.");
+            //    await Task.Delay(10000);
+            //    songController.StartSong();
+            //}
+            //else
+            //    Logger.log?.Debug("timeController is null.");
         }
 
         private async Task SceneSequenceCallback(SceneStage sceneStage)

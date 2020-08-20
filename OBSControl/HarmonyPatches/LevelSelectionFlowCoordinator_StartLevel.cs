@@ -128,8 +128,7 @@ namespace OBSControl.HarmonyPatches
                 }
                 EventHandler<LevelStartingEventArgs>[] invocations = handler.GetInvocationList().Select(d => (EventHandler<LevelStartingEventArgs>)d).ToArray();
                 LevelStartResponse response = LevelStartResponse.None;
-                LevelStartingEventArgs args = new LevelStartingEventArgs(StartLevel, __instance, difficultyBeatmap,
-                    beforeSceneSwitchCallback, practice, playButton, PreviousText ?? DefaultText);
+                LevelStartingEventArgs args = new LevelStartingEventArgs(difficultyBeatmap, practice);
                 for (int i = 0; i < invocations.Length; i++)
                 {
                     try
@@ -143,7 +142,8 @@ namespace OBSControl.HarmonyPatches
                     }
                 }
                 response = args.StartResponse;
-                LevelStartEventArgs startEventArgs = new LevelStartEventArgs(response);
+                LevelStartEventArgs startEventArgs = new LevelStartEventArgs(args, StartLevel, __instance, difficultyBeatmap,
+                    beforeSceneSwitchCallback, practice, playButton, PreviousText ?? DefaultText);
                 if (response == LevelStartResponse.None)
                 {
                     Logger.log?.Debug($"No LevelStartResponse, skipping delayed start.");
@@ -168,7 +168,7 @@ namespace OBSControl.HarmonyPatches
                     Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, startEventArgs, nameof(LevelStart));
                     _ = StartDelayedLevelStart(() =>
                     {
-                        LevelStartingEventArgs levelStartInfo = args;
+                        LevelStartEventArgs levelStartInfo = startEventArgs;
                         StartLevel(levelStartInfo.Coordinator, levelStartInfo.DifficultyBeatmap, levelStartInfo.BeforeSceneSwitchCallback, levelStartInfo.Practice);
                         if (levelStartInfo.PlayButton != null)
                         {
@@ -286,18 +286,6 @@ namespace OBSControl.HarmonyPatches
     public delegate void StartLevelDelegate(LevelSelectionFlowCoordinator coordinator, IDifficultyBeatmap difficultyBeatmap, Action? beforeSceneSwitchCallback, bool practice);
     public class LevelStartEventArgs : EventArgs
     {
-        public readonly LevelStartResponse StartResponseType;
-        public readonly string? StartHandlerName;
-        public readonly int StartDelay;
-        public LevelStartEventArgs(LevelStartResponse responseType, string? startHandlerName, int startDelay)
-        {
-            StartResponseType = responseType;
-            StartHandlerName = startHandlerName;
-            StartDelay = startDelay;
-        }
-    }
-    public class LevelStartingEventArgs : EventArgs
-    {
         public readonly StartLevelDelegate StartLevel;
         public readonly LevelSelectionFlowCoordinator Coordinator;
         public readonly IDifficultyBeatmap DifficultyBeatmap;
@@ -305,34 +293,28 @@ namespace OBSControl.HarmonyPatches
         public readonly bool Practice;
         public readonly Button? PlayButton;
         public readonly string PreviousPlayButtonText;
-        /// <summary>
-        /// How the StartLevel patch should behave.
-        /// </summary>
-        public LevelStartResponse StartResponse { get; protected set; }
-        /// <summary>
-        /// Delay in milliseconds, ignored if there's is a <see cref="LevelStartResponse.Handled"/> response added.
-        /// </summary>
-        public int Delay { get; protected set; }
-        protected List<StartResponse>? StartResponses;
-        public StartResponse[] GetResponses() => StartResponses?.ToArray() ?? Array.Empty<StartResponse>();
-        public void SetResponse(string sourceName, int delayMs = 0)
+        public readonly LevelStartResponse StartResponseType;
+        public readonly string? StartHandlerName;
+        public readonly int StartDelay;
+
+        public void ResetPlayButton()
         {
-            if (StartResponses == null)
-                StartResponses = new List<StartResponse>(1);
-            LevelStartResponse response = delayMs > 0 ? LevelStartResponse.Delayed : LevelStartResponse.Immediate;
-            Delay = delayMs;
-            StartResponses.Add(new StartResponse(sourceName, response));
-            if (StartResponse < response)
-                StartResponse = response;
+            if (PlayButton != null)
+            {
+                PlayButton.interactable = true;
+                if (PreviousPlayButtonText != null && PreviousPlayButtonText.Length > 0)
+                {
+                    PlayButton.SetButtonText(PreviousPlayButtonText);
+                }
+            }
         }
 
-        public void SetHandledResponse(string sourceName, Func<SceneStage, Task> OnSceneStageChangeAsyncCallback)
+        public LevelStartEventArgs(LevelStartingEventArgs args, StartLevelDelegate startLevelDelegate, LevelSelectionFlowCoordinator coordinator, IDifficultyBeatmap difficultyBeatmap, Action? beforeSceneSwitchCallback, bool practice, Button? playButton, string previousPlayText)
         {
-
-        }
-
-        public LevelStartingEventArgs(StartLevelDelegate startLevelDelegate, LevelSelectionFlowCoordinator coordinator, IDifficultyBeatmap difficultyBeatmap, Action? beforeSceneSwitchCallback, bool practice, Button? playButton, string previousPlayText)
-        {
+            StartResponseType = args.StartResponse;
+            StartHandlerName = args.ResponseSource;
+            if (args.StartResponse == LevelStartResponse.Delayed)
+                StartDelay = args.Delay;
             StartLevel = startLevelDelegate;
             Coordinator = coordinator;
             DifficultyBeatmap = difficultyBeatmap;
@@ -341,12 +323,73 @@ namespace OBSControl.HarmonyPatches
             PlayButton = playButton;
             PreviousPlayButtonText = previousPlayText;
         }
+    }
+    public class LevelStartingEventArgs : EventArgs
+    {
+        public readonly IDifficultyBeatmap DifficultyBeatmap;
+        public readonly bool Practice;
+
+        public string? ResponseSource => Response.SourceName;
+
+        /// <summary>
+        /// How the StartLevel patch should behave.
+        /// </summary>
+        public LevelStartResponse StartResponse => Response.LevelStartResponse;
+        /// <summary>
+        /// Delay in milliseconds, ignored if there's is a <see cref="LevelStartResponse.Handled"/> response added.
+        /// </summary>
+        public int Delay { get; protected set; }
+
+        protected List<StartResponse>? StartResponses;
+
+        public StartResponse[] GetResponses() => StartResponses?.ToArray() ?? Array.Empty<StartResponse>();
+
+        protected StartResponse Response;
+
+        protected bool SetResponse(StartResponse response)
+        {
+            if (StartResponses == null)
+                StartResponses = new List<StartResponse>(1);
+            StartResponses.Add(response);
+            if (StartResponse < response.LevelStartResponse)
+            {
+                Response = response;
+                return true;
+            }
+            else
+                return false;
+        }
+
+        public void SetResponse(string sourceName, int delayMs = 0)
+        {
+            LevelStartResponse startResponse = delayMs > 0 ? LevelStartResponse.Delayed : LevelStartResponse.Immediate;
+            Delay = delayMs;
+            StartResponse response = new StartResponse(sourceName, startResponse);
+            SetResponse(response);
+        }
+
+        public void SetHandledResponse(string sourceName)
+        {
+            StartResponse response = new StartResponse(sourceName, LevelStartResponse.Handled);
+
+            if (!SetResponse(response))
+            {
+                Logger.log?.Debug($"StartLevel handled response from '{sourceName}', already have a handled response from '{Response.SourceName}'");
+            }
+        }
+
+        public LevelStartingEventArgs(IDifficultyBeatmap difficultyBeatmap, bool practice)
+        {
+            DifficultyBeatmap = difficultyBeatmap;
+            Practice = practice;
+        }
 
     }
     public struct StartResponse
     {
-        public readonly string SourceName;
+        public readonly string? SourceName;
         public readonly LevelStartResponse LevelStartResponse;
+
         public StartResponse(string sourceName, LevelStartResponse response)
         {
             SourceName = sourceName;
