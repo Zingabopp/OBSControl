@@ -152,13 +152,11 @@ namespace OBSControl
             OBSController.instance?.gameObject.SetActive(Enabled);
         }
 
-#pragma warning disable CS8603 // Possible null reference return.
         /// <summary>
         /// Call this when you want to do multiple changes before saving the file, dispose to save.
         /// </summary>
         /// <returns></returns>
-        public virtual IDisposable ChangeTransaction() => null;
-#pragma warning restore CS8603 // Possible null reference return.
+        public virtual IDisposable ChangeTransaction() => null!;
 
         public void UpdateSceneOptions(IEnumerable<string> newOptions)
         {
