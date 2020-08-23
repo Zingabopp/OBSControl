@@ -2,6 +2,7 @@
 using BeatSaberMarkupLanguage.Components.Settings;
 using IPA.Config.Stores;
 using IPA.Config.Stores.Attributes;
+using IPA.Config.Stores.Converters;
 using OBSControl.OBSComponents;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,7 @@ namespace OBSControl
         [UIValue(nameof(EnableAutoRecord))]
         public virtual bool EnableAutoRecord { get; set; } = true;
         
+        [UseConverter(typeof(EnumConverter<RecordStartOption>))]
         [UIValue(nameof(RecordStartOption))]
         public virtual RecordStartOption RecordStartOption { get; set; } = RecordStartOption.SongStart;
 

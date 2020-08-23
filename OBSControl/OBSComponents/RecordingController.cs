@@ -133,7 +133,11 @@ namespace OBSControl.OBSComponents
         public bool RecordOnSongStart => false;
 
         private RecordStartOption _recordStartOption;
-        public RecordStartOption RecordStartOption => Plugin.config.RecordStartOption;
+        public RecordStartOption RecordStartOption
+        {
+            get => _recordStartOption;
+            set => _recordStartOption = value;
+        }
 
         private RecordStopOption _recordStopOption;
         public RecordStopOption RecordStopOption
@@ -224,48 +228,6 @@ namespace OBSControl.OBSComponents
             return dateTime.ToString(DefaultDateTimeFormat);
         }
 
-        protected void SetRecordStopEvents(RecordActionSourceType startType, RecordStartOption recordStartOption)
-        {
-            bool stopOnManualStart = Plugin.config.AutoStopOnManual;
-            switch (startType)
-            {
-                case RecordActionSourceType.None:
-                    break;
-                case RecordActionSourceType.ManualOBS:
-                    if (stopOnManualStart)
-                    {
-
-                    }
-                    break;
-                case RecordActionSourceType.Manual:
-                    if (stopOnManualStart)
-                    {
-
-                    }
-                    break;
-                case RecordActionSourceType.Auto:
-                    //switch (recordStartOption)
-                    //{
-                    //    case RecordStartOption.None: // Shouldn't happen.
-                    //        break;
-                    //    case RecordStartOption.SceneSequence: // Probably only case that matters...
-                    //        // Event already set?
-                    //        break;
-                    //    case RecordStartOption.SongStart:
-                    //        break;
-                    //    case RecordStartOption.LevelStartDelay:
-                    //        break;
-                    //    case RecordStartOption.Immediate:
-                    //        break;
-                    //    default:
-                    //        break;
-                    //}
-                    break;
-                default:
-                    break;
-            }
-        }
-
         public async Task TryStartRecordingAsync(RecordActionSourceType startType, RecordStartOption recordStartOption, string? fileFormat = null)
         {
             OBSWebsocket? obs = Obs.GetConnectedObs();
@@ -275,7 +237,6 @@ namespace OBSControl.OBSComponents
                 Logger.log?.Error($"Unable to start recording, obs instance not found.");
                 return;
             }
-            SetRecordStopEvents(startType, recordStartOption);
             if (OutputState == OutputState.Started || OutputState == OutputState.Starting)
             {
                 Logger.log?.Warn($"Cannot start recording, already started.");
@@ -324,11 +285,18 @@ namespace OBSControl.OBSComponents
             CurrentFileFormat = fileFormat;
             try
             {
-                await obs.StartRecording().ConfigureAwait(false);
                 RecordStartSource = startType;
+                RecordStartOption = recordStartOption;
+                await obs.StartRecording().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
+                OutputState state = OutputState;
+                if(!(state == OutputState.Starting || OutputState == OutputState.Started))
+                {
+                    RecordStartSource = RecordActionSourceType.None;
+                    RecordStartOption = RecordStartOption.None;
+                }
                 Logger.log?.Error($"Error starting recording in OBS: {ex.Message}");
                 Logger.log?.Debug(ex);
             }
@@ -708,6 +676,11 @@ namespace OBSControl.OBSComponents
                 case OutputState.Started:
                     RecordStartTime = DateTime.UtcNow;
                     recordingCurrentLevel = true;
+                    if(RecordStartSource == RecordActionSourceType.None)
+                    {
+                        RecordStartSource = RecordActionSourceType.ManualOBS;
+                        RecordStartOption = RecordStartOption.None;
+                    }
                     Task.Run(() => Obs.GetConnectedObs()?.SetFilenameFormatting(DefaultFileFormat));
                     break;
                 case OutputState.Stopping:
@@ -716,12 +689,16 @@ namespace OBSControl.OBSComponents
                 case OutputState.Stopped:
                     recordingCurrentLevel = false;
                     RecordStartTime = DateTime.MaxValue;
-                    string? renameString = RenameStringOverride ??
-                        LastLevelData?.GetFilenameString(Plugin.config.RecordingFileFormat, Plugin.config.InvalidCharacterSubstitute, Plugin.config.ReplaceSpacesWith);
-                    if (renameString != null)
-                        RenameLastRecording(renameString);
+                    RecordingData? lastLevelData = LastLevelData;
+                    string? renameOverride = RenameStringOverride;
                     RenameStringOverride = null;
                     LastLevelData = null;
+                    RecordStartSource = RecordActionSourceType.None;
+                    RecordStartOption = RecordStartOption.None;
+                    string? renameString = renameOverride ??
+                        lastLevelData?.GetFilenameString(Plugin.config.RecordingFileFormat, Plugin.config.InvalidCharacterSubstitute, Plugin.config.ReplaceSpacesWith);
+                    if (renameString != null)
+                        RenameLastRecording(renameString);
                     break;
                 default:
                     break;
@@ -783,8 +760,8 @@ namespace OBSControl.OBSComponents
 
         private void OnLevelStarting(object sender, LevelStartingEventArgs e)
         {
-            Logger.log?.Debug($"RecordingController OnLevelStarting.");
             RecordStartOption recordStartOption = RecordStartOption;
+            Logger.log?.Debug($"RecordingController OnLevelStarting. StartOption is {recordStartOption}");
             switch (recordStartOption)
             {
                 case RecordStartOption.None:

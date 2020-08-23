@@ -295,7 +295,7 @@ namespace OBSControlTests
             string dateFormat = "yyyyMMdd";
             string baseString = $"?N-?A_?@{{{dateFormat}}}-?D";
             Console.WriteLine("Format: " + baseString);
-            string expectedResult = OBSControl.Utilities.Utilities.GetSafeFilename($"{b.SongName}-{b.LevelAuthorName}_{DateTime.Now.ToString(dateFormat)}-{b.Difficulty}");
+            string expectedResult = Utilities.GetSafeFilename($"{b.SongName}-{b.LevelAuthorName}_{DateTime.Now.ToString(dateFormat)}-{b.Difficulty}");
             string result = GetFilenameString(baseString, b, results);
             Console.WriteLine($"Result: '{result}'");
             Assert.AreEqual(expectedResult, result);
