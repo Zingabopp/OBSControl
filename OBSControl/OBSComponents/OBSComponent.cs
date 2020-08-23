@@ -177,6 +177,8 @@ namespace OBSControl.OBSComponents
             cancellationToken.ThrowIfCancellationRequested();
             if (!Connected)
                 Connected = true;
+            gameObject.SetActive(true);
+            enabled = true;
             return Task.FromResult(string.Empty);
         }
 
@@ -189,6 +191,8 @@ namespace OBSControl.OBSComponents
             Logger.log?.Debug($"{GetType().Name}: OnDisconnect.");
 #endif
             CancelAll();
+            gameObject.SetActive(false);
+            enabled = false;
             Connected = false;
         }
 

@@ -2,6 +2,7 @@
 using BeatSaberMarkupLanguage.Components.Settings;
 using IPA.Config.Stores;
 using IPA.Config.Stores.Attributes;
+using OBSControl.OBSComponents;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -21,6 +22,14 @@ namespace OBSControl
         public virtual string? ServerPassword { get; set; } = string.Empty;
         [UIValue(nameof(EnableAutoRecord))]
         public virtual bool EnableAutoRecord { get; set; } = true;
+        
+        [UIValue(nameof(RecordStartOption))]
+        public virtual RecordStartOption RecordStartOption { get; set; } = RecordStartOption.SongStart;
+
+
+        [UIValue(nameof(SongStartDelay))]
+        public virtual float SongStartDelay { get; set; } = 0f;
+
         [UIValue(nameof(LevelStartDelay))]
         public virtual float LevelStartDelay
         {

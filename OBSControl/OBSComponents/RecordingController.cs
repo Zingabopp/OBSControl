@@ -1,4 +1,5 @@
 ﻿using BS_Utils.Utilities;
+using IPA.Utilities;
 using OBSControl.HarmonyPatches;
 using OBSControl.Wrappers;
 using OBSWebsocketDotNet;
@@ -110,7 +111,7 @@ namespace OBSControl.OBSComponents
     public class RecordingController : OBSComponent
     {
         //private OBSWebsocket? _obs => OBSController.instance?.GetConnectedObs();
-
+        internal readonly HarmonyPatchInfo ReadyToStartPatch = HarmonyManager.GetReadyToStartPatch();
         public const string LevelStartingSourceName = "RecordingController";
         private const string DefaultFileFormat = "%CCYY-%MM-%DD %hh-%mm-%ss";
         public const string DefaultDateTimeFormat = "yyyyMMddHHmmss";
@@ -132,7 +133,7 @@ namespace OBSControl.OBSComponents
         public bool RecordOnSongStart => false;
 
         private RecordStartOption _recordStartOption;
-        public RecordStartOption RecordStartOption => RecordStartOption.SongStart;
+        public RecordStartOption RecordStartOption => Plugin.config.RecordStartOption;
 
         private RecordStopOption _recordStopOption;
         public RecordStopOption RecordStopOption
@@ -631,8 +632,11 @@ namespace OBSControl.OBSComponents
 
         #region OBS Event Handlers
 
+        public OutputState RecordingState { get; private set; }
 
-        private void Obs_RecordingStateChanged(object sender, OutputState type)
+        public DateTime RecordStartTime { get; private set; }
+
+        private void OnObsRecordingStateChanged(object sender, OutputState type)
         {
             Logger.log?.Info($"Recording State Changed: {type}");
             OutputState = type;
@@ -643,6 +647,7 @@ namespace OBSControl.OBSComponents
                     recordingCurrentLevel = true;
                     break;
                 case OutputState.Started:
+                    RecordStartTime = DateTime.UtcNow;
                     recordingCurrentLevel = true;
                     Task.Run(() => Obs.GetConnectedObs()?.SetFilenameFormatting(DefaultFileFormat));
                     break;
@@ -651,6 +656,7 @@ namespace OBSControl.OBSComponents
                     break;
                 case OutputState.Stopped:
                     recordingCurrentLevel = false;
+                    RecordStartTime = DateTime.MaxValue;
                     string? renameString = RenameStringOverride ??
                         LastLevelData?.GetFilenameString(Plugin.config.RecordingFileFormat, Plugin.config.InvalidCharacterSubstitute, Plugin.config.ReplaceSpacesWith);
                     if (renameString != null)
@@ -699,7 +705,7 @@ namespace OBSControl.OBSComponents
             if (obs == null) return;
             base.SetEvents(obs);
 
-            obs.RecordingStateChanged += Obs_RecordingStateChanged;
+            obs.RecordingStateChanged += OnObsRecordingStateChanged;
             obs.OBSComponentChanged += OnOBSComponentChanged;
             StartLevelPatch.LevelStarting += OnLevelStarting;
         }
@@ -709,7 +715,7 @@ namespace OBSControl.OBSComponents
         {
             if (obs == null) return;
             base.RemoveEvents(obs);
-            obs.RecordingStateChanged -= Obs_RecordingStateChanged;
+            obs.RecordingStateChanged -= OnObsRecordingStateChanged;
             obs.OBSComponentChanged -= OnOBSComponentChanged;
             StartLevelPatch.LevelStarting -= OnLevelStarting;
         }
@@ -717,7 +723,8 @@ namespace OBSControl.OBSComponents
         private void OnLevelStarting(object sender, LevelStartingEventArgs e)
         {
             Logger.log?.Debug($"RecordingController OnLevelStarting.");
-            switch (RecordStartOption)
+            RecordStartOption recordStartOption = RecordStartOption;
+            switch (recordStartOption)
             {
                 case RecordStartOption.None:
                     break;
@@ -738,10 +745,20 @@ namespace OBSControl.OBSComponents
             }
         }
 
+        FieldAccessor<AudioTimeSyncController, float>.Accessor SyncControllerTimeScale = FieldAccessor<AudioTimeSyncController, float>.GetAccessor("_timeScale");
+
         private async void OnGameSceneActive()
         {
-            //Logger.log?.Debug($"RecordingController OnGameSceneActive.");
+            Logger.log?.Debug($"RecordingController OnGameSceneActive.");
+            await TryStartRecordingAsync(RecordActionSourceType.Auto);
             //var timeControllers = Resources.FindObjectsOfTypeAll<AudioTimeSyncController>();
+            //var timeController = timeControllers.First();
+            //float oldTimeScale = SyncControllerTimeScale(ref timeController);
+            //Logger.log?.Debug($"Setting TimeScale to '0', old TimeScale is '{oldTimeScale}'");
+            //SyncControllerTimeScale(ref timeController) = 0;
+            //await Task.Delay(1000);
+            //Logger.log?.Debug($"Setting TimeScale back to '{oldTimeScale}'");
+            //SyncControllerTimeScale(ref timeController) = oldTimeScale;
             //var songControllers = Resources.FindObjectsOfTypeAll<SongController>();
             //if (songControllers.Length > 1)
             //    Logger.log?.Error($"{songControllers.Length} SongControllers exist.");
@@ -793,6 +810,8 @@ namespace OBSControl.OBSComponents
         protected override void OnEnable()
         {
             base.OnEnable();
+            Logger.log?.Error($"RecordingController.OnEnable");
+            ReadyToStartPatch.ApplyPatch();
             SetEvents(Obs);
         }
 
@@ -802,6 +821,7 @@ namespace OBSControl.OBSComponents
         protected override void OnDisable()
         {
             base.OnDisable();
+            ReadyToStartPatch.RemovePatch();
             RemoveEvents(Obs);
         }
         #endregion

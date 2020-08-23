@@ -136,6 +136,7 @@
   <ItemGroup>
     <Compile Include="GameStatus.cs" />
     <Compile Include="HarmonyPatches\HarmonyManager.cs" />
+    <Compile Include="HarmonyPatches\GameSongController_ReadyToStart.cs" />
     <Compile Include="HarmonyPatches\HarmonyPatchInfo.cs" />
     <Compile Include="HarmonyPatches\LevelSelectionFlowCoordinator_StartLevel.cs" />
     <Compile Include="OBSComponents\OBSComponent.cs" />
