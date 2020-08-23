@@ -224,13 +224,61 @@ namespace OBSControl.OBSComponents
             return dateTime.ToString(DefaultDateTimeFormat);
         }
 
-        public async Task TryStartRecordingAsync(RecordActionSourceType startType, string? fileFormat = null)
+        protected void SetRecordStopEvents(RecordActionSourceType startType, RecordStartOption recordStartOption)
+        {
+            bool stopOnManualStart = Plugin.config.AutoStopOnManual;
+            switch (startType)
+            {
+                case RecordActionSourceType.None:
+                    break;
+                case RecordActionSourceType.ManualOBS:
+                    if (stopOnManualStart)
+                    {
+
+                    }
+                    break;
+                case RecordActionSourceType.Manual:
+                    if (stopOnManualStart)
+                    {
+
+                    }
+                    break;
+                case RecordActionSourceType.Auto:
+                    //switch (recordStartOption)
+                    //{
+                    //    case RecordStartOption.None: // Shouldn't happen.
+                    //        break;
+                    //    case RecordStartOption.SceneSequence: // Probably only case that matters...
+                    //        // Event already set?
+                    //        break;
+                    //    case RecordStartOption.SongStart:
+                    //        break;
+                    //    case RecordStartOption.LevelStartDelay:
+                    //        break;
+                    //    case RecordStartOption.Immediate:
+                    //        break;
+                    //    default:
+                    //        break;
+                    //}
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public async Task TryStartRecordingAsync(RecordActionSourceType startType, RecordStartOption recordStartOption, string? fileFormat = null)
         {
             OBSWebsocket? obs = Obs.GetConnectedObs();
             Logger.log?.Debug($"TryStartRecording");
             if (obs == null)
             {
                 Logger.log?.Error($"Unable to start recording, obs instance not found.");
+                return;
+            }
+            SetRecordStopEvents(startType, recordStartOption);
+            if (OutputState == OutputState.Started || OutputState == OutputState.Starting)
+            {
+                Logger.log?.Warn($"Cannot start recording, already started.");
                 return;
             }
             try
@@ -563,8 +611,18 @@ namespace OBSControl.OBSComponents
                 return path;
         }
 
-        protected RecordingData? LastLevelData;
+        private bool validLevelData;
+        private RecordingData? _lastLevelData;
 
+        protected RecordingData? LastLevelData
+        {
+            get => validLevelData ? _lastLevelData : null;
+            set
+            {
+                validLevelData = _lastLevelData == null;
+                _lastLevelData = value;
+            }
+        }
         protected class RecordingData
         {
             public bool MultipleLastLevels;
@@ -577,8 +635,11 @@ namespace OBSControl.OBSComponents
                 LevelData = levelData;
                 PlayerLevelStats = playerLevelStats;
             }
-            public string GetFilenameString(string? fileFormat, string? invalidSubstitute, string? spaceReplacement)
+            public string? GetFilenameString(string? fileFormat, string? invalidSubstitute, string? spaceReplacement)
             {
+                // TODO: Handle MultipleLastLevels, empty results?
+                if (LevelData == null || LevelResults == null)
+                    return null;
                 return Utilities.FileRenaming.GetFilenameString(fileFormat,
                         LevelData,
                         LevelResults,
@@ -586,10 +647,9 @@ namespace OBSControl.OBSComponents
                         spaceReplacement);
             }
         }
+
         private async void OnLevelFinished(StandardLevelScenesTransitionSetupDataSO levelScenesTransitionSetupDataSO, LevelCompletionResults levelCompletionResults)
         {
-            BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
-            string? newFileName = null;
             bool multipleLevelData = LastLevelData != null || (LastLevelData?.MultipleLastLevels ?? false) == true;
             try
             {
@@ -608,7 +668,6 @@ namespace OBSControl.OBSComponents
                         MultipleLastLevels = multipleLevelData
                     };
                     LastLevelData = recordingData;
-                    newFileName = recordingData.GetFilenameString(Plugin.config.RecordingFileFormat, Plugin.config.InvalidCharacterSubstitute, Plugin.config.ReplaceSpacesWith);
                 }
 
             }
@@ -620,13 +679,13 @@ namespace OBSControl.OBSComponents
             }
 #pragma warning restore CA1031 // Do not catch general exception types
             if (StopRecordAction == RecordActionType.Immediate)
-                StopRecordingTask = TryStopRecordingAsync(newFileName);
+                StopRecordingTask = TryStopRecordingAsync();
             else if (StopRecordAction == RecordActionType.Delayed)
             {
                 TimeSpan stopDelay = TimeSpan.FromSeconds(Plugin.config?.RecordingStopDelay ?? 0);
                 if (stopDelay > TimeSpan.Zero)
                     await Task.Delay(stopDelay);
-                await TryStopRecordingAsync(newFileName);
+                await TryStopRecordingAsync();
             }
         }
 
@@ -708,6 +767,7 @@ namespace OBSControl.OBSComponents
             obs.RecordingStateChanged += OnObsRecordingStateChanged;
             obs.OBSComponentChanged += OnOBSComponentChanged;
             StartLevelPatch.LevelStarting += OnLevelStarting;
+            BSEvents.gameSceneActive += OnGameSceneActive;
         }
 
 
@@ -718,6 +778,7 @@ namespace OBSControl.OBSComponents
             obs.RecordingStateChanged -= OnObsRecordingStateChanged;
             obs.OBSComponentChanged -= OnOBSComponentChanged;
             StartLevelPatch.LevelStarting -= OnLevelStarting;
+            BSEvents.gameSceneActive -= OnGameSceneActive;
         }
 
         private void OnLevelStarting(object sender, LevelStartingEventArgs e)
@@ -731,9 +792,6 @@ namespace OBSControl.OBSComponents
                 case RecordStartOption.SceneSequence:
                     break;
                 case RecordStartOption.SongStart:
-                    Logger.log?.Debug($"RecordingController OnLevelStarting: Setting SongStart event.");
-                    BSEvents.gameSceneLoaded -= OnGameSceneActive;
-                    BSEvents.gameSceneLoaded += OnGameSceneActive;
                     break;
                 case RecordStartOption.LevelStartDelay:
                     e.SetResponse(LevelStartingSourceName, (int)(RecordingStartDelay * 1000));
@@ -750,7 +808,11 @@ namespace OBSControl.OBSComponents
         private async void OnGameSceneActive()
         {
             Logger.log?.Debug($"RecordingController OnGameSceneActive.");
-            await TryStartRecordingAsync(RecordActionSourceType.Auto);
+            StartCoroutine(GameStatusSetup());
+            if (RecordStartOption == RecordStartOption.SongStart)
+            {
+                await TryStartRecordingAsync(RecordActionSourceType.Auto, RecordStartOption.SongStart);
+            }
             //var timeControllers = Resources.FindObjectsOfTypeAll<AudioTimeSyncController>();
             //var timeController = timeControllers.First();
             //float oldTimeScale = SyncControllerTimeScale(ref timeController);
@@ -781,7 +843,7 @@ namespace OBSControl.OBSComponents
             Logger.log?.Debug($"RecordingController: SceneStage - {sceneStage}.");
             if (sceneStage == SceneStage.IntroStarted)
             {
-                await TryStartRecordingAsync(RecordActionSourceType.Auto);
+                await TryStartRecordingAsync(RecordActionSourceType.Auto, RecordStartOption.SceneSequence);
             }
             else if (sceneStage == SceneStage.Game)
                 StartCoroutine(GameStatusSetup());
@@ -798,6 +860,8 @@ namespace OBSControl.OBSComponents
         protected override void SetEvents(OBSWebsocket obs)
         {
         }
+
+
         protected override void RemoveEvents(OBSWebsocket obs)
         {
         }
@@ -810,7 +874,6 @@ namespace OBSControl.OBSComponents
         protected override void OnEnable()
         {
             base.OnEnable();
-            Logger.log?.Error($"RecordingController.OnEnable");
             ReadyToStartPatch.ApplyPatch();
             SetEvents(Obs);
         }

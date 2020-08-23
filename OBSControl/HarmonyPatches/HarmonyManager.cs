@@ -82,8 +82,6 @@ namespace OBSControl.HarmonyPatches
         {
             if (ReadyToStartPatch == null)
             {
-                MethodInfo[] accessors = typeof(GameSongController).GetProperty("waitUntilIsReadyToStartTheSong").GetAccessors(false);
-                Logger.log?.Critical(string.Join(", ", accessors.Select(a => a.Name)));
                 MethodInfo original = typeof(GameSongController).GetMethod("get_waitUntilIsReadyToStartTheSong", allBindingFlags);
                 HarmonyMethod postFix = new HarmonyMethod(typeof(GameSongController_ReadyToStart).GetMethod("Postfix", allBindingFlags));
                 ReadyToStartPatch = new HarmonyPatchInfo(Harmony, original, null, postFix);
