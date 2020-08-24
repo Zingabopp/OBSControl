@@ -14,7 +14,25 @@ namespace OBSControl.Utilities
             return ColorUtility.TryParseHtmlString(colorStr, out color);
         }
 
-        public static void RaiseEventSafe<TArgs>(EventHandler<TArgs>? e, object sender, TArgs args, string eventName)
+        public static void RaiseEventSafe(this EventHandler? e, object sender, string eventName)
+        {
+            EventHandler[] handlers = e?.GetInvocationList().Select(d => (EventHandler)d).ToArray()
+                ?? Array.Empty<EventHandler>();
+            for (int i = 0; i < handlers.Length; i++)
+            {
+                try
+                {
+                    handlers[i].Invoke(sender, EventArgs.Empty);
+                }
+                catch (Exception ex)
+                {
+                    Logger.log?.Error($"Error in {eventName} handlers '{handlers[i]?.Method.Name}': {ex.Message}");
+                    Logger.log?.Debug(ex);
+                }
+            }
+        }
+
+        public static void RaiseEventSafe<TArgs>(this EventHandler<TArgs>? e, object sender, TArgs args, string eventName)
         {
             EventHandler<TArgs>[] handlers = e?.GetInvocationList().Select(d => (EventHandler<TArgs>)d).ToArray()
                 ?? Array.Empty<EventHandler<TArgs>>();

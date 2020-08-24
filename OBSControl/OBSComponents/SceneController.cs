@@ -49,6 +49,7 @@ namespace OBSControl.OBSComponents
         {
             get => false;
         }
+
         public bool GetSceneSequenceEnabled()
         {
             if (!Connected)
@@ -633,10 +634,12 @@ namespace OBSControl.OBSComponents
         private void OnLevelStarting(object sender, LevelStartingEventArgs e)
         {
             Logger.log?.Debug($"SceneController OnLevelStarting.");
-            
-            e.SetHandledResponse(LevelStartingSourceName);
-            StartLevelPatch.LevelStart -= OnLevelStart;
-            StartLevelPatch.LevelStart += OnLevelStart;
+            if (GetSceneSequenceEnabled())
+            {
+                e.SetHandledResponse(LevelStartingSourceName);
+                StartLevelPatch.LevelStart -= OnLevelStart;
+                StartLevelPatch.LevelStart += OnLevelStart;
+            }
         }
 
         #region OBS Websocket Event Handlers
