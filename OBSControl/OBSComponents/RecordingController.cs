@@ -15,107 +15,47 @@ using UnityEngine;
 #nullable enable
 namespace OBSControl.OBSComponents
 {
-    public enum RecordActionSourceType
-    {
-        /// <summary>
-        /// No information on recording action.
-        /// </summary>
-        None = 0,
-        /// <summary>
-        /// Recording started by OBS.
-        /// </summary>
-        ManualOBS = 1,
-        /// <summary>
-        /// Recording started manually from OBSControl.
-        /// </summary>
-        Manual = 2,
-        /// <summary>
-        /// Recording start/stop automatically.
-        /// </summary>
-        Auto = 3
-    }
-
-    public enum RecordActionType
-    {
-        /// <summary>
-        /// No information on recording action.
-        /// </summary>
-        None = 0,
-        /// <summary>
-        /// Recording should be stopped only manually.
-        /// </summary>
-        NoAction = 1,
-        /// <summary>
-        /// Recording should be start/stopped immediately.
-        /// </summary>
-        Immediate = 2,
-        /// <summary>
-        /// Recording should be start/stopped after a delay.
-        /// </summary>
-        Delayed = 3,
-        /// <summary>
-        /// Recording should be stopped automatically (by SceneSequence callback).
-        /// </summary>
-        Auto = 4
-    }
-
-    public enum RecordStartOption
-    {
-        /// <summary>
-        /// Recording will not be auto started
-        /// </summary>
-        None = 0,
-        /// <summary>
-        /// Recording starts when triggered by SceneSequence.
-        /// </summary>
-        SceneSequence = 2,
-        /// <summary>
-        /// Recording will be started in GameCore at the start of the song.
-        /// </summary>
-        SongStart = 3,
-        /// <summary>
-        /// Level start will begin after recording starts and a delay.
-        /// </summary>
-        LevelStartDelay = 4,
-        /// <summary>
-        /// Recording will be started immediately when LevelStarting is triggered.
-        /// </summary>
-        Immediate = 5
-    }
-
-    public enum RecordStopOption
-    {
-        /// <summary>
-        /// Recording will not be auto stopped
-        /// </summary>
-        None = 0,
-        /// <summary>
-        /// Recording stopped when triggered by SceneSequence.
-        /// </summary>
-        SceneSequence = 2,
-        /// <summary>
-        /// Recording will be stopped based on when the song ends (paired with stop delay).
-        /// </summary>
-        SongEnd = 3,
-        /// <summary>
-        /// Recording will be stopped based on when the results view is presented (paired with stop delay).
-        /// </summary>
-        ResultsView = 4
-    }
-
-    /// <summary>
-    /// Monobehaviours (scripts) are added to GameObjects.
-    /// For a full list of Messages a Monobehaviour can receive from the game, see https://docs.unity3d.com/ScriptReference/MonoBehaviour.html.
-    /// </summary>
     [DisallowMultipleComponent]
-    public class RecordingController : OBSComponent
+    public partial class RecordingController : OBSComponent
     {
         //private OBSWebsocket? _obs => OBSController.instance?.GetConnectedObs();
         internal readonly HarmonyPatchInfo ReadyToStartPatch = HarmonyManager.GetReadyToStartPatch();
         public const string LevelStartingSourceName = "RecordingController";
         private const string DefaultFileFormat = "%CCYY-%MM-%DD %hh-%mm-%ss";
         public const string DefaultDateTimeFormat = "yyyyMMddHHmmss";
+        #region Encapsulated Fields
         private SceneController? _sceneController;
+        private RecordingData? _lastLevelData;
+        private RecordStopOption _recordStopOption;
+        private RecordStartOption _recordStartOption;
+
+        #endregion
+        public bool recordingCurrentLevel;
+        private bool validLevelData;
+        private string? RenameStringOverride;
+
+        // private static readonly FieldAccessor<AudioTimeSyncController, float>.Accessor SyncControllerTimeScale = FieldAccessor<AudioTimeSyncController, float>.GetAccessor("_timeScale");
+        #region Properties
+
+        private string? CurrentFileFormat { get; set; }
+
+        /// <summary>
+        /// Data about the last level played. If not null when a level is finished, <see cref="RecordingData.MultipleLastLevels"/> will be set to true.
+        /// Should be set to null after it's used to rename a recording.
+        /// </summary>
+        protected RecordingData? LastLevelData
+        {
+            get => validLevelData ? _lastLevelData : null;
+            set
+            {
+                validLevelData = _lastLevelData == null;
+                _lastLevelData = value;
+            }
+        }
+        public OutputState RecordingState { get; private set; }
+        public DateTime RecordStartTime { get; private set; }
+        #endregion
+
         #region Options
         public bool AutoStopOnManual => Plugin.config?.AutoStopOnManual ?? true;
         /// <summary>
@@ -132,14 +72,12 @@ namespace OBSControl.OBSComponents
         /// </summary>
         public bool RecordOnSongStart => false;
 
-        private RecordStartOption _recordStartOption;
         public RecordStartOption RecordStartOption
         {
             get => _recordStartOption;
             set => _recordStartOption = value;
         }
 
-        private RecordStopOption _recordStopOption;
         public RecordStopOption RecordStopOption
         {
             get
@@ -292,7 +230,7 @@ namespace OBSControl.OBSComponents
             catch (Exception ex)
             {
                 OutputState state = OutputState;
-                if(!(state == OutputState.Starting || OutputState == OutputState.Started))
+                if (!(state == OutputState.Starting || OutputState == OutputState.Started))
                 {
                     RecordStartSource = RecordActionSourceType.None;
                     RecordStartOption = RecordStartOption.None;
@@ -366,7 +304,6 @@ namespace OBSControl.OBSComponents
 #pragma warning restore CA1031 // Do not catch general exception types
         }
 
-        private string? CurrentFileFormat { get; set; }
 
         public async Task TryStopRecordingAsync(string? renameTo = null)
         {
@@ -403,7 +340,6 @@ namespace OBSControl.OBSComponents
             }
         }
 
-        private string? RenameStringOverride;
         public void RenameLastRecording(string? newName)
         {
             if (newName == null)
@@ -467,8 +403,6 @@ namespace OBSControl.OBSComponents
 #pragma warning restore CA1031 // Do not catch general exception types
         }
 
-        public bool recordingCurrentLevel;
-
         public IEnumerator<WaitUntil> GameStatusSetup()
         {
             // TODO: Limit wait by tries/current scene so it doesn't go forever.
@@ -480,6 +414,17 @@ namespace OBSControl.OBSComponents
             });
             yield return waitForData;
             GameStatus.Setup();
+            bool multipleLevelData = false;
+            if (LastLevelData?.LevelResults != null)
+                multipleLevelData = true;
+            if (GameStatus.DifficultyBeatmap != null)
+            {
+                RecordingData recordingData = new RecordingData(new BeatmapLevelWrapper(GameStatus.DifficultyBeatmap))
+                {
+                    MultipleLastLevels = multipleLevelData
+                };
+                LastLevelData = recordingData;
+            }
             BS_Utils.Plugin.LevelDidFinishEvent += OnLevelFinished;
         }
 
@@ -579,63 +524,46 @@ namespace OBSControl.OBSComponents
                 return path;
         }
 
-        private bool validLevelData;
-        private RecordingData? _lastLevelData;
-
-        protected RecordingData? LastLevelData
-        {
-            get => validLevelData ? _lastLevelData : null;
-            set
-            {
-                validLevelData = _lastLevelData == null;
-                _lastLevelData = value;
-            }
-        }
-        protected class RecordingData
-        {
-            public bool MultipleLastLevels;
-            public PlayerLevelStatsData? PlayerLevelStats;
-            public LevelCompletionResultsWrapper LevelResults;
-            public BeatmapLevelWrapper LevelData;
-            public RecordingData(LevelCompletionResultsWrapper levelResults, BeatmapLevelWrapper levelData, PlayerLevelStatsData? playerLevelStats)
-            {
-                LevelResults = levelResults;
-                LevelData = levelData;
-                PlayerLevelStats = playerLevelStats;
-            }
-            public string? GetFilenameString(string? fileFormat, string? invalidSubstitute, string? spaceReplacement)
-            {
-                // TODO: Handle MultipleLastLevels, empty results?
-                if (LevelData == null || LevelResults == null)
-                    return null;
-                return Utilities.FileRenaming.GetFilenameString(fileFormat,
-                        LevelData,
-                        LevelResults,
-                        invalidSubstitute,
-                        spaceReplacement);
-            }
-        }
 
         private async void OnLevelFinished(StandardLevelScenesTransitionSetupDataSO levelScenesTransitionSetupDataSO, LevelCompletionResults levelCompletionResults)
         {
-            bool multipleLevelData = LastLevelData != null || (LastLevelData?.MultipleLastLevels ?? false) == true;
+            bool multipleLevelData = LastLevelData?.LevelResults != null || (LastLevelData?.MultipleLastLevels ?? false) == true;
             try
             {
                 PlayerLevelStatsData? stats = null;
-                if (OBSController.instance?.PlayerData != null && GameStatus.LevelInfo != null && GameStatus.DifficultyBeatmap != null)
+                IBeatmapLevel? levelInfo = GameStatus.LevelInfo;
+                IDifficultyBeatmap? difficultyBeatmap = GameStatus.DifficultyBeatmap;
+                PlayerDataModel? playerData = OBSController.instance?.PlayerData;
+                if (playerData != null && levelInfo != null && difficultyBeatmap != null)
                 {
-                    stats = OBSController.instance.PlayerData.playerData.GetPlayerLevelStatsData(
-                        GameStatus.LevelInfo.levelID, GameStatus.DifficultyBeatmap.difficulty, GameStatus.DifficultyBeatmap.parentDifficultyBeatmapSet.beatmapCharacteristic);
+                    stats = playerData.playerData.GetPlayerLevelStatsData(
+                        levelInfo.levelID, difficultyBeatmap.difficulty, difficultyBeatmap.parentDifficultyBeatmapSet.beatmapCharacteristic);
                 }
 
                 LevelCompletionResultsWrapper levelResults = new LevelCompletionResultsWrapper(levelCompletionResults, stats?.playCount ?? 0, GameStatus.MaxModifiedScore);
-                if (GameStatus.DifficultyBeatmap != null)
+                RecordingData? recordingData = LastLevelData;
+                if (recordingData == null)
                 {
-                    RecordingData recordingData = new RecordingData(levelResults, new BeatmapLevelWrapper(GameStatus.DifficultyBeatmap), stats)
+                    recordingData = new RecordingData(new BeatmapLevelWrapper(difficultyBeatmap), levelResults, stats)
                     {
                         MultipleLastLevels = multipleLevelData
                     };
                     LastLevelData = recordingData;
+                }
+                else
+                {
+                    if (recordingData.LevelData == null)
+                    {
+                        recordingData.LevelData = new BeatmapLevelWrapper(difficultyBeatmap);
+                    }
+                    else if (difficultyBeatmap != null && recordingData.LevelData.DifficultyBeatmap != difficultyBeatmap)
+                    {
+                        Logger.log?.Debug($"Existing beatmap data doesn't match level completion beatmap data: '{recordingData.LevelData.SongName}' != '{difficultyBeatmap?.level.songName}'");
+                        recordingData.LevelData = new BeatmapLevelWrapper(difficultyBeatmap);
+                    }
+                    recordingData.LevelResults = levelResults;
+                    recordingData.PlayerLevelStats = stats;
+                    recordingData.MultipleLastLevels = multipleLevelData;
                 }
 
             }
@@ -659,9 +587,7 @@ namespace OBSControl.OBSComponents
 
         #region OBS Event Handlers
 
-        public OutputState RecordingState { get; private set; }
 
-        public DateTime RecordStartTime { get; private set; }
 
         private void OnObsRecordingStateChanged(object sender, OutputState type)
         {
@@ -676,7 +602,7 @@ namespace OBSControl.OBSComponents
                 case OutputState.Started:
                     RecordStartTime = DateTime.UtcNow;
                     recordingCurrentLevel = true;
-                    if(RecordStartSource == RecordActionSourceType.None)
+                    if (RecordStartSource == RecordActionSourceType.None)
                     {
                         RecordStartSource = RecordActionSourceType.ManualOBS;
                         RecordStartOption = RecordStartOption.None;
@@ -780,7 +706,6 @@ namespace OBSControl.OBSComponents
             }
         }
 
-        FieldAccessor<AudioTimeSyncController, float>.Accessor SyncControllerTimeScale = FieldAccessor<AudioTimeSyncController, float>.GetAccessor("_timeScale");
 
         private async void OnGameSceneActive()
         {
@@ -867,14 +792,4 @@ namespace OBSControl.OBSComponents
         #endregion
     }
 
-    public struct RecordingSettings
-    {
-        public static RecordingSettings None => new RecordingSettings();
-
-        public string? PreviousOutputDirectory;
-        public bool OutputDirectorySet;
-
-        public string? PreviousFileFormat;
-        public bool FileFormatSet;
-    }
 }
