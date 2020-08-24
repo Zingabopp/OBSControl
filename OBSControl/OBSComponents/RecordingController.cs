@@ -402,16 +402,13 @@ namespace OBSControl.OBSComponents
             });
             yield return waitForData;
             GameStatus.Setup();
-            bool multipleLevelData = false;
-            if (LastLevelData?.LevelResults != null)
-                multipleLevelData = true;
-            if (GameStatus.DifficultyBeatmap != null)
+            if (LastLevelData == null)
             {
-                RecordingData recordingData = new RecordingData(new BeatmapLevelWrapper(GameStatus.DifficultyBeatmap))
+                if (GameStatus.DifficultyBeatmap != null)
                 {
-                    MultipleLastLevels = multipleLevelData
-                };
-                LastLevelData = recordingData;
+                    RecordingData recordingData = new RecordingData(new BeatmapLevelWrapper(GameStatus.DifficultyBeatmap));
+                    LastLevelData = recordingData;
+                }
             }
         }
 

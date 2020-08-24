@@ -168,9 +168,6 @@ namespace OBSControl.OBSComponents
                 StopRecordingTask = TryStopRecordingAsync();
             }
         }
-
-
-
         #endregion
 
 
