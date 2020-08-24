@@ -140,6 +140,7 @@
     <Compile Include="HarmonyPatches\HarmonyPatchInfo.cs" />
     <Compile Include="HarmonyPatches\LevelSelectionFlowCoordinator_StartLevel.cs" />
     <Compile Include="HarmonyPatches\LevelSelectionFlowCoordinator_HandleStandardLevelDidFinishPatch.cs" />
+    <Compile Include="NotificationController.cs" />
     <Compile Include="OBSComponents\OBSComponent.cs" />
     <Compile Include="OBSComponents\RecordingController_EventHandlers.cs" />
     <Compile Include="OBSComponents\RecordingController_Types.cs" />
