@@ -29,7 +29,9 @@ namespace OBSControl.HarmonyPatches
             {
                 return;
             }
-            RecordStartOption recordStartOption = Plugin.config.RecordStartOption;
+            RecordStartOption recordStartOption = recordingController.RecordStartOption;
+            if (recordStartOption != RecordStartOption.SongStart)
+                return;
             TimeSpan delay;
             float startDelay = Plugin.config.SongStartDelay;
             if (startDelay > 0)
@@ -38,7 +40,7 @@ namespace OBSControl.HarmonyPatches
                 delay = TimeSpan.Zero;
             DateTime now = DateTime.UtcNow;
             TimeSpan timeout = TimeSpan.FromSeconds(5) + delay;
-            Logger.log?.Debug($"Start Start delay enabled, waiting for recording to start and delaying by {delay.TotalSeconds}s, timing out after {timeout.TotalSeconds}s");
+            Logger.log?.Debug($"Song Start delay enabled, waiting for recording to start and delaying by {delay.TotalSeconds}s, timing out after {timeout.TotalSeconds}s");
             if (recordStartOption == RecordStartOption.SongStart)
             {
                 __result = new WaitUntil(() =>

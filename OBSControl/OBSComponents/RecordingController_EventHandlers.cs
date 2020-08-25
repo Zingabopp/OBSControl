@@ -59,6 +59,7 @@ namespace OBSControl.OBSComponents
                 default:
                     break;
             }
+            Logger.log?.Debug($"RecordingController OnLevelStart. RecordStartOption: {RecordStartOption}.");
             if (recordStartOption == RecordStartOption.LevelStartDelay || recordStartOption == RecordStartOption.Immediate)
             {
                 await TryStartRecordingAsync(RecordActionSourceType.Auto, recordStartOption).ConfigureAwait(false);
@@ -85,7 +86,7 @@ namespace OBSControl.OBSComponents
         /// <param name="levelCompletionResults"></param>
         private async void OnLevelFinished(StandardLevelScenesTransitionSetupDataSO levelScenesTransitionSetupDataSO, LevelCompletionResults levelCompletionResults)
         {
-            Logger.log?.Debug($"RecordingController OnLevelFinished: {SceneManager.GetActiveScene().name}.");
+            Logger.log?.Debug($"RecordingController OnLevelFinished: {SceneManager.GetActiveScene().name}. RecordStopOption: {RecordStopOption}.");
             bool multipleLevelData = LastLevelData?.LevelResults != null || (LastLevelData?.MultipleLastLevels ?? false) == true;
             try
             {
@@ -144,7 +145,7 @@ namespace OBSControl.OBSComponents
 
         private async void OnGameSceneActive()
         {
-            Logger.log?.Debug($"RecordingController OnGameSceneActive.");
+            Logger.log?.Debug($"RecordingController OnGameSceneActive. RecordStartOption: {RecordStartOption}.");
             StartCoroutine(GameStatusSetup());
             if (RecordStartOption == RecordStartOption.SongStart)
             {
@@ -159,7 +160,7 @@ namespace OBSControl.OBSComponents
         /// <param name="_"></param>
         public async void OnLevelDidFinish(object sender, EventArgs _)
         {
-            Logger.log?.Debug($"RecordingController OnLevelDidFinish: {SceneManager.GetActiveScene().name}.");
+            Logger.log?.Debug($"RecordingController OnLevelDidFinish: {SceneManager.GetActiveScene().name}. RecordStopOption: {RecordStopOption}.");
             if (RecordStopOption == RecordStopOption.ResultsView)
             {
                 TimeSpan stopDelay = TimeSpan.FromSeconds(Plugin.config?.RecordingStopDelay ?? 0);
@@ -191,7 +192,7 @@ namespace OBSControl.OBSComponents
                     if (RecordStartSource == RecordActionSourceType.None)
                     {
                         RecordStartSource = RecordActionSourceType.ManualOBS;
-                        RecordStartOption = RecordStartOption.None;
+                        // RecordStartOption = RecordStartOption.None;
                     }
                     Task.Run(() => Obs.GetConnectedObs()?.SetFilenameFormatting(DefaultFileFormat));
                     break;
@@ -206,7 +207,7 @@ namespace OBSControl.OBSComponents
                     RenameStringOverride = null;
                     LastLevelData = null;
                     RecordStartSource = RecordActionSourceType.None;
-                    RecordStartOption = RecordStartOption.None;
+                    // RecordStartOption = RecordStartOption.None;
                     string? renameString = renameOverride ??
                         lastLevelData?.GetFilenameString(Plugin.config.RecordingFileFormat, Plugin.config.InvalidCharacterSubstitute, Plugin.config.ReplaceSpacesWith);
                     if (renameString != null)

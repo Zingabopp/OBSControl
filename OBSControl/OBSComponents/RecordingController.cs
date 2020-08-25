@@ -74,7 +74,7 @@ namespace OBSControl.OBSComponents
 
         public RecordStartOption RecordStartOption
         {
-            get => _recordStartOption;
+            get => Plugin.config?.RecordStartOption ?? RecordStartOption.None;
             set => _recordStartOption = value;
         }
 
@@ -212,8 +212,14 @@ namespace OBSControl.OBSComponents
             try
             {
                 RecordStartSource = startType;
-                RecordStartOption = recordStartOption;
+                // RecordStartOption = recordStartOption;
                 await obs.StartRecording().ConfigureAwait(false);
+                RecordStopOption = recordStartOption switch
+                {
+                    RecordStartOption.None => RecordStopOption.None,
+                    RecordStartOption.SceneSequence => RecordStopOption.SceneSequence,
+                    _ => Plugin.config?.RecordStopOption ?? RecordStopOption.ResultsView
+                };
             }
             catch (Exception ex)
             {
@@ -221,7 +227,7 @@ namespace OBSControl.OBSComponents
                 if (!(state == OutputState.Starting || OutputState == OutputState.Started))
                 {
                     RecordStartSource = RecordActionSourceType.None;
-                    RecordStartOption = RecordStartOption.None;
+                    // RecordStartOption = RecordStartOption.None;
                 }
                 Logger.log?.Error($"Error starting recording in OBS: {ex.Message}");
                 Logger.log?.Debug(ex);
@@ -540,6 +546,7 @@ namespace OBSControl.OBSComponents
             obs.RecordingStateChanged += OnObsRecordingStateChanged;
             obs.OBSComponentChanged += OnOBSComponentChanged;
             StartLevelPatch.LevelStarting += OnLevelStarting;
+            StartLevelPatch.LevelStart += OnLevelStart;
             HandleStandardLevelDidFinishPatch.LevelDidFinish += OnLevelDidFinish;
             BSEvents.gameSceneActive += OnGameSceneActive;
             BS_Utils.Plugin.LevelDidFinishEvent += OnLevelFinished;
@@ -553,6 +560,7 @@ namespace OBSControl.OBSComponents
             obs.RecordingStateChanged -= OnObsRecordingStateChanged;
             obs.OBSComponentChanged -= OnOBSComponentChanged;
             StartLevelPatch.LevelStarting -= OnLevelStarting;
+            StartLevelPatch.LevelStart -= OnLevelStart;
             HandleStandardLevelDidFinishPatch.LevelDidFinish -= OnLevelDidFinish;
             BSEvents.gameSceneActive -= OnGameSceneActive;
             BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
@@ -560,13 +568,14 @@ namespace OBSControl.OBSComponents
 
         private async Task SceneSequenceCallback(SceneStage sceneStage)
         {
-            Logger.log?.Debug($"RecordingController: SceneStage - {sceneStage}.");
+            Logger.log?.Debug($"RecordingController: SceneStage - {sceneStage}. RecordStartOption: {RecordStartOption}.");
             if (sceneStage == SceneStage.IntroStarted && RecordStartOption == RecordStartOption.SceneSequence)
             {
                 await TryStartRecordingAsync(RecordActionSourceType.Auto, RecordStartOption.SceneSequence);
             }
             else if (sceneStage == SceneStage.OutroFinished)
             {
+                Logger.log?.Debug($"RecordingController: RecordStopOption: {RecordStopOption}.");
                 if (RecordStopOption == RecordStopOption.SceneSequence)
                     await TryStopRecordingAsync();
             }

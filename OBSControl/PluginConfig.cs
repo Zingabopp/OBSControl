@@ -28,6 +28,10 @@ namespace OBSControl
         [UIValue(nameof(RecordStartOption))]
         public virtual RecordStartOption RecordStartOption { get; set; } = RecordStartOption.SongStart;
 
+        [UseConverter(typeof(EnumConverter<RecordStopOption>))]
+        [UIValue(nameof(RecordStopOption))]
+        public virtual RecordStopOption RecordStopOption { get; set; } = RecordStopOption.ResultsView;
+
 
         [UIValue(nameof(SongStartDelay))]
         public virtual float SongStartDelay { get; set; } = 0f;

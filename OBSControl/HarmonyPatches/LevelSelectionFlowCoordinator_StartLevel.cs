@@ -1,6 +1,7 @@
 ﻿using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Components;
 using HarmonyLib;
+using HMUI;
 using IPA.Utilities;
 using OBSControl.OBSComponents;
 using OBSWebsocketDotNet.Types;
@@ -80,7 +81,6 @@ namespace OBSControl.HarmonyPatches
             ref Action beforeSceneSwitchCallback, ref bool practice,
             LevelSelectionNavigationController ____levelSelectionNavigationController)
         {
-
             if (WaitingToStart)
             {
                 WaitingToStart = false;
@@ -90,20 +90,9 @@ namespace OBSControl.HarmonyPatches
             WaitingToStart = true;
             Logger.log?.Debug("LevelSelectionNavigationController_StartLevel");
             OBSController? obs = OBSController.instance;
-            SceneController? sceneController = obs?.GetOBSComponent<SceneController>();
             if (obs == null || !obs.IsConnected)
             {
                 Logger.log?.Warn($"Skipping StartLevel sequence, OBS is unavailable.");
-                return true;
-            }
-            if (sceneController == null || !sceneController.ActiveAndConnected)
-            {
-                Logger.log?.Warn($"Skipping StartLevel sequence, SceneController is unavailable.");
-                return true;
-            }
-            if (!sceneController.GetSceneSequenceEnabled())
-            {
-                Logger.log?.Warn($"Skipping StartLevel sequence, SceneController SceneSequence is not enabled.");
                 return true;
             }
             StandardLevelDetailViewController detailViewController = AccessDetailViewController(ref ____levelSelectionNavigationController);
@@ -112,18 +101,14 @@ namespace OBSControl.HarmonyPatches
             PlayButton = playButton;
             PreviousText = playButton.GetComponentInChildren<TextMeshProUGUI>()?.text;
             playButton.interactable = false;
-
-            //void StartingHandler(object sender, LevelStartEventArgs e)
-            //{
-            //    e.SetResponse(LevelStartResponse.Delayed);
-            //    Logger.log?.Info($"Setting LevelStartResponse: {e.StartResponse}");
-            //}
-            //LevelStarting += StartingHandler;
+            levelView.hidePracticeButton = true;
+            bool returnValue = false;
             try
             {
                 var handler = LevelStarting;
                 if (handler == null)
                 {
+                    returnValue = true;
                     return true;
                 }
                 EventHandler<LevelStartingEventArgs>[] invocations = handler.GetInvocationList().Select(d => (EventHandler<LevelStartingEventArgs>)d).ToArray();
@@ -148,25 +133,33 @@ namespace OBSControl.HarmonyPatches
                 {
                     Logger.log?.Debug($"No LevelStartResponse, skipping delayed start.");
                     Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, startEventArgs, nameof(LevelStart));
+                    returnValue = true;
                     return true;
+                }
+                else
+                {
+                    
                 }
                 if (response == LevelStartResponse.Immediate)
                 {
                     Logger.log?.Debug("LevelStartResponse is Immediate, skipping delayed start.");
+                    FadeOutPreview();
                     Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, startEventArgs, nameof(LevelStart));
+                    returnValue = true;
                     return true;
                 }
                 if (response == LevelStartResponse.Handled)
                 {
                     Logger.log?.Debug($"LevelStartResponse is handled, skipping delayed start.");
+                    FadeOutPreview();
                     Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, startEventArgs, nameof(LevelStart));
+                    returnValue = false;
                     return false;
                 }
                 if (response == LevelStartResponse.Delayed)
                 {
                     Logger.log?.Info($"Starting delayed level start sequence.");
-                    Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, startEventArgs, nameof(LevelStart));
-                    _ = StartDelayedLevelStart(() =>
+                    _ = StartDelayedLevelStart(__instance, startEventArgs, () =>
                     {
                         LevelStartEventArgs levelStartInfo = startEventArgs;
                         StartLevel(levelStartInfo.Coordinator, levelStartInfo.DifficultyBeatmap, levelStartInfo.BeforeSceneSwitchCallback, levelStartInfo.Practice);
@@ -181,6 +174,7 @@ namespace OBSControl.HarmonyPatches
                             }
                         }
                     });
+                    returnValue = false;
                     return false;
                 }
             }
@@ -189,14 +183,54 @@ namespace OBSControl.HarmonyPatches
                 Logger.log?.Error($"Error in StartLevel patch: {ex.Message}");
                 Logger.log?.Debug(ex);
             }
+            finally
+            {
+                if (returnValue)
+                {
+                    playButton.interactable = true;
+                    levelView.hidePracticeButton = true;
+                }
+            }
+            playButton.interactable = true;
+            levelView.hidePracticeButton = true;
             return true;
         }
-        private async static Task StartDelayedLevelStart(Action continuation)
+
+        private static void FadeOutPreview()
         {
+            try
+            {
+                SongPreviewPlayer? previewPlayer = GameObject.FindObjectsOfType<SongPreviewPlayer>().FirstOrDefault();
+                if (previewPlayer != null)
+                {
+                    previewPlayer.FadeOut();
+                }
+                else
+                    Logger.log?.Debug($"Couldn't find SongPreviewPlayer.");
+            }
+            catch (Exception ex)
+            {
+                Logger.log?.Error($"Error fading out song preview: {ex.Message}");
+                Logger.log?.Debug(ex);
+            }
+        }
+        private async static Task StartDelayedLevelStart(LevelSelectionFlowCoordinator sender, LevelStartEventArgs args, Action continuation)
+        {
+            FadeOutPreview();
+            await Task.Delay(500);
+            Utilities.Utilities.RaiseEventSafe(LevelStart, sender, args, nameof(LevelStart));
             TimeSpan levelStartDelay = TimeSpan.FromSeconds(Plugin.config.LevelStartDelay);
             if (levelStartDelay > TimeSpan.Zero)
                 await Task.Delay(levelStartDelay);
-            continuation?.Invoke();
+            try
+            {
+                continuation?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                Logger.log?.Error($"Starting level in delayed level start continuation: {ex.Message}");
+                Logger.log?.Debug(ex);
+            }
         }
 
         private static string? PreviousText;

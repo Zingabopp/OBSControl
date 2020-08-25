@@ -97,10 +97,8 @@ namespace OBSControl.UI
             StreamButtonInteractable = false;
             try
             {
-
-                await SceneController.StartIntroSceneSequence(CancellationToken.None);
-                //await StreamingController.StartStreaming();
-                //await Task.Delay(2000);
+                await StreamingController.StartStreaming();
+                await Task.Delay(2000);
             }
             catch (Exception ex)
             {
