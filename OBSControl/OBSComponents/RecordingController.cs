@@ -463,32 +463,32 @@ namespace OBSControl.OBSComponents
             return settings;
         }
 
-        public async Task<Output[]> GetOutputsAsync(CancellationToken cancellationToken = default)
+        public async Task<OBSOutputInfo[]> GetOutputsAsync(CancellationToken cancellationToken = default)
         {
             OBSWebsocket? obs = Obs.Obs;
             if (obs == null || !obs.IsConnected)
             {
                 Logger.log?.Error($"Unable to get output list, OBSWebsocket is not connected.");
-                return Array.Empty<Output>();
+                return Array.Empty<OBSOutputInfo>();
             }
             try
             {
-                Output[]? outputList = await obs.ListOutputs(cancellationToken).ConfigureAwait(false);
+                OBSOutputInfo[]? outputList = await obs.ListOutputs(cancellationToken).ConfigureAwait(false);
                 if (outputList == null || outputList.Length == 0)
                     Logger.log?.Warn("No Outputs listed");
-                return outputList ?? Array.Empty<Output>();
+                return outputList ?? Array.Empty<OBSOutputInfo>();
             }
             catch (Exception ex)
             {
                 Logger.log?.Error($"Error getting list of outputs: {ex.Message}");
                 Logger.log?.Debug(ex);
-                return Array.Empty<Output>();
+                return Array.Empty<OBSOutputInfo>();
             }
         }
 
         public async Task<string?> GetCurrentRecordFile(CancellationToken cancellationToken = default)
         {
-            Output[] outputList = await GetOutputsAsync(cancellationToken).ConfigureAwait(false);
+            OBSOutputInfo[] outputList = await GetOutputsAsync(cancellationToken).ConfigureAwait(false);
             FileOutput[] fileOutputs = outputList.Where(o => o is FileOutput).Select(fo => (FileOutput)fo).ToArray();
             if (fileOutputs.Length > 1)
             {
