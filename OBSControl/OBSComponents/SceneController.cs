@@ -50,7 +50,7 @@ namespace OBSControl.OBSComponents
             get => false;
         }
 
-        public bool SceneSequenceEnabled { get; set; }
+        public bool SceneSequenceEnabled => (Plugin.config?.RecordStartOption ?? RecordStartOption.None) == RecordStartOption.SceneSequence;
 
         public bool IntroSceneSequenceEnabled
         {
@@ -626,13 +626,15 @@ namespace OBSControl.OBSComponents
 
         private void OnLevelStarting(object sender, LevelStartingEventArgs e)
         {
-            Logger.log?.Debug($"SceneController OnLevelStarting.");
             if (IntroSceneSequenceEnabled)
             {
+                Logger.log?.Debug($"SceneController OnLevelStarting: Intro sequence enabled.");
                 e.SetHandledResponse(LevelStartingSourceName);
                 StartLevelPatch.LevelStart -= OnLevelStart;
                 StartLevelPatch.LevelStart += OnLevelStart;
             }
+            else
+                Logger.log?.Debug($"SceneController OnLevelStarting.");
         }
 
         #region OBS Websocket Event Handlers
