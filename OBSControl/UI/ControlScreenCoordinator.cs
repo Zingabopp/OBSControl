@@ -108,7 +108,7 @@ namespace OBSControl.UI
                 SetScreenTransform(ControlScreen, Plugin.config);
                 Logger.log?.Critical($"Control screen created: {ControlScreen != null}");
             }
-            ControlScreen.gameObject.SetActive(true);
+            ControlScreen?.gameObject.SetActive(true);
         }
 
         public FloatingScreen CreateFloatingScreen()

@@ -95,7 +95,7 @@ namespace OBSControl.Utilities
         }
 
         public static string GetLevelDataString(LevelDataType levelDataType, ILevelData levelData, 
-            ILevelCompletionResults levelCompletionResults, string? data = null)
+            ILevelCompletionResults? levelCompletionResults, string? data = null)
         {
             string? retVal = null;
             switch (levelDataType)
@@ -141,25 +141,33 @@ namespace OBSControl.Utilities
                 case LevelDataType.Date:
                     return DateTime.Now.ToString(data ?? DefaultDateTimeFormat);
                 case LevelDataType.FirstPlay:
+                    if (levelCompletionResults == null) return string.Empty;
                     if (levelCompletionResults.PlayCount == 0)
                         return "1st";
                     else
                         return string.Empty;
                 case LevelDataType.BadCutsCount:
+                    if (levelCompletionResults == null) return string.Empty;
                     return levelCompletionResults.BadCutsCount.ToString();
                 case LevelDataType.EndSongTimeNoLabels:
+                    if (levelCompletionResults == null) return string.Empty;
                     levelCompletionResults.EndSongTime.MinutesAndSeconds(out int endMin, out int endSec);
                     return endMin + "." + endSec.ToString("00");
                 case LevelDataType.EndSongTimeLabeled:
+                    if (levelCompletionResults == null) return string.Empty;
                     levelCompletionResults.EndSongTime.MinutesAndSeconds(out int endMinL, out int endSecL);
                     return endMinL + "m." + endSecL.ToString("00") + "s";
                 case LevelDataType.FullCombo:
+                    if (levelCompletionResults == null) return string.Empty;
                     return levelCompletionResults.FullCombo ? "FC" : string.Empty;
                 case LevelDataType.Modifiers:
+                    if (levelCompletionResults == null) return string.Empty;
                     return levelCompletionResults.GameplayModifiers.ToModifierString();
                 case LevelDataType.GoodCutsCount:
+                    if (levelCompletionResults == null) return string.Empty;
                     return levelCompletionResults.GoodCutsCount.ToString();
                 case LevelDataType.LevelEndType:
+                    if (levelCompletionResults == null) return string.Empty;
                     if (levelCompletionResults.LevelEndAction == SongEndAction.Quit
                         || levelCompletionResults.LevelEndAction == SongEndAction.Restart)
                         return "Quit";
@@ -171,6 +179,7 @@ namespace OBSControl.Utilities
                         _ => "Unknown",
                     };
                 case LevelDataType.LevelIncompleteType:
+                    if (levelCompletionResults == null) return string.Empty;
                     if (levelCompletionResults.LevelEndAction == SongEndAction.Quit
                         || levelCompletionResults.LevelEndAction == SongEndAction.Restart)
                         return "Quit";
@@ -182,16 +191,22 @@ namespace OBSControl.Utilities
                         _ => string.Empty,
                     };
                 case LevelDataType.MaxCombo:
+                    if (levelCompletionResults == null) return string.Empty;
                     return levelCompletionResults.MaxCombo.ToString();
                 case LevelDataType.MissedCount:
+                    if (levelCompletionResults == null) return string.Empty;
                     return levelCompletionResults.MissedCount.ToString();
                 case LevelDataType.ModifiedScore:
+                    if (levelCompletionResults == null) return string.Empty;
                     return levelCompletionResults.ModifiedScore.ToString();
                 case LevelDataType.Rank:
+                    if (levelCompletionResults == null) return string.Empty;
                     return levelCompletionResults.Rank.ToString();
                 case LevelDataType.RawScore:
+                    if (levelCompletionResults == null) return string.Empty;
                     return levelCompletionResults.RawScore.ToString();
                 case LevelDataType.ScorePercent:
+                    if (levelCompletionResults == null) return string.Empty;
                     string scoreStr = levelCompletionResults.ScorePercent.ToString("F3");
                     return scoreStr.Substring(0, scoreStr.Length - 1); // Game rounds down
                 default:
@@ -207,13 +222,11 @@ namespace OBSControl.Utilities
         /// <param name="levelCompletionResults"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="difficultyBeatmap"/> or <paramref name="levelCompletionResults"/> is null.</exception>
-        public static string GetFilenameString(string? baseString, ILevelData levelData, ILevelCompletionResults levelCompletionResults, 
+        public static string GetFilenameString(string? baseString, ILevelData levelData, ILevelCompletionResults? levelCompletionResults, 
             string? invalidSubstitute = "", string? spaceReplacement = null)
         {
             if (levelData == null)
                 throw new ArgumentNullException(nameof(levelData), "difficultyBeatmap cannot be null for GetFilenameString.");
-            if (levelCompletionResults == null)
-                throw new ArgumentNullException(nameof(levelCompletionResults), "levelCompletionResults cannot be null for GetFilenameString.");
             if(string.IsNullOrEmpty(baseString) || baseString == null)
                 return string.Empty;
             if (!baseString.Contains("?"))

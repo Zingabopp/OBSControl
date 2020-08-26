@@ -2,8 +2,13 @@
 using BeatSaberMarkupLanguage.Components.Settings;
 using IPA.Config.Stores;
 using IPA.Config.Stores.Attributes;
+using IPA.Config.Stores.Converters;
+using Newtonsoft.Json;
+using OBSControl.OBSComponents;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -19,6 +24,21 @@ namespace OBSControl
         public virtual string? ServerAddress { get; set; } = "ws://127.0.0.1:4444";
         [UIValue(nameof(ServerPassword))]
         public virtual string? ServerPassword { get; set; } = string.Empty;
+        [UIValue(nameof(EnableAutoRecord))]
+        public virtual bool EnableAutoRecord { get; set; } = true;
+
+        [UseConverter(typeof(EnumConverter<RecordStartOption>))]
+        [UIValue(nameof(RecordStartOption))]
+        public virtual RecordStartOption RecordStartOption { get; set; } = RecordStartOption.SongStart;
+
+        [UseConverter(typeof(EnumConverter<RecordStopOption>))]
+        [UIValue(nameof(RecordStopOption))]
+        public virtual RecordStopOption RecordStopOption { get; set; } = RecordStopOption.ResultsView;
+
+
+        [UIValue(nameof(SongStartDelay))]
+        public virtual float SongStartDelay { get; set; } = 0f;
+
         [UIValue(nameof(LevelStartDelay))]
         public virtual float LevelStartDelay
         {
@@ -41,6 +61,10 @@ namespace OBSControl
                 _recordingStopDelay = (float)Math.Round(value, 1);
             }
         }
+
+        [UIValue(nameof(AutoStopOnManual))]
+        public virtual bool AutoStopOnManual { get; set; } = true;
+
         [UIValue(nameof(RecordingFileFormat))]
         public virtual string? RecordingFileFormat { get; set; } = "?N{20}-?A{20}_?%<_[?M]><-?F><-?e>";
 
@@ -62,6 +86,19 @@ namespace OBSControl
             }
         }
 
+        private float _endSceneStartDelay;
+        [UIValue(nameof(EndSceneStartDelay))]
+        public float EndSceneStartDelay
+        {
+            get { return _endSceneStartDelay; }
+            set
+            {
+                if (value < 0)
+                    value = 0;
+                _endSceneStartDelay = (float)Math.Round(value, 1);
+            }
+        }
+
         [UIValue(nameof(EndSceneDuration))]
         public virtual float EndSceneDuration
         {
@@ -73,6 +110,11 @@ namespace OBSControl
                 _endSceneDuration = (float)Math.Round(value, 1);
             }
         }
+
+        //[NonNullable]
+        //[UIValue(nameof(SceneCollectionName))]
+        //public virtual string SceneCollectionName { get; set; } = string.Empty;
+
         [NonNullable]
         [UIValue(nameof(StartSceneName))]
         public virtual string StartSceneName { get; set; } = string.Empty;
@@ -87,6 +129,16 @@ namespace OBSControl
         [UIValue(nameof(RestingSceneName))]
         public virtual string RestingSceneName { get; set; } = string.Empty;
 
+        [NonNullable]
+        public virtual string MaterialName { get; set; } = string.Empty;
+
+        [NonNullable]
+        public virtual string ShaderName { get; set; } = string.Empty;
+        [NonNullable]
+        public virtual string ColorName { get; set; } = string.Empty;
+        [NonNullable]
+        public virtual float ColorAlpha { get; set; } = 1f;
+
         #region Floating Screen
         public virtual float ScreenPosX { get; set; } = 0f;
         public virtual float ScreenPosY { get; set; } = 2.9f;
@@ -98,12 +150,18 @@ namespace OBSControl
 
         #endregion
 
+        public virtual float ObsTimeout { get; set; } = 5000f;
+
         /// <summary>
         /// This is called whenever BSIPA reads the config from disk (including when file changes are detected).
         /// </summary>
         public virtual void OnReload()
         {
             TryAddCurrentNames(StartSceneName, GameSceneName, EndSceneName, RestingSceneName);
+            HMMainThreadDispatcher.instance.Enqueue(() =>
+            {
+                Plugin.instance.SetThings(MaterialName, ShaderName, ColorName, ColorAlpha);
+            });
         }
 
         /// <summary>
@@ -117,9 +175,11 @@ namespace OBSControl
             OBSController.instance?.gameObject.SetActive(Enabled);
         }
 
-#pragma warning disable CS8603 // Possible null reference return.
-        public IDisposable ChangeTransaction() => null;
-#pragma warning restore CS8603 // Possible null reference return.
+        /// <summary>
+        /// Call this when you want to do multiple changes before saving the file, dispose to save.
+        /// </summary>
+        /// <returns></returns>
+        public virtual IDisposable ChangeTransaction() => null!;
 
         public void UpdateSceneOptions(IEnumerable<string> newOptions)
         {
@@ -129,6 +189,14 @@ namespace OBSControl
             TryAddCurrentNames(StartSceneName, GameSceneName, EndSceneName, RestingSceneName);
             RefreshDropdowns();
         }
+        //public void UpdateSceneCollectionOptions(IEnumerable<KeyValuePair<string, string[]>> newOptions)
+        //{
+        //    SceneCollectionOptions.Clear();
+        //    SceneCollectionOptions.Add(string.Empty);
+        //    SceneCollectionOptions.AddRange(newOptions.Select(p => p.Key));
+
+        //    RefreshDropdowns();
+        //}
 
         private void TryAddCurrentNames(params string[]? sceneNames)
         {
@@ -159,9 +227,18 @@ namespace OBSControl
         {
             return $"{Math.Round(val, 1)}s";
         }
+
         [Ignore]
         [UIValue("SceneSelectOptions")]
         public List<object> SceneSelectOptions = new List<object>() { string.Empty };
+
+
+        //[Ignore]
+        //public ConcurrentDictionary<string, string[]> SceneCollections = new ConcurrentDictionary<string, string[]>();
+
+        //[Ignore]
+        //[UIValue("SceneCollectionOptions")]
+        //public List<object> SceneCollectionOptions = new List<object>() { string.Empty };
 
         [Ignore]
         [UIComponent("StartSceneDropdown")]
@@ -182,6 +259,52 @@ namespace OBSControl
         private float _startSceneDuration = 1f;
         private float _endSceneDuration = 2f;
         #endregion
+    }
+
+    /// <summary>
+    /// Not used yet.
+    /// </summary>
+    public class SceneProfile
+    {
+        public event EventHandler? SceneListUpdated;
+        [JsonRequired]
+        [JsonProperty("SceneCollectionName")]
+        public string SceneCollectionName { get; protected set; }
+
+        [NonNullable]
+        [JsonProperty("StartSceneName")]
+        public virtual string StartSceneName { get; set; } = string.Empty;
+        [NonNullable]
+        [JsonProperty("GameSceneName")]
+        public virtual string GameSceneName { get; set; } = string.Empty;
+        [NonNullable]
+        [JsonProperty("EndSceneName")]
+        public virtual string EndSceneName { get; set; } = string.Empty;
+        [NonNullable]
+        [JsonProperty("RestingSceneName")]
+        public virtual string RestingSceneName { get; set; } = string.Empty;
+
+        [JsonIgnore]
+        private HashSet<string> AvailableScenes = new HashSet<string>();
+
+        public bool SceneAvailable(string sceneName) => AvailableScenes.Contains(sceneName);
+
+        public void UpdateAvailableScenes(IEnumerable<string> sceneList)
+        {
+            AvailableScenes.Clear();
+            foreach (var scene in sceneList)
+            {
+                if (!string.IsNullOrEmpty(scene))
+                    AvailableScenes.Add(scene);
+            }
+            SceneListUpdated?.Invoke(this, EventArgs.Empty);
+        }
+
+        [JsonConstructor]
+        public SceneProfile(string sceneCollectionName)
+        {
+            SceneCollectionName = sceneCollectionName;
+        }
     }
 
     internal static class ConfigExtensions

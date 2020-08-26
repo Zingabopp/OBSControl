@@ -1,19 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Web.UI;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.ViewControllers;
 using OBSControl.OBSComponents;
 using OBSControl.UI.Formatters;
+using OBSWebsocketDotNet;
 using OBSWebsocketDotNet.Types;
 using UnityEngine;
+#nullable enable
 
 namespace OBSControl.UI
 {
     public partial class ControlScreen
     {
-        protected StreamStatus CurrentStreamStatus;
+        protected StreamStatusEventArgs? CurrentStreamStatus;
         [UIValue(nameof(TimeFormatter))]
         public readonly TimeFormatter TimeFormatter = new TimeFormatter();
         #region Properties
@@ -93,16 +97,16 @@ namespace OBSControl.UI
             StreamButtonInteractable = false;
             try
             {
-                await OBSController.instance.Obs.StartStreaming();
+                await StreamingController.StartStreaming();
+                await Task.Delay(2000);
             }
             catch (Exception ex)
             {
-                Logger.log?.Warn($"Error stopping streaming: {ex.Message}");
+                Logger.log?.Warn($"Error starting streaming: {ex.Message}");
                 Logger.log?.Debug(ex);
             }
-            if (GetOutputStateIsSettled(StreamingController.instance.OutputState))
-                StartCoroutine(DelayedStreamInteractableEnable(false));
-        }
+            StreamButtonInteractable = true;
+        } 
 
         [UIAction(nameof(StopStreaming))]
         public async void StopStreaming()
@@ -110,15 +114,15 @@ namespace OBSControl.UI
             StreamButtonInteractable = false;
             try
             {
-                await StreamingController.instance.StopStreaming();
+                await StreamingController.StopStreaming();
+                await Task.Delay(2000);
             }
             catch (Exception ex)
             {
                 Logger.log?.Warn($"Error stopping streaming: {ex.Message}");
                 Logger.log?.Debug(ex);
             }
-            if (GetOutputStateIsSettled(StreamingController.instance.OutputState))
-                StartCoroutine(DelayedStreamInteractableEnable(true));
+            StreamButtonInteractable = true;
         }
         #endregion
 
@@ -132,10 +136,14 @@ namespace OBSControl.UI
                     StartCoroutine(DelayedStreamInteractableEnable(e == OutputState.Stopped));
                 else
                     StreamButtonInteractable = false;
+                if (e == OutputState.Started)
+                    IsStreaming = true;
+                else if (e == OutputState.Stopped)
+                    IsStreaming = false;
             });
         }
 
-        private void OnStreamStatus(object sender, StreamStatus e)
+        private void OnStreamStatus(object sender, StreamStatusEventArgs e)
         {
             CurrentStreamStatus = e;
             NotifyPropertyChanged(nameof(StreamTime));

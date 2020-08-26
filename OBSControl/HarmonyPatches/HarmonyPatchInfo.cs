@@ -30,7 +30,12 @@ namespace OBSControl.HarmonyPatches
         {
             if (harmony == null)
                 harmony = HarmonyInstance ?? throw new ArgumentNullException(nameof(harmony), $"Must have a non-null HarmonyInstance for ApplyPatch()");
-            if (IsApplied) return false;
+            if (IsApplied)
+            {
+
+                Logger.log?.Debug($"Harmony patch on '{OriginalMethod.Name}' is already applied.");
+                return false;
+            }
             try
             {
                 string? patchTypeName = null;

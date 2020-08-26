@@ -59,10 +59,11 @@
                   align='MidlineLeft' size-delta-x='~ValueDoubleWidth' />
           </horizontal>
           <horizontal background='round-rect-panel' pad-left='3' pad-right='-3'
-                      preferred-height='6' min-width='50'
+                      preferred-height='6' min-width='50' child-align='MiddleLeft'
                       child-control-width='false' child-expand-width='false'>
             <text text='Render Missed Frames:'  align='MidlineLeft' size-delta-x='~LabelWidth' />
             <text data='RenderMissedFrames' data-format='#,0 Frames' align='MidlineLeft' size-delta-x='~ValueWidth' />
+            <clickable-image on-click='ResetRenderMissedFrames' source='OBSControl.Icons.reset.png' preferred-height='6' preferred-width='10' preserve-aspect='true' />
           </horizontal>
         </vertical>
       </tab>

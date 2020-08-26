@@ -20,7 +20,7 @@ namespace OBSControlTests
             TestDifficultyBeatmap? difficultyBeatmap = TestDifficultyBeatmap.Default;
             string baseString = "?N-?A_?%<_[?M]><-?F><-?e>";
 #pragma warning disable CS8604 // Possible null reference argument.
-            Assert.ThrowsException<ArgumentNullException>(() => GetFilenameString(baseString, difficultyBeatmap, results));
+            //Assert.ThrowsException<ArgumentNullException>(() => GetFilenameString(baseString, difficultyBeatmap, results));
 #pragma warning restore CS8604 // Possible null reference argument.
             results = TestLevelCompletionResults.DefaultCompletionResults;
             difficultyBeatmap = null;
@@ -295,7 +295,7 @@ namespace OBSControlTests
             string dateFormat = "yyyyMMdd";
             string baseString = $"?N-?A_?@{{{dateFormat}}}-?D";
             Console.WriteLine("Format: " + baseString);
-            string expectedResult = OBSControl.Utilities.Utilities.GetSafeFilename($"{b.SongName}-{b.LevelAuthorName}_{DateTime.Now.ToString(dateFormat)}-{b.Difficulty}");
+            string expectedResult = Utilities.GetSafeFilename($"{b.SongName}-{b.LevelAuthorName}_{DateTime.Now.ToString(dateFormat)}-{b.Difficulty}");
             string result = GetFilenameString(baseString, b, results);
             Console.WriteLine($"Result: '{result}'");
             Assert.AreEqual(expectedResult, result);
@@ -372,6 +372,25 @@ namespace OBSControlTests
         }
 
         [TestMethod]
+        public void NullCompletionResults()
+        {
+            TestLevelCompletionResults? results = null;
+            TestGameplayModifiers modifiers = new TestGameplayModifiers();
+            TestDifficultyBeatmap b = TestDifficultyBeatmap.Default;
+            modifiers.DisappearingArrows = true;
+            modifiers.FastNotes = true;
+            modifiers.SongSpeed = SongSpeed.Slower;
+            string baseString = "?N-?A<_?%<_[?M]><-?F><-?e>>";
+            Console.WriteLine("Format: " + baseString);
+            string result = GetFilenameString(baseString, b, results);
+            string expectedResult = $"{b.SongName}-{b.LevelAuthorName}";
+            expectedResult = Utilities.GetSafeFilename(expectedResult);
+            Console.WriteLine($"  '{expectedResult}'");
+            Console.WriteLine($"  '{result}'");
+            Assert.AreEqual(expectedResult, result);
+        }
+
+        [TestMethod]
         public void InvalidFilenameCharacters()
         {
             TestLevelCompletionResults results = TestLevelCompletionResults.DefaultCompletionResults;
@@ -384,10 +403,10 @@ namespace OBSControlTests
             modifiers.SongSpeed = SongSpeed.Slower;
             results.LevelEndStateType = LevelEndState.Failed;
             results.MaxCombo = results.TotalNotes - 1;
-            string baseString = "?N-?A_?%<_[?M]><-?F><-?e>";
+            string baseString = "?N-?A<_?%><_[?M]><-?F><-?e>";
             Console.WriteLine("Format: " + baseString);
             string result = GetFilenameString(baseString, b, results);
-            string scoreStr = Math.Round(results.ScorePercent, 2, MidpointRounding.ToZero).ToString("F2");
+            string scoreStr = Math.Round(results?.ScorePercent ?? 0, 2, MidpointRounding.ToZero).ToString("F2");
             string expectedResult = $"{b.SongName}-{b.LevelAuthorName}_{scoreStr}_[{modifiers}]-Failed";
             expectedResult = Utilities.GetSafeFilename(expectedResult);
             Console.WriteLine($"  '{expectedResult}'");

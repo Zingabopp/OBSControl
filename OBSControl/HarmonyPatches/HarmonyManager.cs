@@ -21,6 +21,8 @@ namespace OBSControl.HarmonyPatches
         }
         private static readonly BindingFlags allBindingFlags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
         private static HarmonyPatchInfo? LevelDelayPatch;
+        private static HarmonyPatchInfo? ReadyToStartPatch;
+        private static HarmonyPatchInfo? LevelDidFinishPatch;
         internal readonly static HashSet<HarmonyPatchInfo> AppliedPatches = new HashSet<HarmonyPatchInfo>();
 
         public static bool ApplyPatch(HarmonyPatchInfo patchInfo)
@@ -56,7 +58,7 @@ namespace OBSControl.HarmonyPatches
 
         public static void ApplyDefaultPatches()
         {
-
+            GetLevelDidFinishPatch().ApplyPatch();
         }
 
         public static void UnpatchAll()
@@ -72,11 +74,30 @@ namespace OBSControl.HarmonyPatches
             if(LevelDelayPatch == null)
             {
                 MethodInfo original = typeof(LevelSelectionFlowCoordinator).GetMethod("StartLevel", allBindingFlags);
-                HarmonyMethod prefix = new HarmonyMethod(typeof(LevelSelectionNavigationController_StartLevel).GetMethod("Prefix", allBindingFlags));
+                HarmonyMethod prefix = new HarmonyMethod(typeof(StartLevelPatch).GetMethod("Prefix", allBindingFlags));
                 LevelDelayPatch = new HarmonyPatchInfo(Harmony, original, prefix, null);
             }
             return LevelDelayPatch;
         }
-
+        public static HarmonyPatchInfo GetReadyToStartPatch()
+        {
+            if (ReadyToStartPatch == null)
+            {
+                MethodInfo original = typeof(GameSongController).GetMethod("get_waitUntilIsReadyToStartTheSong", allBindingFlags);
+                HarmonyMethod postFix = new HarmonyMethod(typeof(GameSongController_ReadyToStart).GetMethod("Postfix", allBindingFlags));
+                ReadyToStartPatch = new HarmonyPatchInfo(Harmony, original, null, postFix);
+            }
+            return ReadyToStartPatch;
+        }
+        public static HarmonyPatchInfo GetLevelDidFinishPatch()
+        {
+            if (LevelDidFinishPatch == null)
+            {
+                MethodInfo original = typeof(LevelSelectionFlowCoordinator).GetMethod("HandleStandardLevelDidFinish", allBindingFlags);
+                HarmonyMethod postFix = new HarmonyMethod(typeof(HandleStandardLevelDidFinishPatch).GetMethod("Postfix", allBindingFlags));
+                LevelDidFinishPatch = new HarmonyPatchInfo(Harmony, original, null, postFix);
+            }
+            return LevelDidFinishPatch;
+        }
     }
 }

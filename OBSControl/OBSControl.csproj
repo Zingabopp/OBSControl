@@ -19,6 +19,7 @@
     <RuntimeIdentifiers>win</RuntimeIdentifiers>
     <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
+    <DisableCopyToPlugins>false</DisableCopyToPlugins>
   </PropertyGroup>
   <PropertyGroup Condition="'$(NCrunch)' == '1' ">
     <DisableCopyToPlugins>True</DisableCopyToPlugins>
@@ -135,8 +136,15 @@
   <ItemGroup>
     <Compile Include="GameStatus.cs" />
     <Compile Include="HarmonyPatches\HarmonyManager.cs" />
+    <Compile Include="HarmonyPatches\GameSongController_ReadyToStart.cs" />
     <Compile Include="HarmonyPatches\HarmonyPatchInfo.cs" />
     <Compile Include="HarmonyPatches\LevelSelectionFlowCoordinator_StartLevel.cs" />
+    <Compile Include="HarmonyPatches\LevelSelectionFlowCoordinator_HandleStandardLevelDidFinishPatch.cs" />
+    <Compile Include="NotificationController.cs" />
+    <Compile Include="OBSComponents\OBSComponent.cs" />
+    <Compile Include="OBSComponents\RecordingController_EventHandlers.cs" />
+    <Compile Include="OBSComponents\RecordingController_Types.cs" />
+    <Compile Include="OBSComponents\SceneController.cs" />
     <Compile Include="OBSComponents\StreamingController.cs" />
     <Compile Include="OBSController.cs" />
     <Compile Include="OBSLogger.cs" />
@@ -151,6 +159,7 @@
     <Compile Include="UI\ControlScreen.cs" />
     <Compile Include="UI\Formatters\TimeFormatter.cs" />
     <Compile Include="UI\Formatters\BoolFormatter.cs" />
+    <Compile Include="Utilities\AsyncEventListener.cs" />
     <Compile Include="Utilities\FileRenaming.cs" />
     <Compile Include="Wrappers\BeatmapLevelWrapper.cs" />
     <Compile Include="Wrappers\ConversionExtensions.cs" />
@@ -191,18 +200,22 @@
     <ProjectReference Include="..\obs-websocket-dotnet\obs-websocket-dotnet\obs-websocket-dotnet.csproj">
       <Project>{c8668815-f21e-49c0-8f1a-58bc698153af}</Project>
       <Name>obs-websocket-dotnet</Name>
-      <SetTargetFramework>TargetFramework=net472</SetTargetFramework>
+      <SetTargetFramework>TargetFramework=net46</SetTargetFramework>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Icons\lock.png" />
-    <EmbeddedResource Include="Icons\lock.svg" />
+    <None Include="Icons\lock.svg" />
     <EmbeddedResource Include="Icons\lock_open.png" />
-    <EmbeddedResource Include="Icons\lock_open.svg" />
+    <None Include="Icons\lock_open.svg" />
     <EmbeddedResource Include="Icons\unfold_less.png" />
-    <EmbeddedResource Include="Icons\unfold_less.svg" />
+    <None Include="Icons\unfold_less.svg" />
     <EmbeddedResource Include="Icons\unfold_more.png" />
-    <EmbeddedResource Include="Icons\unfold_more.svg" />
+    <None Include="Icons\unfold_more.svg" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Icons\reset.png" />
+    <None Include="Icons\reset.svg" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="ILRepack.targets" />

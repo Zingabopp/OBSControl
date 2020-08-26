@@ -9,42 +9,42 @@ namespace OBSControl.Wrappers
 {
     public class BeatmapLevelWrapper : ILevelData
     {
-        private readonly IDifficultyBeatmap _difficultyBeatmap;
+        public readonly IDifficultyBeatmap DifficultyBeatmap;
         public BeatmapLevelWrapper(IDifficultyBeatmap difficultyBeatmap)
         {
-            _difficultyBeatmap = difficultyBeatmap ?? throw new ArgumentNullException(nameof(difficultyBeatmap), "difficultyBeatmap cannot be null.");
+            DifficultyBeatmap = difficultyBeatmap ?? throw new ArgumentNullException(nameof(difficultyBeatmap), "difficultyBeatmap cannot be null.");
         }
-        public string LevelID => _difficultyBeatmap.level.levelID;
+        public string LevelID => DifficultyBeatmap.level.levelID;
 
-        public string SongName => _difficultyBeatmap.level.songName;
+        public string SongName => DifficultyBeatmap.level.songName;
 
-        public string SongSubName => _difficultyBeatmap.level.songSubName;
+        public string SongSubName => DifficultyBeatmap.level.songSubName;
 
-        public string SongAuthorName => _difficultyBeatmap.level.songAuthorName;
+        public string SongAuthorName => DifficultyBeatmap.level.songAuthorName;
 
-        public string LevelAuthorName => _difficultyBeatmap.level.levelAuthorName;
+        public string LevelAuthorName => DifficultyBeatmap.level.levelAuthorName;
 
-        public float BeatsPerMinute => _difficultyBeatmap.level.beatsPerMinute;
+        public float BeatsPerMinute => DifficultyBeatmap.level.beatsPerMinute;
 
-        public float SongTimeOffset => _difficultyBeatmap.level.songTimeOffset;
+        public float SongTimeOffset => DifficultyBeatmap.level.songTimeOffset;
 
-        public float Shuffle => _difficultyBeatmap.level.shuffle;
+        public float Shuffle => DifficultyBeatmap.level.shuffle;
 
-        public float ShufflePeriod => _difficultyBeatmap.level.shufflePeriod;
+        public float ShufflePeriod => DifficultyBeatmap.level.shufflePeriod;
 
-        public float PreviewStartTime => _difficultyBeatmap.level.previewStartTime;
+        public float PreviewStartTime => DifficultyBeatmap.level.previewStartTime;
 
-        public float PreviewDuration => _difficultyBeatmap.level.previewDuration;
+        public float PreviewDuration => DifficultyBeatmap.level.previewDuration;
 
-        public float SongDuration => _difficultyBeatmap.level.songDuration;
+        public float SongDuration => DifficultyBeatmap.level.songDuration;
 
-        public Difficulty Difficulty => _difficultyBeatmap.difficulty.ToBeatmapDifficulty();
+        public Difficulty Difficulty => DifficultyBeatmap.difficulty.ToBeatmapDifficulty();
 
-        public int DifficultyRank => _difficultyBeatmap.difficultyRank;
+        public int DifficultyRank => DifficultyBeatmap.difficultyRank;
 
-        public float NoteJumpMovementSpeed => _difficultyBeatmap.noteJumpMovementSpeed;
+        public float NoteJumpMovementSpeed => DifficultyBeatmap.noteJumpMovementSpeed;
 
-        public float NoteJumpStartBeatOffset => _difficultyBeatmap.noteJumpStartBeatOffset;
+        public float NoteJumpStartBeatOffset => DifficultyBeatmap.noteJumpStartBeatOffset;
     }
 
     public enum Difficulty
