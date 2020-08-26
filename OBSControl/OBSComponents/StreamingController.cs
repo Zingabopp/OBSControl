@@ -45,7 +45,7 @@ namespace OBSControl.OBSComponents
                 }
                 catch (OperationCanceledException ex)
                 {
-                    taskCompletion.TrySetCanceled(cancellationToken);
+                    taskCompletion.TrySetCanceled(ex.CancellationToken);
                 }
                 catch (Exception ex)
                 {
@@ -116,7 +116,7 @@ namespace OBSControl.OBSComponents
                 }
                 catch (OperationCanceledException ex)
                 {
-                    taskCompletion.TrySetCanceled(cancellationToken);
+                    taskCompletion.TrySetCanceled(ex.CancellationToken);
                 }
                 catch (Exception ex)
                 {

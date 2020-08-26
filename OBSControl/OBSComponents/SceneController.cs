@@ -247,7 +247,8 @@ namespace OBSControl.OBSComponents
             return success;
         }
 
-        private AsyncEventListenerWithArg<string?, string, string?> StopSceneSequenceSceneListener { get; } = new AsyncEventListenerWithArg<string?, string, string?>((s, sceneName, expectedScene) =>
+        private AsyncEventListenerWithArg<string?, string, string?> StopSceneSequenceSceneListener { get; } 
+            = new AsyncEventListenerWithArg<string?, string, string?>((s, sceneName, expectedScene) =>
         {
             if (string.IsNullOrEmpty(expectedScene))
                 return new EventListenerResult<string?>(null, true);
@@ -324,7 +325,9 @@ namespace OBSControl.OBSComponents
                 TimeSpan endSceneDuration = TimeSpan.FromSeconds(Plugin.config.EndSceneDuration);
                 TimeSpan endSceneStartDelay = TimeSpan.FromSeconds(Plugin.config.EndSceneStartDelay);
                 Logger.log?.Info($"Beginning Outro Scene Sequence  {endSceneStartDelay.TotalMilliseconds}ms => '{endScene}' => {endSceneDuration.TotalMilliseconds}ms => '{restingScene ?? gameScene}'");
+#pragma warning disable CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate.
                 SceneChanged += StopSceneSequenceSceneListener.OnEvent;
+#pragma warning restore CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate.
                 StopSceneSequenceSceneListener.Reset(endScene);
                 StopSceneSequenceSceneListener.StartListening();
                 if (endScene != null && CurrentScene != endScene)
@@ -401,7 +404,9 @@ namespace OBSControl.OBSComponents
             {
                 Logger.log?.Debug($"Exiting StartOutroSceneSequence {(success ? "successfully" : "after failure")}.");
                 StopSceneSequenceSceneListener.TrySetCanceled();
+#pragma warning disable CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate.
                 SceneChanged -= StopSceneSequenceSceneListener.OnEvent;
+#pragma warning restore CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate.
             }
             return success;
         }

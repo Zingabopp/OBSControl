@@ -143,14 +143,15 @@ namespace OBSControl.OBSComponents
 #endif
             CancelAll();
             SetEvents(obs);
-            try
-            {
+            // TODO: What was this going to be for?
+            //try
+            //{
                 
-            }
-            catch (Exception ex)
-            {
+            //}
+            //catch (Exception ex)
+            //{
 
-            }
+            //}
         }
 
         protected virtual void OnDestroyingObs(object sender, OBSWebsocket obs)

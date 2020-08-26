@@ -277,8 +277,8 @@ namespace OBSControl.HarmonyPatches
         }
 
         static string DefaultText = "Play";
-        static string NotRecording = "Waiting for OBS";
-        static string RecordingText = "Recording";
+        // static string NotRecording = "Waiting for OBS";
+        // static string RecordingText = "Recording";
 
         private static StartLevelDelegate? _startLevel;
         private static StartLevelDelegate StartLevel

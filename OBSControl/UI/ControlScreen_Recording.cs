@@ -9,6 +9,7 @@ using OBSControl.UI.Formatters;
 using OBSWebsocketDotNet;
 using OBSWebsocketDotNet.Types;
 using UnityEngine;
+#nullable enable
 
 namespace OBSControl.UI
 {
