@@ -4,7 +4,6 @@ using BeatSaberMarkupLanguage.Notify;
 using IPA.Config.Stores;
 using IPA.Config.Stores.Attributes;
 using IPA.Config.Stores.Converters;
-using Newtonsoft.Json;
 using OBSControl.OBSComponents;
 using System;
 using System.Collections.Concurrent;
@@ -314,48 +313,48 @@ namespace OBSControl
     /// <summary>
     /// Not used yet.
     /// </summary>
-    public class SceneProfile
-    {
-        public event EventHandler? SceneListUpdated;
-        [JsonRequired]
-        [JsonProperty("SceneCollectionName")]
-        public string SceneCollectionName { get; protected set; }
+    //public class SceneProfile
+    //{
+    //    public event EventHandler? SceneListUpdated;
+    //    [JsonRequired]
+    //    [JsonProperty("SceneCollectionName")]
+    //    public string SceneCollectionName { get; protected set; }
 
-        [NonNullable]
-        [JsonProperty("StartSceneName")]
-        public virtual string StartSceneName { get; set; } = string.Empty;
-        [NonNullable]
-        [JsonProperty("GameSceneName")]
-        public virtual string GameSceneName { get; set; } = string.Empty;
-        [NonNullable]
-        [JsonProperty("EndSceneName")]
-        public virtual string EndSceneName { get; set; } = string.Empty;
-        [NonNullable]
-        [JsonProperty("RestingSceneName")]
-        public virtual string RestingSceneName { get; set; } = string.Empty;
+    //    [NonNullable]
+    //    [JsonProperty("StartSceneName")]
+    //    public virtual string StartSceneName { get; set; } = string.Empty;
+    //    [NonNullable]
+    //    [JsonProperty("GameSceneName")]
+    //    public virtual string GameSceneName { get; set; } = string.Empty;
+    //    [NonNullable]
+    //    [JsonProperty("EndSceneName")]
+    //    public virtual string EndSceneName { get; set; } = string.Empty;
+    //    [NonNullable]
+    //    [JsonProperty("RestingSceneName")]
+    //    public virtual string RestingSceneName { get; set; } = string.Empty;
 
-        [JsonIgnore]
-        private HashSet<string> AvailableScenes = new HashSet<string>();
+    //    [JsonIgnore]
+    //    private HashSet<string> AvailableScenes = new HashSet<string>();
 
-        public bool SceneAvailable(string sceneName) => AvailableScenes.Contains(sceneName);
+    //    public bool SceneAvailable(string sceneName) => AvailableScenes.Contains(sceneName);
 
-        public void UpdateAvailableScenes(IEnumerable<string> sceneList)
-        {
-            AvailableScenes.Clear();
-            foreach (var scene in sceneList)
-            {
-                if (!string.IsNullOrEmpty(scene))
-                    AvailableScenes.Add(scene);
-            }
-            SceneListUpdated?.Invoke(this, EventArgs.Empty);
-        }
+    //    public void UpdateAvailableScenes(IEnumerable<string> sceneList)
+    //    {
+    //        AvailableScenes.Clear();
+    //        foreach (var scene in sceneList)
+    //        {
+    //            if (!string.IsNullOrEmpty(scene))
+    //                AvailableScenes.Add(scene);
+    //        }
+    //        SceneListUpdated?.Invoke(this, EventArgs.Empty);
+    //    }
 
-        [JsonConstructor]
-        public SceneProfile(string sceneCollectionName)
-        {
-            SceneCollectionName = sceneCollectionName;
-        }
-    }
+    //    [JsonConstructor]
+    //    public SceneProfile(string sceneCollectionName)
+    //    {
+    //        SceneCollectionName = sceneCollectionName;
+    //    }
+    //}
 
     internal static class ConfigExtensions
     {
