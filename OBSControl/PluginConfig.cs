@@ -3,9 +3,12 @@ using BeatSaberMarkupLanguage.Components.Settings;
 using IPA.Config.Stores;
 using IPA.Config.Stores.Attributes;
 using IPA.Config.Stores.Converters;
+using Newtonsoft.Json;
 using OBSControl.OBSComponents;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -23,7 +26,7 @@ namespace OBSControl
         public virtual string? ServerPassword { get; set; } = string.Empty;
         [UIValue(nameof(EnableAutoRecord))]
         public virtual bool EnableAutoRecord { get; set; } = true;
-        
+
         [UseConverter(typeof(EnumConverter<RecordStartOption>))]
         [UIValue(nameof(RecordStartOption))]
         public virtual RecordStartOption RecordStartOption { get; set; } = RecordStartOption.SongStart;
@@ -107,6 +110,11 @@ namespace OBSControl
                 _endSceneDuration = (float)Math.Round(value, 1);
             }
         }
+
+        //[NonNullable]
+        //[UIValue(nameof(SceneCollectionName))]
+        //public virtual string SceneCollectionName { get; set; } = string.Empty;
+
         [NonNullable]
         [UIValue(nameof(StartSceneName))]
         public virtual string StartSceneName { get; set; } = string.Empty;
@@ -181,6 +189,14 @@ namespace OBSControl
             TryAddCurrentNames(StartSceneName, GameSceneName, EndSceneName, RestingSceneName);
             RefreshDropdowns();
         }
+        //public void UpdateSceneCollectionOptions(IEnumerable<KeyValuePair<string, string[]>> newOptions)
+        //{
+        //    SceneCollectionOptions.Clear();
+        //    SceneCollectionOptions.Add(string.Empty);
+        //    SceneCollectionOptions.AddRange(newOptions.Select(p => p.Key));
+
+        //    RefreshDropdowns();
+        //}
 
         private void TryAddCurrentNames(params string[]? sceneNames)
         {
@@ -211,9 +227,18 @@ namespace OBSControl
         {
             return $"{Math.Round(val, 1)}s";
         }
+
         [Ignore]
         [UIValue("SceneSelectOptions")]
         public List<object> SceneSelectOptions = new List<object>() { string.Empty };
+
+
+        //[Ignore]
+        //public ConcurrentDictionary<string, string[]> SceneCollections = new ConcurrentDictionary<string, string[]>();
+
+        //[Ignore]
+        //[UIValue("SceneCollectionOptions")]
+        //public List<object> SceneCollectionOptions = new List<object>() { string.Empty };
 
         [Ignore]
         [UIComponent("StartSceneDropdown")]
@@ -234,6 +259,52 @@ namespace OBSControl
         private float _startSceneDuration = 1f;
         private float _endSceneDuration = 2f;
         #endregion
+    }
+
+    /// <summary>
+    /// Not used yet.
+    /// </summary>
+    public class SceneProfile
+    {
+        public event EventHandler? SceneListUpdated;
+        [JsonRequired]
+        [JsonProperty("SceneCollectionName")]
+        public string SceneCollectionName { get; protected set; }
+
+        [NonNullable]
+        [JsonProperty("StartSceneName")]
+        public virtual string StartSceneName { get; set; } = string.Empty;
+        [NonNullable]
+        [JsonProperty("GameSceneName")]
+        public virtual string GameSceneName { get; set; } = string.Empty;
+        [NonNullable]
+        [JsonProperty("EndSceneName")]
+        public virtual string EndSceneName { get; set; } = string.Empty;
+        [NonNullable]
+        [JsonProperty("RestingSceneName")]
+        public virtual string RestingSceneName { get; set; } = string.Empty;
+
+        [JsonIgnore]
+        private HashSet<string> AvailableScenes = new HashSet<string>();
+
+        public bool SceneAvailable(string sceneName) => AvailableScenes.Contains(sceneName);
+
+        public void UpdateAvailableScenes(IEnumerable<string> sceneList)
+        {
+            AvailableScenes.Clear();
+            foreach (var scene in sceneList)
+            {
+                if (!string.IsNullOrEmpty(scene))
+                    AvailableScenes.Add(scene);
+            }
+            SceneListUpdated?.Invoke(this, EventArgs.Empty);
+        }
+
+        [JsonConstructor]
+        public SceneProfile(string sceneCollectionName)
+        {
+            SceneCollectionName = sceneCollectionName;
+        }
     }
 
     internal static class ConfigExtensions
