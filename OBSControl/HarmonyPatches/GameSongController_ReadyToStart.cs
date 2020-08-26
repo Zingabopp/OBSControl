@@ -41,6 +41,7 @@ namespace OBSControl.HarmonyPatches
             DateTime now = DateTime.UtcNow;
             TimeSpan timeout = TimeSpan.FromSeconds(5) + delay;
             Logger.log?.Debug($"Song Start delay enabled, waiting for recording to start and delaying by {delay.TotalSeconds}s, timing out after {timeout.TotalSeconds}s");
+            // TODO: Add fallback for other recording start options that should've started recording by now?
             if (recordStartOption == RecordStartOption.SongStart)
             {
                 __result = new WaitUntil(() =>

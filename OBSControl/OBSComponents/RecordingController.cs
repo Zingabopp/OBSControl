@@ -1,6 +1,7 @@
 ﻿using BS_Utils.Utilities;
 using IPA.Utilities;
 using OBSControl.HarmonyPatches;
+using OBSControl.UI;
 using OBSControl.Utilities;
 using OBSControl.Wrappers;
 using OBSWebsocketDotNet;
@@ -50,7 +51,6 @@ namespace OBSControl.OBSComponents
             }
         }
 
-        // private static readonly FieldAccessor<AudioTimeSyncController, float>.Accessor SyncControllerTimeScale = FieldAccessor<AudioTimeSyncController, float>.GetAccessor("_timeScale");
         #region Properties
 
         private string? CurrentFileFormat { get; set; }
@@ -90,7 +90,14 @@ namespace OBSControl.OBSComponents
 
         public RecordStartOption RecordStartOption
         {
-            get => Plugin.config?.RecordStartOption ?? RecordStartOption.None;
+            get
+            {
+                if(!(ControlScreenCoordinator.Instance?.ControlScreen?.EnableAutoRecord ?? true))
+                {
+                    return RecordStartOption.None;
+                }
+                return Plugin.config?.RecordStartOption ?? RecordStartOption.None;
+            }
             set => _recordStartOption = value;
         }
 

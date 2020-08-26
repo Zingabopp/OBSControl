@@ -83,6 +83,7 @@ namespace OBSControl.HarmonyPatches
         {
             if (WaitingToStart)
             {
+                Logger.log?.Debug($"StartLevelPatch was waiting to start, starting level.");
                 WaitingToStart = false;
                 return true;
             }
@@ -93,6 +94,7 @@ namespace OBSControl.HarmonyPatches
             if (obs == null || !obs.IsConnected)
             {
                 Logger.log?.Warn($"Skipping StartLevel sequence, OBS is unavailable.");
+                WaitingToStart = false;
                 return true;
             }
             StandardLevelDetailViewController detailViewController = AccessDetailViewController(ref ____levelSelectionNavigationController);
@@ -188,6 +190,7 @@ namespace OBSControl.HarmonyPatches
             {
                 if (returnValue)
                 {
+                    WaitingToStart = false;
                     playButton.interactable = true;
                     levelView.hidePracticeButton = !practiceButtonEnabled;
                 }

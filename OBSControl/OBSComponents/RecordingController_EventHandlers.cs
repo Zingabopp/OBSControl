@@ -172,6 +172,7 @@ namespace OBSControl.OBSComponents
             {
                 await TryStartRecordingAsync(RecordActionSourceType.Auto, RecordStartOption.SongStart, true).ConfigureAwait(false);
             }
+            // TODO: Add fallback to start recording for other options that should've had recording running by now.
         }
 
         /// <summary>

@@ -156,7 +156,23 @@ namespace OBSControl.UI
             if (GetOutputStateIsSettled(RecordingController.OutputState))
                 StartCoroutine(DelayedRecordInteractableEnable());
         }
-#endregion
+
+        private bool _enableAutoRecord = true;
+        [UIValue(nameof(EnableAutoRecord))]
+        public bool EnableAutoRecord
+        {
+            get { return _enableAutoRecord; }
+            set
+            {
+                if (_enableAutoRecord == value) return;
+                Logger.log?.Debug($"EnableAutoRecord: {value}");
+                _enableAutoRecord = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+
+        #endregion
 
         public static bool GetOutputStateIsSettled(OutputState state)
         {
