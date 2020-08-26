@@ -101,6 +101,7 @@ namespace OBSControl.HarmonyPatches
             PlayButton = playButton;
             PreviousText = playButton.GetComponentInChildren<TextMeshProUGUI>()?.text;
             playButton.interactable = false;
+            bool practiceButtonEnabled = levelView.practiceButton.isActiveAndEnabled;
             levelView.hidePracticeButton = true;
             bool returnValue = false;
             try
@@ -150,7 +151,7 @@ namespace OBSControl.HarmonyPatches
                 }
                 if (response == LevelStartResponse.Handled)
                 {
-                    Logger.log?.Debug($"LevelStartResponse is handled, skipping delayed start.");
+                    Logger.log?.Debug($"LevelStartResponse is handled by {args.ResponseSource}.");
                     FadeOutPreview();
                     Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, startEventArgs, nameof(LevelStart));
                     returnValue = false;
@@ -188,11 +189,11 @@ namespace OBSControl.HarmonyPatches
                 if (returnValue)
                 {
                     playButton.interactable = true;
-                    levelView.hidePracticeButton = true;
+                    levelView.hidePracticeButton = !practiceButtonEnabled;
                 }
             }
             playButton.interactable = true;
-            levelView.hidePracticeButton = true;
+            levelView.hidePracticeButton = !practiceButtonEnabled;
             return true;
         }
 
