@@ -89,7 +89,7 @@ namespace OBSControl
         public virtual bool AutoStopOnManual { get; set; } = true;
 
         [UIValue(nameof(RecordingFileFormat))]
-        public virtual string? RecordingFileFormat { get; set; } = "?N{20}-?A{20}_?%<_[?M]><-?F><-?e>";
+        public virtual string? RecordingFileFormat { get; set; } = "?N{20}-?A{20}<_?%><_[?M]><-?F><-?e>";
 
         [UIValue(nameof(ReplaceSpacesWith))]
         public virtual string? ReplaceSpacesWith { get; set; } = "_";

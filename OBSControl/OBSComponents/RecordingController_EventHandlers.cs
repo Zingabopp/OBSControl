@@ -1,8 +1,10 @@
 ﻿using OBSControl.HarmonyPatches;
 using OBSControl.Wrappers;
+using OBSWebsocketDotNet;
 using OBSWebsocketDotNet.Types;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -207,9 +209,36 @@ namespace OBSControl.OBSComponents
 
         #region OBS Event Handlers
 
+        private async Task<string?> GetRecordingFileName()
+        {
+            OBSWebsocket? obs = Obs.GetConnectedObs();
+            if (obs != null)
+            {
+                try
+                {
+                    FileOutput? output = (FileOutput?)(await obs.ListOutputs().ConfigureAwait(false)).FirstOrDefault(o => o is FileOutput);
+                    if (output != null)
+                    {
+                        Logger.log?.Debug($"Got FileOutput from OBS: {output.Name} | '{output.Settings.Path}'");
+                        string? path = output?.Settings.Path;
+                        if (!string.IsNullOrEmpty(path))
+                        {
+                            return Path.GetFileName(path);
+                        }
+                    }
+                    else
+                        Logger.log?.Warn($"Could not get file output from OBS.");
+                }
+                catch (Exception ex)
+                {
+                    Logger.log?.Error($"Error getting current recording file name: {ex.Message}.");
+                    Logger.log?.Debug(ex);
+                }
+            }
+            return null;
+        }
 
-
-        private void OnObsRecordingStateChanged(object sender, OutputState type)
+        private async void OnObsRecordingStateChanged(object sender, OutputState type)
         {
             Logger.log?.Info($"Recording State Changed: {type}");
             OutputState = type;
@@ -228,8 +257,36 @@ namespace OBSControl.OBSComponents
                         RecordStopOption recordStopOption = Plugin.config?.RecordStopOption ?? RecordStopOption.None;
                         RecordStopOption = recordStopOption == RecordStopOption.SceneSequence ? RecordStopOption.ResultsView : recordStopOption;
                     }
-                    Task.Run(() => Obs.GetConnectedObs()?.SetFilenameFormatting(DefaultFileFormat));
                     RecordStopCancellationSource = new CancellationTokenSource();
+                    OBSWebsocket? obs = Obs.GetConnectedObs();
+                    if (obs != null)
+                    {
+                        try
+                        {
+                            await obs.SetFilenameFormatting(DefaultFileFormat).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+
+                            Logger.log?.Error($"Error setting default filename formatting: {ex.Message}.");
+                            Logger.log?.Debug(ex);
+                        }
+                        if (string.IsNullOrEmpty(CurrentFileFormat))
+                        {
+                            string? path = await GetRecordingFileName().ConfigureAwait(false);
+                            if (path != null)
+                            {
+                                if (string.IsNullOrEmpty(CurrentFileFormat))
+                                {
+                                    CurrentFileFormat = path;
+                                    Logger.log?.Info($"Got currently recording filename from OBS: {path}");
+                                }
+                            }
+                            else
+                                Logger.log?.Warn($"CurrentFileFormat is null, unable to get the filename from OBS");
+                        }
+
+                    }
                     break;
                 case OutputState.Stopping:
                     recordingCurrentLevel = false;
@@ -248,6 +305,11 @@ namespace OBSControl.OBSComponents
                         lastLevelData?.GetFilenameString(Plugin.config.RecordingFileFormat, Plugin.config.InvalidCharacterSubstitute, Plugin.config.ReplaceSpacesWith);
                     if (renameString != null)
                         RenameLastRecording(renameString);
+                    else
+                    {
+                        Logger.log?.Info("No data to rename the recording file.");
+                        CurrentFileFormat = null;
+                    }
                     break;
                 default:
                     break;

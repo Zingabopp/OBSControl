@@ -433,7 +433,7 @@ namespace OBSControl.OBSComponents
             }
             string fileName = targetFile.Name.Substring(0, targetFile.Name.LastIndexOf('.'));
             string fileExtension = targetFile.Extension;
-            Logger.log?.Info($"Attempting to rename {fileFormat}{fileExtension} to {newName} with an extension of {fileExtension}");
+            Logger.log?.Info($"Attempting to rename {fileName}{fileExtension} to {newName} with an extension of {fileExtension}");
             string newFile = newName + fileExtension;
             int index = 2;
             while (File.Exists(Path.Combine(directory.FullName, newFile)))
