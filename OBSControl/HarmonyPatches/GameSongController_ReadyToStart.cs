@@ -5,7 +5,7 @@ using System.Text;
 using HarmonyLib;
 using OBSControl.OBSComponents;
 using UnityEngine;
-
+#nullable enable
 /// <summary>
 /// See https://github.com/pardeike/Harmony/wiki for a full reference on Harmony.
 /// </summary>
@@ -23,7 +23,7 @@ namespace OBSControl.HarmonyPatches
         /// </summary>
         static void Postfix(GameSongController __instance, ref AudioTimeSyncController ____audioTimeSyncController, ref WaitUntil __result)
         {
-            RecordingController recordingController = OBSController.instance?.GetOBSComponent<RecordingController>();
+            RecordingController? recordingController = OBSController.instance?.GetOBSComponent<RecordingController>();
             AudioTimeSyncController audioTimeSyncController = ____audioTimeSyncController;
             if (!(recordingController?.ActiveAndConnected ?? false))
             {
