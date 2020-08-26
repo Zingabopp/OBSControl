@@ -92,39 +92,44 @@ namespace OBSControl.OBSComponents
             {
                 PlayerLevelStatsData? stats = null;
                 IBeatmapLevel? levelInfo = GameStatus.LevelInfo;
-                IDifficultyBeatmap? difficultyBeatmap = GameStatus.DifficultyBeatmap;
+                IDifficultyBeatmap? difficultyBeatmap = GameStatus.DifficultyBeatmap ?? LastLevelData?.LevelData?.DifficultyBeatmap;
                 PlayerDataModel? playerData = OBSController.instance?.PlayerData;
-                if (playerData != null && levelInfo != null && difficultyBeatmap != null)
+                if (difficultyBeatmap != null)
                 {
-                    stats = playerData.playerData.GetPlayerLevelStatsData(
-                        levelInfo.levelID, difficultyBeatmap.difficulty, difficultyBeatmap.parentDifficultyBeatmapSet.beatmapCharacteristic);
-                }
-
-                LevelCompletionResultsWrapper levelResults = new LevelCompletionResultsWrapper(levelCompletionResults, stats?.playCount ?? 0, GameStatus.MaxModifiedScore);
-                RecordingData? recordingData = LastLevelData;
-                if (recordingData == null)
-                {
-                    recordingData = new RecordingData(new BeatmapLevelWrapper(difficultyBeatmap), levelResults, stats)
+                    if (playerData != null && levelInfo != null)
                     {
-                        MultipleLastLevels = multipleLevelData
-                    };
-                    LastLevelData = recordingData;
+                        stats = playerData.playerData.GetPlayerLevelStatsData(
+                            levelInfo.levelID, difficultyBeatmap.difficulty, difficultyBeatmap.parentDifficultyBeatmapSet.beatmapCharacteristic);
+                    }
+
+                    LevelCompletionResultsWrapper levelResults = new LevelCompletionResultsWrapper(levelCompletionResults, stats?.playCount ?? 0, GameStatus.MaxModifiedScore);
+                    RecordingData? recordingData = LastLevelData;
+                    if (recordingData == null)
+                    {
+                        recordingData = new RecordingData(new BeatmapLevelWrapper(difficultyBeatmap), levelResults, stats)
+                        {
+                            MultipleLastLevels = multipleLevelData
+                        };
+                        LastLevelData = recordingData;
+                    }
+                    else
+                    {
+                        if (recordingData.LevelData == null)
+                        {
+                            recordingData.LevelData = new BeatmapLevelWrapper(difficultyBeatmap);
+                        }
+                        else if (recordingData.LevelData.DifficultyBeatmap != difficultyBeatmap)
+                        {
+                            Logger.log?.Debug($"Existing beatmap data doesn't match level completion beatmap data: '{recordingData.LevelData.SongName}' != '{difficultyBeatmap.level.songName}'");
+                            recordingData.LevelData = new BeatmapLevelWrapper(difficultyBeatmap);
+                        }
+                        recordingData.LevelResults = levelResults;
+                        recordingData.PlayerLevelStats = stats;
+                        recordingData.MultipleLastLevels = multipleLevelData;
+                    }
                 }
                 else
-                {
-                    if (recordingData.LevelData == null)
-                    {
-                        recordingData.LevelData = new BeatmapLevelWrapper(difficultyBeatmap);
-                    }
-                    else if (difficultyBeatmap != null && recordingData.LevelData.DifficultyBeatmap != difficultyBeatmap)
-                    {
-                        Logger.log?.Debug($"Existing beatmap data doesn't match level completion beatmap data: '{recordingData.LevelData.SongName}' != '{difficultyBeatmap?.level.songName}'");
-                        recordingData.LevelData = new BeatmapLevelWrapper(difficultyBeatmap);
-                    }
-                    recordingData.LevelResults = levelResults;
-                    recordingData.PlayerLevelStats = stats;
-                    recordingData.MultipleLastLevels = multipleLevelData;
-                }
+                    Logger.log?.Warn($"Beatmap data unavailable, unable to generate data for recording file rename.");
 
             }
 #pragma warning disable CA1031 // Do not catch general exception types
