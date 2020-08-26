@@ -17,7 +17,7 @@
     <Error Text="The BeatSaberModdingTools.Tasks nuget package doesn't seem to be installed, advanced build targets will not work." ContinueOnError="true" />
   </Target>
   <Target Name="GetProjectInfo" AfterTargets="BeforeBuild" Condition="'$(BSMTTaskAssembly)' != ''">
-    <GetManifestInfo ErrorOnMismatch="True">
+    <GetManifestInfo ErrorOnMismatch="False">
       <Output TaskParameter="PluginVersion" PropertyName="PluginVersion" />
       <Output TaskParameter="GameVersion" PropertyName="GameVersion" />
       <Output TaskParameter="AssemblyVersion" PropertyName="AssemblyVersion" />
