@@ -33,6 +33,7 @@ namespace OBSControl.OBSComponents
         public bool recordingCurrentLevel;
         private bool validLevelData;
         private string? RenameStringOverride;
+        protected bool WasInGame;
 
         // private static readonly FieldAccessor<AudioTimeSyncController, float>.Accessor SyncControllerTimeScale = FieldAccessor<AudioTimeSyncController, float>.GetAccessor("_timeScale");
         #region Properties
@@ -86,6 +87,8 @@ namespace OBSControl.OBSComponents
             }
             set
             {
+                if (_recordStopOption == value) return;
+                Logger.log?.Debug($"RecordingController: RecordStopOption changed to: '{value}'.");
                 _recordStopOption = value;
             }
         }
@@ -547,7 +550,8 @@ namespace OBSControl.OBSComponents
             obs.OBSComponentChanged += OnOBSComponentChanged;
             StartLevelPatch.LevelStarting += OnLevelStarting;
             StartLevelPatch.LevelStart += OnLevelStart;
-            HandleStandardLevelDidFinishPatch.LevelDidFinish += OnLevelDidFinish;
+            BSEvents.menuSceneActive += OnLevelDidFinish;
+            //HandleStandardLevelDidFinishPatch.LevelDidFinish += OnLevelDidFinish;
             BSEvents.gameSceneActive += OnGameSceneActive;
             BS_Utils.Plugin.LevelDidFinishEvent += OnLevelFinished;
         }
@@ -561,7 +565,8 @@ namespace OBSControl.OBSComponents
             obs.OBSComponentChanged -= OnOBSComponentChanged;
             StartLevelPatch.LevelStarting -= OnLevelStarting;
             StartLevelPatch.LevelStart -= OnLevelStart;
-            HandleStandardLevelDidFinishPatch.LevelDidFinish -= OnLevelDidFinish;
+            BSEvents.menuSceneActive += OnLevelDidFinish;
+            //HandleStandardLevelDidFinishPatch.LevelDidFinish -= OnLevelDidFinish;
             BSEvents.gameSceneActive -= OnGameSceneActive;
             BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
         }

@@ -279,29 +279,6 @@ namespace OBSControl.HarmonyPatches
         static string DefaultText = "Play";
         static string NotRecording = "Waiting for OBS";
         static string RecordingText = "Recording";
-        //private static IEnumerator DelayedLevelStart(RecordingController recordingController, LevelSelectionFlowCoordinator coordinator,
-        //    IDifficultyBeatmap difficultyBeatmap, Action beforeSceneSwitchCallback, bool practice,
-        //    UnityEngine.UI.Button? playButton)
-        //{
-        //    if (playButton != null)
-        //        playButton.interactable = false;
-        //    else
-        //        Logger.log?.Warn($"playButton is null for DelayedLevelStart, unable to disable while waiting.");
-        //    Logger.log?.Debug($"Delaying level start by {Plugin.config.LevelStartDelay} seconds...");
-        //    recordingController?.TryStartRecordingAsync(RecordActionSourceType.Auto);
-        //    yield return new WaitForSeconds(Plugin.config.LevelStartDelay); ;
-        //    WaitingToStart = false;
-        //    //playButton.interactable = true;
-        //    StartLevel(coordinator, difficultyBeatmap, beforeSceneSwitchCallback, practice);
-        //    if (playButton != null)
-        //    {
-        //        SetButtonText(playButton, PreviousText ?? DefaultText);
-        //        PreviousText = null;
-        //    }
-        //    RecordStateChangedAction = null;
-        //    if (recordingController != null)
-        //        SharedCoroutineStarter.instance.StartCoroutine(recordingController.GameStatusSetup());
-        //}
 
         private static StartLevelDelegate? _startLevel;
         private static StartLevelDelegate StartLevel

@@ -90,7 +90,7 @@ namespace OBSControl.OBSComponents
             return args.GetCallbacks() ?? Array.Empty<Func<SceneStage, Task>>();
         }
 
-        private AsyncEventListenerWithArg<string?, string?, string?> StartSceneSequenceListener { get; } = new AsyncEventListenerWithArg<string?, string?, string?>((s, sceneName, expectedScene) =>
+        private AsyncEventListenerWithArg<string?, string?, string?> StartSceneSequenceSceneListener { get; } = new AsyncEventListenerWithArg<string?, string?, string?>((s, sceneName, expectedScene) =>
         {
             if (string.IsNullOrEmpty(expectedScene))
                 return new EventListenerResult<string?>(null, true);
@@ -176,33 +176,33 @@ namespace OBSControl.OBSComponents
                     return false;
                 }
                 Logger.log?.Info($"Beginning Intro Scene Sequence '{startScene}' => {startSceneDuration.TotalMilliseconds}ms => '{gameScene}'");
-                SceneChanged += StartSceneSequenceListener.OnEvent;
-                StartSceneSequenceListener.Reset(startScene, cancellationToken);
-                StartSceneSequenceListener.StartListening();
+                SceneChanged += StartSceneSequenceSceneListener.OnEvent;
+                StartSceneSequenceSceneListener.Reset(startScene, cancellationToken);
+                StartSceneSequenceSceneListener.StartListening();
                 if (startScene != null && CurrentScene != startScene)
                 {
                     Logger.log?.Info($"Setting starting scene to '{startScene}'.");
                     await obs.SetCurrentScene(startScene, cancellationToken);
-                    await StartSceneSequenceListener.Task;
+                    await StartSceneSequenceSceneListener.Task;
                 }
                 else
-                    StartSceneSequenceListener.TrySetResult(startScene);
+                    StartSceneSequenceSceneListener.TrySetResult(startScene);
                 currentStage = SceneStage.IntroStarted;
                 callbacks = RaiseSceneStageChanged(currentStage);
                 if (callbacks.Length > 0)
                     await ExecuteCallbacks(callbacks, currentStage);
                 if (startSceneDuration > TimeSpan.Zero)
-                    await Task.Delay(startSceneDuration);
-                StartSceneSequenceListener.Reset(gameScene, cancellationToken);
-                StartSceneSequenceListener.StartListening();
+                    await Task.Delay(startSceneDuration, cancellationToken);
+                StartSceneSequenceSceneListener.Reset(gameScene, cancellationToken);
+                StartSceneSequenceSceneListener.StartListening();
                 if (gameScene.Length > 0 && CurrentScene != gameScene)
                 {
                     Logger.log?.Info($"Setting game scene to '{gameScene}'.");
                     await obs.SetCurrentScene(gameScene, cancellationToken);
-                    await StartSceneSequenceListener.Task;
+                    await StartSceneSequenceSceneListener.Task;
                 }
                 else
-                    StartSceneSequenceListener.TrySetResult(gameScene);
+                    StartSceneSequenceSceneListener.TrySetResult(gameScene);
                 currentStage = SceneStage.Game;
                 callbacks = RaiseSceneStageChanged(currentStage);
                 if (callbacks.Length > 0)
@@ -241,13 +241,13 @@ namespace OBSControl.OBSComponents
             finally
             {
                 Logger.log?.Debug($"Exiting StartIntroSceneSequence {(success ? "successfully" : "after failure")}.");
-                StartSceneSequenceListener.TrySetCanceled();
-                SceneChanged -= StartSceneSequenceListener.OnEvent;
+                StartSceneSequenceSceneListener.TrySetCanceled();
+                SceneChanged -= StartSceneSequenceSceneListener.OnEvent;
             }
             return success;
         }
 
-        private AsyncEventListenerWithArg<string?, string, string?> StopSceneSequenceListener { get; } = new AsyncEventListenerWithArg<string?, string, string?>((s, sceneName, expectedScene) =>
+        private AsyncEventListenerWithArg<string?, string, string?> StopSceneSequenceSceneListener { get; } = new AsyncEventListenerWithArg<string?, string, string?>((s, sceneName, expectedScene) =>
         {
             if (string.IsNullOrEmpty(expectedScene))
                 return new EventListenerResult<string?>(null, true);
@@ -324,9 +324,9 @@ namespace OBSControl.OBSComponents
                 TimeSpan endSceneDuration = TimeSpan.FromSeconds(Plugin.config.EndSceneDuration);
                 TimeSpan endSceneStartDelay = TimeSpan.FromSeconds(Plugin.config.EndSceneStartDelay);
                 Logger.log?.Info($"Beginning Outro Scene Sequence  {endSceneStartDelay.TotalMilliseconds}ms => '{endScene}' => {endSceneDuration.TotalMilliseconds}ms => '{restingScene ?? gameScene}'");
-                SceneChanged += StopSceneSequenceListener.OnEvent;
-                StopSceneSequenceListener.Reset(endScene);
-                StopSceneSequenceListener.StartListening();
+                SceneChanged += StopSceneSequenceSceneListener.OnEvent;
+                StopSceneSequenceSceneListener.Reset(endScene);
+                StopSceneSequenceSceneListener.StartListening();
                 if (endScene != null && CurrentScene != endScene)
                 {
                     if (endSceneStartDelay > TimeSpan.Zero)
@@ -336,10 +336,10 @@ namespace OBSControl.OBSComponents
                     }
                     Logger.log?.Info($"Setting end scene scene to '{endScene}'.");
                     await obs.SetCurrentScene(endScene, cancellationToken);
-                    await StopSceneSequenceListener.Task;
+                    await StopSceneSequenceSceneListener.Task;
                 }
                 else
-                    StopSceneSequenceListener.TrySetResult(endScene);
+                    StopSceneSequenceSceneListener.TrySetResult(endScene);
                 currentStage = SceneStage.OutroStarted;
                 callbacks = RaiseSceneStageChanged(currentStage);
                 if (callbacks.Length > 0)
@@ -353,15 +353,15 @@ namespace OBSControl.OBSComponents
                 callbacks = RaiseSceneStageChanged(currentStage);
                 if (callbacks.Length > 0)
                     await ExecuteCallbacks(callbacks, currentStage);
-                StopSceneSequenceListener.Reset(restingScene);
-                StopSceneSequenceListener.StartListening();
+                StopSceneSequenceSceneListener.Reset(restingScene);
+                StopSceneSequenceSceneListener.StartListening();
                 if (restingScene != null && CurrentScene != restingScene)
                 {
                     await obs.SetCurrentScene(restingScene, cancellationToken);
-                    await StopSceneSequenceListener.Task;
+                    await StopSceneSequenceSceneListener.Task;
                 }
                 else
-                    StopSceneSequenceListener.TrySetResult(gameScene);
+                    StopSceneSequenceSceneListener.TrySetResult(gameScene);
                 currentStage = SceneStage.Resting;
                 callbacks = RaiseSceneStageChanged(currentStage);
                 if (callbacks.Length > 0)
@@ -400,8 +400,8 @@ namespace OBSControl.OBSComponents
             finally
             {
                 Logger.log?.Debug($"Exiting StartOutroSceneSequence {(success ? "successfully" : "after failure")}.");
-                StopSceneSequenceListener.TrySetCanceled();
-                SceneChanged -= StopSceneSequenceListener.OnEvent;
+                StopSceneSequenceSceneListener.TrySetCanceled();
+                SceneChanged -= StopSceneSequenceSceneListener.OnEvent;
             }
             return success;
         }

@@ -145,6 +145,7 @@ namespace OBSControl.OBSComponents
 
         private async void OnGameSceneActive()
         {
+            WasInGame = true;
             Logger.log?.Debug($"RecordingController OnGameSceneActive. RecordStartOption: {RecordStartOption}.");
             StartCoroutine(GameStatusSetup());
             if (RecordStartOption == RecordStartOption.SongStart)
@@ -158,8 +159,10 @@ namespace OBSControl.OBSComponents
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="_"></param>
-        public async void OnLevelDidFinish(object sender, EventArgs _)
+        public async void OnLevelDidFinish()//(object sender, EventArgs _)
         {
+            if (!WasInGame) return;
+            WasInGame = false;
             Logger.log?.Debug($"RecordingController OnLevelDidFinish: {SceneManager.GetActiveScene().name}. RecordStopOption: {RecordStopOption}.");
             if (RecordStopOption == RecordStopOption.ResultsView)
             {
@@ -192,7 +195,8 @@ namespace OBSControl.OBSComponents
                     if (RecordStartSource == RecordActionSourceType.None)
                     {
                         RecordStartSource = RecordActionSourceType.ManualOBS;
-                        // RecordStartOption = RecordStartOption.None;
+                        RecordStopOption recordStopOption = Plugin.config?.RecordStopOption ?? RecordStopOption.None;
+                        RecordStopOption = recordStopOption == RecordStopOption.SceneSequence ? RecordStopOption.ResultsView : recordStopOption;
                     }
                     Task.Run(() => Obs.GetConnectedObs()?.SetFilenameFormatting(DefaultFileFormat));
                     break;
