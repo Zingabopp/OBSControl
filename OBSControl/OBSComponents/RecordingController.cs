@@ -35,8 +35,8 @@ namespace OBSControl.OBSComponents
         private bool validLevelData;
         private string? RenameStringOverride;
         protected bool WasInGame;
-        private CancellationTokenSource _recordStopCancellationSource = new CancellationTokenSource();
 
+        private CancellationTokenSource _recordStopCancellationSource = new CancellationTokenSource();
         public CancellationTokenSource RecordStopCancellationSource
         {
             get { return _recordStopCancellationSource; }
@@ -202,10 +202,13 @@ namespace OBSControl.OBSComponents
                     RecordingStoppedListener.StartListening();
                     try
                     {
+                        Logger.log?.Info($"Stopping current recording to start a new one.");
                         await obs.StopRecording().ConfigureAwait(false);
                         if (OutputState == OutputState.Stopped)
                             RecordingStoppedListener.TrySetResult(OutputState.Stopped);
                         await RecordingStoppedListener.Task;
+                        Logger.log?.Debug($"Recording stopped.");
+                        await Task.Delay(100).ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {
@@ -274,6 +277,7 @@ namespace OBSControl.OBSComponents
                     RecordStartOption.SceneSequence => RecordStopOption.SceneSequence,
                     _ => Plugin.config?.RecordStopOption ?? RecordStopOption.ResultsView
                 };
+                Logger.log?.Info($"Recording started from {RecordStartSource}. Planned Stop type: {RecordStopOption}");
             }
             catch (Exception ex)
             {
@@ -353,7 +357,7 @@ namespace OBSControl.OBSComponents
         }
 
 
-        public async Task TryStopRecordingAsync(string? renameTo = null)
+        public async Task TryStopRecordingAsync(CancellationToken cancellationToken)
         {
             OBSWebsocket? obs = Obs.GetConnectedObs();
             if (obs == null)
@@ -363,15 +367,16 @@ namespace OBSControl.OBSComponents
             }
             try
             {
+                using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, RecordStopCancellationSource.Token);
                 WaitingToStop = true;
-                RenameStringOverride = renameTo;
-                RecordStopCancellationSource.Token.ThrowIfCancellationRequested();
-                await obs.StopRecording().ConfigureAwait(false);
+                //RenameStringOverride = renameTo;
+                Logger.log?.Info($"Attempting to stop recording.");
+                await obs.StopRecording(cts.Token).ConfigureAwait(false);
                 recordingCurrentLevel = false;
             }
             catch (OperationCanceledException)
             {
-                Logger.log?.Debug($"Auto stop recording was canceled in 'TryStopRecordingAsync'.");
+                Logger.log?.Debug($"Stop recording was canceled in 'TryStopRecordingAsync'.");
             }
             catch (ErrorResponseException ex)
             {
@@ -627,7 +632,7 @@ namespace OBSControl.OBSComponents
             BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
         }
 
-        private async Task SceneSequenceCallback(SceneStage sceneStage)
+        private async Task SceneSequenceCallback(SceneStage sceneStage, CancellationToken cancellationToken)
         {
             Logger.log?.Debug($"RecordingController: SceneStage - {sceneStage}. RecordStartOption: {RecordStartOption}.");
             if (sceneStage == SceneStage.IntroStarted && RecordStartOption == RecordStartOption.SceneSequence)
@@ -636,9 +641,10 @@ namespace OBSControl.OBSComponents
             }
             else if (sceneStage == SceneStage.OutroFinished)
             {
+                using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, RecordStopCancellationSource.Token);
                 Logger.log?.Debug($"RecordingController: RecordStopOption: {RecordStopOption}.");
                 if (RecordStopOption == RecordStopOption.SceneSequence)
-                    await TryStopRecordingAsync();
+                    await TryStopRecordingAsync(cts.Token);
             }
         }
 

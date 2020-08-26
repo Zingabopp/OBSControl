@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Web.UI;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
@@ -145,7 +146,7 @@ namespace OBSControl.UI
             RecordButtonInteractable = false;
             try
             {
-                await RecordingController.TryStopRecordingAsync();
+                await RecordingController.TryStopRecordingAsync(CancellationToken.None);
             }
             catch (Exception ex)
             {

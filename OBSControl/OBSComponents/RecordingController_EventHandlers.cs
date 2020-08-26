@@ -149,7 +149,7 @@ namespace OBSControl.OBSComponents
                     TimeSpan stopDelay = TimeSpan.FromSeconds(Plugin.config?.RecordingStopDelay ?? 0);
                     if (stopDelay > TimeSpan.Zero)
                         await Task.Delay(stopDelay, RecordStopCancellationSource.Token);
-                    StopRecordingTask = TryStopRecordingAsync();
+                    StopRecordingTask = TryStopRecordingAsync(RecordStopCancellationSource.Token);
                 }
                 catch (OperationCanceledException)
                 {
@@ -191,7 +191,7 @@ namespace OBSControl.OBSComponents
                     TimeSpan stopDelay = TimeSpan.FromSeconds(Plugin.config?.RecordingStopDelay ?? 0);
                     if (stopDelay > TimeSpan.Zero)
                         await Task.Delay(stopDelay, RecordStopCancellationSource.Token);
-                    StopRecordingTask = TryStopRecordingAsync();
+                    StopRecordingTask = TryStopRecordingAsync(RecordStopCancellationSource.Token);
                 }
             }
             catch (OperationCanceledException)
