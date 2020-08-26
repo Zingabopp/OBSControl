@@ -129,15 +129,15 @@ namespace OBSControl
         [UIValue(nameof(RestingSceneName))]
         public virtual string RestingSceneName { get; set; } = string.Empty;
 
-        [NonNullable]
-        public virtual string MaterialName { get; set; } = string.Empty;
+        //[NonNullable]
+        //public virtual string MaterialName { get; set; } = string.Empty;
 
-        [NonNullable]
-        public virtual string ShaderName { get; set; } = string.Empty;
-        [NonNullable]
-        public virtual string ColorName { get; set; } = string.Empty;
-        [NonNullable]
-        public virtual float ColorAlpha { get; set; } = 1f;
+        //[NonNullable]
+        //public virtual string ShaderName { get; set; } = string.Empty;
+        //[NonNullable]
+        //public virtual string ColorName { get; set; } = string.Empty;
+        //[NonNullable]
+        //public virtual float ColorAlpha { get; set; } = 1f;
 
         #region Floating Screen
         public virtual float ScreenPosX { get; set; } = 0f;
@@ -158,10 +158,10 @@ namespace OBSControl
         public virtual void OnReload()
         {
             TryAddCurrentNames(StartSceneName, GameSceneName, EndSceneName, RestingSceneName);
-            HMMainThreadDispatcher.instance.Enqueue(() =>
-            {
-                Plugin.instance.SetThings(MaterialName, ShaderName, ColorName, ColorAlpha);
-            });
+            //HMMainThreadDispatcher.instance.Enqueue(() =>
+            //{
+            //    Plugin.instance.SetThings(MaterialName, ShaderName, ColorName, ColorAlpha);
+            //});
         }
 
         /// <summary>
