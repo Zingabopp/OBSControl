@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine.SceneManagement;
 #nullable enable
@@ -62,7 +63,7 @@ namespace OBSControl.OBSComponents
             Logger.log?.Debug($"RecordingController OnLevelStart. RecordStartOption: {RecordStartOption}.");
             if (recordStartOption == RecordStartOption.LevelStartDelay || recordStartOption == RecordStartOption.Immediate)
             {
-                await TryStartRecordingAsync(RecordActionSourceType.Auto, recordStartOption).ConfigureAwait(false);
+                await TryStartRecordingAsync(RecordActionSourceType.Auto, recordStartOption, true).ConfigureAwait(false);
             }
         }
         /// <summary>
@@ -141,10 +142,22 @@ namespace OBSControl.OBSComponents
 #pragma warning restore CA1031 // Do not catch general exception types
             if (RecordStopOption == RecordStopOption.SongEnd)
             {
-                TimeSpan stopDelay = TimeSpan.FromSeconds(Plugin.config?.RecordingStopDelay ?? 0);
-                if (stopDelay > TimeSpan.Zero)
-                    await Task.Delay(stopDelay);
-                StopRecordingTask = TryStopRecordingAsync();
+                try
+                {
+                    TimeSpan stopDelay = TimeSpan.FromSeconds(Plugin.config?.RecordingStopDelay ?? 0);
+                    if (stopDelay > TimeSpan.Zero)
+                        await Task.Delay(stopDelay, RecordStopCancellationSource.Token);
+                    StopRecordingTask = TryStopRecordingAsync();
+                }
+                catch (OperationCanceledException)
+                {
+                    Logger.log?.Debug($"Auto stop recording was canceled in 'OnLevelFinished'.");
+                }
+                catch (Exception ex)
+                {
+                    Logger.log?.Error($"Exception auto stop recording in 'OnLevelFinished': {ex.Message}");
+                    Logger.log?.Debug(ex);
+                }
             }
         }
 
@@ -155,7 +168,7 @@ namespace OBSControl.OBSComponents
             StartCoroutine(GameStatusSetup());
             if (RecordStartOption == RecordStartOption.SongStart)
             {
-                await TryStartRecordingAsync(RecordActionSourceType.Auto, RecordStartOption.SongStart).ConfigureAwait(false);
+                await TryStartRecordingAsync(RecordActionSourceType.Auto, RecordStartOption.SongStart, true).ConfigureAwait(false);
             }
         }
 
@@ -164,17 +177,29 @@ namespace OBSControl.OBSComponents
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="_"></param>
-        public async void OnLevelDidFinish()//(object sender, EventArgs _)
+        public async void OnLevelDidFinish()
         {
             if (!WasInGame) return;
             WasInGame = false;
             Logger.log?.Debug($"RecordingController OnLevelDidFinish: {SceneManager.GetActiveScene().name}. RecordStopOption: {RecordStopOption}.");
-            if (RecordStopOption == RecordStopOption.ResultsView)
+            try
             {
-                TimeSpan stopDelay = TimeSpan.FromSeconds(Plugin.config?.RecordingStopDelay ?? 0);
-                if (stopDelay > TimeSpan.Zero)
-                    await Task.Delay(stopDelay);
-                StopRecordingTask = TryStopRecordingAsync();
+                if (RecordStopOption == RecordStopOption.ResultsView)
+                {
+                    TimeSpan stopDelay = TimeSpan.FromSeconds(Plugin.config?.RecordingStopDelay ?? 0);
+                    if (stopDelay > TimeSpan.Zero)
+                        await Task.Delay(stopDelay, RecordStopCancellationSource.Token);
+                    StopRecordingTask = TryStopRecordingAsync();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                Logger.log?.Debug($"Auto stop recording was canceled in 'OnLevelFinished'.");
+            }
+            catch (Exception ex)
+            {
+                Logger.log?.Error($"Exception auto stop recording in 'OnLevelDidFinish': {ex.Message}");
+                Logger.log?.Debug(ex);
             }
         }
         #endregion
@@ -204,9 +229,11 @@ namespace OBSControl.OBSComponents
                         RecordStopOption = recordStopOption == RecordStopOption.SceneSequence ? RecordStopOption.ResultsView : recordStopOption;
                     }
                     Task.Run(() => Obs.GetConnectedObs()?.SetFilenameFormatting(DefaultFileFormat));
+                    RecordStopCancellationSource = new CancellationTokenSource();
                     break;
                 case OutputState.Stopping:
                     recordingCurrentLevel = false;
+                    RecordStopCancellationSource.Cancel();
                     break;
                 case OutputState.Stopped:
                     recordingCurrentLevel = false;
