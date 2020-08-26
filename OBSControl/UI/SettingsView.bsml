@@ -1,14 +1,32 @@
 ﻿<settings-container xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
-  <bool-setting text='Enabled' value='Enabled' />
-  <string-setting text='Server Address' value='ServerAddress'
-                  hover-hint='OBS websocket server address (usually in the form of ws://ip:port)' />
-  <string-setting text='Server Password' value='ServerPassword'
-                  hover-hint='Password for the OBS websocket server, leave blank if none.' />
-  <slider-setting text='Level Start Delay' value='LevelStartDelay' integer-only='false' min='0' max='20' increment='0.1'
-                  formatter='formatter-seconds' hover-hint='Amount of time to delay after clicking Play.' />
-  <slider-setting text='Recording Stop Delay' value='RecordingStopDelay' integer-only='false' min='0' max='20' increment='0.1'
-                  formatter='formatter-seconds' hover-hint='Amount of time to delay before stopping recording or switching to the End Scene.' />
+  <bool-setting text='Enabled' value='Enabled' hover-hint='Enable/Disable the automatic features of OBSControl.' />
+  <settings-submenu text='Connection'>
+    <settings-container>
+      <clickable-text text='Back' click-event='back' />
+      <string-setting text='Server Address' value='ServerAddress'
+                      hover-hint='OBS websocket server address (usually in the form of ws://ip:port)' />
+      <string-setting text='Server Password' value='ServerPassword'
+                      hover-hint='Password for the OBS websocket server, leave blank if none.' />
+    </settings-container>
+  </settings-submenu>
+  <settings-submenu text='Recording'>
+    <settings-container>
+      <clickable-text text='Back' click-event='back' />
+      <bool-setting text='Auto-Stop on Manual' value='AutoStopOnManual' hover-hint='Enable automatic stop when recording is manually triggered.' />
+      <dropdown-list-setting id='RecordOptionsDropdown' text='Record Start Option' value='RecordStartOption' options='RecordStartOptions'
+                             apply-on-change='true' hover-hint='How recording should be started.' />
+      <slider-setting text='Level Start Delay' active='~DelayedLevelStartEnabled' value='LevelStartDelay' integer-only='false' min='0' max='20' increment='0.1'
+                      formatter='formatter-seconds' hover-hint='Amount of time to delay level start after clicking Play.' />
+      <slider-setting text='Song Start Delay' active='~SongStartEnabled' value='SongStartDelay' integer-only='false' min='0' max='20' increment='0.1'
+                      formatter='formatter-seconds' hover-hint='Amount of time to delay song start after the song is loaded.' />
 
+      <dropdown-list-setting id='RecordStopOptionsDropdown' text='Record Stop Option' value='RecordStopOption' options='RecordStopOptions'
+                             apply-on-change='true' hover-hint='How recording should be stopped, ignored for recordings started with SceneSequence.' />
+      <slider-setting text='Recording Stop Delay' value='RecordingStopDelay' integer-only='false' min='0' max='20' increment='0.1'
+                      formatter='formatter-seconds' hover-hint='Amount of time to delay before stopping recording, ignored for recordings started with SceneSequence..' />
+    </settings-container>
+  </settings-submenu>
+  
   <settings-submenu text='Scene Settings'>
     <scrollable-settings-container>
       <clickable-text text='Back' click-event='back' />
@@ -20,6 +38,8 @@
                       formatter='formatter-seconds' hover-hint='How long the Start Scene is shown before switching to the Game Scene.' />
       <dropdown-list-setting id='EndSceneDropdown' text='End Scene Name' value='EndSceneName' options='SceneSelectOptions' 
                              apply-on-change='true' hover-hint='Name of the scene to show after the Recording Stop Delay.' />
+      <slider-setting text='End Scene Delay' value='EndSceneStartDelay' integer-only='false' min='0' max='20' increment='0.1'
+                      formatter='formatter-seconds' hover-hint='Amount of time to delay the End Scene switch.' />
       <slider-setting text='End Scene Duration' value='EndSceneDuration' integer-only='false' min='0' max='20' increment='0.1' 
                       formatter='formatter-seconds' hover-hint='How long the End Scene is shown before the recording is stopped.' />
       <dropdown-list-setting id='RestingSceneDropdown' text='Resting Scene Name' value='RestingSceneName' options='SceneSelectOptions'

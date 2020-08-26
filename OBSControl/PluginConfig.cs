@@ -1,5 +1,6 @@
 ﻿using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components.Settings;
+using BeatSaberMarkupLanguage.Notify;
 using IPA.Config.Stores;
 using IPA.Config.Stores.Attributes;
 using IPA.Config.Stores.Converters;
@@ -16,7 +17,7 @@ using UnityEngine.SceneManagement;
 [assembly: InternalsVisibleTo(GeneratedStore.AssemblyVisibilityTarget)]
 namespace OBSControl
 {
-    internal class PluginConfig
+    internal class PluginConfig : INotifiableHost
     {
         [UIValue(nameof(Enabled))]
         public virtual bool Enabled { get; set; } = true;
@@ -27,14 +28,37 @@ namespace OBSControl
         [UIValue(nameof(EnableAutoRecord))]
         public virtual bool EnableAutoRecord { get; set; } = true;
 
+        public void NotifyRecordStartChanged()
+        {
+            RaisePropertyChanged(nameof(RecordStartOption));
+            RaisePropertyChanged(nameof(DelayedLevelStartEnabled));
+            RaisePropertyChanged(nameof(SongStartEnabled));
+            RaisePropertyChanged(nameof(SceneSequenceEnabled));
+            RaisePropertyChanged(nameof(SceneSequenceDisabled));
+        }
+
         [UseConverter(typeof(EnumConverter<RecordStartOption>))]
         [UIValue(nameof(RecordStartOption))]
-        public virtual RecordStartOption RecordStartOption { get; set; } = RecordStartOption.SongStart;
-
+        public virtual RecordStartOption RecordStartOption
+        {
+            get => _recordStartOption;
+            set
+            {
+                if (value == _recordStartOption) return;
+                _recordStartOption = value;
+                NotifyRecordStartChanged();
+            }
+        }
         [UseConverter(typeof(EnumConverter<RecordStopOption>))]
         [UIValue(nameof(RecordStopOption))]
         public virtual RecordStopOption RecordStopOption { get; set; } = RecordStopOption.ResultsView;
 
+        [Ignore]
+        [UIValue(nameof(DelayedLevelStartEnabled))]
+        public bool DelayedLevelStartEnabled => RecordStartOption == RecordStartOption.LevelStartDelay;
+        [Ignore]
+        [UIValue(nameof(SongStartEnabled))]
+        public bool SongStartEnabled => RecordStartOption == RecordStartOption.SongStart;
 
         [UIValue(nameof(SongStartDelay))]
         public virtual float SongStartDelay { get; set; } = 0f;
@@ -233,6 +257,21 @@ namespace OBSControl
         public List<object> SceneSelectOptions = new List<object>() { string.Empty };
 
 
+        [Ignore]
+        [UIValue(nameof(RecordStartOptions))]
+        public List<object> RecordStartOptions = new List<object>() { RecordStartOption.SongStart, RecordStartOption.LevelStartDelay, RecordStartOption.SceneSequence };
+
+        [Ignore]
+        [UIValue(nameof(RecordStopOptions))]
+        public List<object> RecordStopOptions = new List<object>() { RecordStopOption.ResultsView, RecordStopOption.SongEnd };
+
+        [Ignore]
+        [UIValue(nameof(SceneSequenceEnabled))]
+        public bool SceneSequenceEnabled => RecordStartOption == RecordStartOption.SceneSequence;
+        [Ignore]
+        [UIValue(nameof(SceneSequenceDisabled))]
+        public bool SceneSequenceDisabled => !SceneSequenceEnabled;
+
         //[Ignore]
         //public ConcurrentDictionary<string, string[]> SceneCollections = new ConcurrentDictionary<string, string[]>();
 
@@ -258,7 +297,18 @@ namespace OBSControl
         private float _recordingStopDelay = 4f;
         private float _startSceneDuration = 1f;
         private float _endSceneDuration = 2f;
+        private RecordStartOption _recordStartOption = RecordStartOption.SongStart;
+
         #endregion
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        public void RaisePropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            if (propertyName != null)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
     }
 
     /// <summary>
