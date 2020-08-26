@@ -14,16 +14,29 @@ A Beat Saber mod to automatically start/stop recording in OBS when you play a so
 ## Configuration
 Settings can be found in-game in the `Mod Settings > OBSControl` menu.
 * Enabled: Check to have OBSControl automatically start/stop recording.
-* ServerAddress: The address of your OBS websocket server (in the form of `ws://ip:port`). This doesn't usually need to be changed.
-* ServerPassword: If you set a password in OBS Websocket, enter it here.
-* LevelStartDelay: Amount of time in seconds to delay the start of the level. When the Play button is clicked, OBS will start recording for this amount of time before the level actually starts.
-* RecordingStopDelay: Amount of time in seconds to wait after the end of a level before stopping the recording **or** switching to the End Scene.
+* Connection:
+  * Server Address: The address of your OBS websocket server (in the form of `ws://ip:port`). This doesn't usually need to be changed.
+  * Server Password: If you set a password in OBS Websocket, enter it here.
+* Recording
+  * Auto-Stop on Manual: Enable to have OBSControl automatically stop recording if the recording was started manually.
+  * Record Start Option: How recording should be started.
+    * SceneSequence: Recording will be started and stopped with the scene sequence defined in `SceneSettings`.
+    * SongStart: Recording will be started based on when the song is loaded. The song will start after OBS starts recording and an optional delay.
+    * LevelStartDelay: Recording will be started once the `Play` button is clicked. The transition out of the menu can optionally be delayed.
+  * Level Start Delay: Amount of time in seconds to delay the start of the level. When the Play button is clicked, OBS will start recording for this amount of time before the level actually starts. Only used for the `LevelStartDelay` Record Start Option.
+  * Song Start Delay: Amount of time in seconds to delay the start of the song. Only used for the `SongStart` Record Start Option.
+  * Record Stop Option: How recording should be stopped. Not used if SceneSequence is used to start the song.
+    * ResultsView: Recording is stopped after an optional delay when the menu is loaded.
+    * SongEnd: Recording is stopped after an optional delay when the song ends, before the transition out of the game scene.
+  * Recording Stop Delay: Amount of time in seconds to wait after the selected Record Stop Option. Is not used for recordings started with SceneSequence.
 * Scene Settings
-  * GameSceneName: Set the name of the OBS scene you want to use for gameplay footage, leave blank to disable scene switching.
-  * StartSceneName: Name of the OBS scene to use as an intro for your videos. **You must have a valid GameSceneName set to use this option.**
-  * StartSceneDuration: Amount of time in seconds to show the Start Scene before switching to the Game Scene.
-  * EndSceneName: Name of the OBS scene to use as an outro for your videos. This scene is shown **after** RecordingStopDelay has finished. **You must have a valid GameSceneName set to use this option.**
-  * EndSceneDuration: Amount of time in seconds to show the End Scene before stopping the recording.
+  * Game Scene Name: Set the name of the OBS scene you want to use for gameplay footage, leave blank to disable scene switching.
+  * Start Scene Name: Name of the OBS scene to use as an intro for your videos. **You must have a valid GameSceneName set to use this option.**
+  * Start Scene Duration: Amount of time in seconds to show the Start Scene before switching to the Game Scene.
+  * End Scene Name: Name of the OBS scene to use as an outro for your videos. This scene is shown **after** RecordingStopDelay has finished. **You must have a valid GameSceneName set to use this option.**
+  * End Scene Delay: Amount of time in seconds to delay the switch the End Scene.
+  * End Scene Duration: Amount of time in seconds to show the End Scene before stopping the recording and switching to Resting Scene (if defined).
+  * Resting Scene Name: The scene OBSControl will switch to after the recording stops. If not defined, Game Scene will be used.
 * Advanced (Available only by editing `OBSControl.json` in your `Beat Saber\UserData` folder)
   * RecordingFileFormat: Defines how the file will be renamed after the recording stops.
     * Substitution characters are prefixed with `?`
