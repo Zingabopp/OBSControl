@@ -411,7 +411,7 @@ namespace OBSControl
             }
             try
             {
-                ConnectionStateChanged?.Invoke(this, true);
+                ConnectionStateChanged.RaiseEventSafe(this, true, nameof(ConnectionStateChanged));
             }
             catch (Exception ex)
             {
@@ -428,7 +428,7 @@ namespace OBSControl
             wasConnected = false;
             try
             {
-                ConnectionStateChanged?.Invoke(this, false);
+                ConnectionStateChanged.RaiseEventSafe(this, false, nameof(ConnectionStateChanged));
             }
             catch (Exception ex)
             {
@@ -448,7 +448,7 @@ namespace OBSControl
             {
                 LastHeartbeatTime = DateTime.UtcNow;
                 LastHeartbeat = new HeartBeat(heartbeat);
-                Heartbeat?.Invoke(this, heartbeat);
+                Heartbeat?.RaiseEventSafe(this, heartbeat, nameof(Heartbeat));
             }
             catch (Exception ex)
             {
@@ -461,7 +461,7 @@ namespace OBSControl
         {
             try
             {
-                RecordingStateChanged?.Invoke(this, e.OutputState);
+                RecordingStateChanged?.RaiseEventSafe(this, e.OutputState, nameof(RecordingStateChanged));
             }
             catch (Exception ex)
             {
@@ -495,7 +495,7 @@ namespace OBSControl
 #endif
             try
             {
-                StreamStatus?.Invoke(this, status);
+                StreamStatus?.RaiseEventSafe(this, status, nameof(StreamStatus));
             }
             catch (Exception ex)
             {

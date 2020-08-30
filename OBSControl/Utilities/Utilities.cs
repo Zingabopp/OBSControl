@@ -34,6 +34,7 @@ namespace OBSControl.Utilities
 
         public static void RaiseEventSafe<TArgs>(this EventHandler<TArgs>? e, object sender, TArgs args, string eventName)
         {
+            if (e == null) return;
             EventHandler<TArgs>[] handlers = e?.GetInvocationList().Select(d => (EventHandler<TArgs>)d).ToArray()
                 ?? Array.Empty<EventHandler<TArgs>>();
             for (int i = 0; i < handlers.Length; i++)
