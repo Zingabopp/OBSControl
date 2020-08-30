@@ -355,6 +355,9 @@ namespace OBSControl
         {
             if (obs == null)
                 return;
+#if DEBUG
+            Logger.log?.Debug($"OBSController.SetEvents");
+#endif
             RemoveEvents(obs);
             obs.Connected += OnConnect;
             obs.Disconnected += OnDisconnect;
@@ -369,6 +372,9 @@ namespace OBSControl
         {
             if (obs == null)
                 return;
+#if DEBUG
+            Logger.log?.Debug($"OBSController.RemoveEvents");
+#endif
             obs.Connected -= OnConnect;
             obs.Disconnected -= OnDisconnect;
 
