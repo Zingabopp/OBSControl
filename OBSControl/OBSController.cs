@@ -106,7 +106,7 @@ namespace OBSControl
         public event EventHandler<OBSWebsocket>? ObsCreated;
         public event EventHandler<OBSWebsocket>? DestroyingObs;
         private readonly WaitForSeconds HeartbeatCheckInterval = new WaitForSeconds(10);
-        private TimeSpan HeartbeatTimeout = new TimeSpan(0, 0, 30);
+        private TimeSpan HeartbeatTimeout = TimeSpan.FromSeconds(30);
         private IEnumerator<WaitForSeconds> HeartbeatCoroutine()
         {
             while (wasConnected)
@@ -398,10 +398,10 @@ namespace OBSControl
                 await obs.SetHeartbeat(true);
                 if (!HeartbeatTimerActive)
                 {
-                    Logger.log?.Debug($"Enabling HeartBeat check.");
+                    //Logger.log?.Debug($"Enabling HeartBeat check.");
                     LastHeartbeatTime = DateTime.UtcNow;
                     HeartbeatTimerActive = true;
-                    StartCoroutine(HeartbeatCoroutine());
+                    //StartCoroutine(HeartbeatCoroutine());
                 }
             }
             catch (Exception ex)
@@ -442,7 +442,7 @@ namespace OBSControl
         protected void OnHeartbeat(object sender, HeartBeatEventArgs heartbeat)
         {
 #if DEBUG
-            // Logger.log?.Debug("Heartbeat Received");
+            Logger.log?.Debug("Heartbeat Received");
 #endif
             try
             {
