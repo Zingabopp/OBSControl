@@ -16,7 +16,8 @@ namespace OBSControl.Utilities
 
         public static void RaiseEventSafe(this EventHandler? e, object sender, string eventName)
         {
-            EventHandler[] handlers = e?.GetInvocationList().Select(d => (EventHandler)d).ToArray()
+            if (e == null) return;
+            EventHandler[] handlers = e.GetInvocationList().Select(d => (EventHandler)d).ToArray()
                 ?? Array.Empty<EventHandler>();
             for (int i = 0; i < handlers.Length; i++)
             {
@@ -26,7 +27,7 @@ namespace OBSControl.Utilities
                 }
                 catch (Exception ex)
                 {
-                    Logger.log?.Error($"Error in {eventName} handlers '{handlers[i]?.Method.Name}': {ex.Message}");
+                    Logger.log?.Error($"Error in '{eventName}' handlers '{handlers[i]?.Method.Name}': {ex.Message}");
                     Logger.log?.Debug(ex);
                 }
             }
@@ -35,7 +36,7 @@ namespace OBSControl.Utilities
         public static void RaiseEventSafe<TArgs>(this EventHandler<TArgs>? e, object sender, TArgs args, string eventName)
         {
             if (e == null) return;
-            EventHandler<TArgs>[] handlers = e?.GetInvocationList().Select(d => (EventHandler<TArgs>)d).ToArray()
+            EventHandler<TArgs>[] handlers = e.GetInvocationList().Select(d => (EventHandler<TArgs>)d).ToArray()
                 ?? Array.Empty<EventHandler<TArgs>>();
             for (int i = 0; i < handlers.Length; i++)
             {
@@ -45,7 +46,7 @@ namespace OBSControl.Utilities
                 }
                 catch (Exception ex)
                 {
-                    Logger.log?.Error($"Error in {eventName} handlers '{handlers[i]?.Method.Name}': {ex.Message}");
+                    Logger.log?.Error($"Error in '{eventName}' handlers '{handlers[i]?.Method.Name}': {ex.Message}");
                     Logger.log?.Debug(ex);
                 }
             }
