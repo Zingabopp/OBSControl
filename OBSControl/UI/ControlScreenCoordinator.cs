@@ -39,7 +39,20 @@ namespace OBSControl.UI
             BSEvents.earlyMenuSceneLoadedFresh += BSEvents_earlyMenuSceneLoadedFresh;
             BSEvents.gameSceneActive += OnGameSceneActive;
             BSEvents.menuSceneActive += OnMenuSceneActive;
+            BSEvents.songPaused += OnSongPaused;
+            BSEvents.songUnpaused += OnSongUnpaused;
 
+        }
+
+        private void OnSongUnpaused()
+        {
+            SetControlScreenLock(true);
+        }
+
+        private void OnSongPaused()
+        {
+            if (ControlScreenView != null)
+                SetControlScreenLock(ControlScreenView.WindowLocked);
         }
 
         public void SetControlScreenLock(bool locked)
@@ -56,34 +69,7 @@ namespace OBSControl.UI
         private void OnGameSceneActive()
         {
             ResetScreenMover(true);
-        }
-
-        private void ResetScreenMover(bool isGameScene)
-        {
-            FloatingScreenMoverPointer? screenMover = ControlScreen?.screenMover;
-            if (ControlScreen != null && screenMover != null)
-            {
-                VRPointer pointer;
-                if (isGameScene)
-                    pointer = Resources.FindObjectsOfTypeAll<VRPointer>().LastOrDefault();
-                else
-                    pointer = Resources.FindObjectsOfTypeAll<VRPointer>().FirstOrDefault();
-
-                if (pointer != null)
-                {
-#if NEW_BSML
-                    screenMover.Init(ControlScreen, pointer);
-#else
-                    GameObject.DestroyImmediate(ControlScreen.screenMover);
-                    ControlScreen.screenMover = pointer.gameObject.AddComponent<FloatingScreenMoverPointer>();
-                    ControlScreen.screenMover.OnRelease += OnRelease;
-                    ControlScreen.screenMover.Init(ControlScreen);
-#endif
-                }
-                else
-                    Logger.log?.Warn($"Couldn't find VRPointer.");
-
-            }
+            SetControlScreenLock(true);
         }
 
         private void BSEvents_earlyMenuSceneLoadedFresh(ScenesTransitionSetupDataSO obj)
@@ -119,16 +105,9 @@ namespace OBSControl.UI
                 Vector3.zero,
                 Quaternion.identity);
 
-#if NEW_BSML
             screen.HandleReleased -= OnRelease;
             screen.HandleReleased += OnRelease;
-#else
-            FloatingScreenMoverPointer? screenMover = screen.screenMover;
-            if (screenMover != null)
-            {
-                screenMover.OnRelease = OnRelease;
-            }
-#endif
+
             if (!config.ShowScreenHandle)
                 screen.ShowHandle = false;
 
@@ -137,7 +116,29 @@ namespace OBSControl.UI
             return screen;
         }
 
+        /// <summary>
+        /// Fixes floating screen mover not working after changing scenes.
+        /// </summary>
+        /// <param name="isGameScene"></param>
+        private void ResetScreenMover(bool isGameScene)
+        {
+            FloatingScreenMoverPointer? screenMover = ControlScreen?.screenMover;
+            if (ControlScreen != null && screenMover != null)
+            {
+                VRPointer pointer;
+                if (isGameScene)
+                    pointer = Resources.FindObjectsOfTypeAll<VRPointer>().LastOrDefault();
+                else
+                    pointer = Resources.FindObjectsOfTypeAll<VRPointer>().FirstOrDefault();
 
+                if (pointer != null)
+                {
+                    screenMover.Init(ControlScreen, pointer);
+                }
+                else
+                    Logger.log?.Warn($"Couldn't find VRPointer.");
+            }
+        }
 
         internal static void SetScreenTransform(FloatingScreen screen, PluginConfig config)
         {
@@ -145,20 +146,14 @@ namespace OBSControl.UI
             screen.transform.rotation = config.GetScreenRotation();
         }
 
-#if NEW_BSML
         private void OnRelease(object _, FloatingScreenHandleEventArgs posRot)
-#else
-        private void OnRelease(Vector3 newPos, Quaternion newRot)
-#endif
+
         {
             PluginConfig config = Plugin.config;
             using IDisposable t = config.ChangeTransaction();
-#if NEW_BSML
             Vector3 newPos = posRot.Position;
             Vector3 euler = posRot.Rotation.eulerAngles;
-#else
-            Vector3 euler = newRot.eulerAngles;
-#endif
+
             config.ScreenPosX = newPos.x;
             config.ScreenPosY = newPos.y;
             config.ScreenPosZ = newPos.z;
