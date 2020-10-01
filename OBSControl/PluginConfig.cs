@@ -13,7 +13,6 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Windows.Forms;
-using CSCore.CoreAudioAPI;
 #nullable enable
 [assembly: InternalsVisibleTo(GeneratedStore.AssemblyVisibilityTarget)]
 namespace OBSControl
