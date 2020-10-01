@@ -12,6 +12,8 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Windows.Forms;
+using CSCore.CoreAudioAPI;
 #nullable enable
 [assembly: InternalsVisibleTo(GeneratedStore.AssemblyVisibilityTarget)]
 namespace OBSControl
@@ -34,6 +36,17 @@ namespace OBSControl
             RaisePropertyChanged(nameof(SongStartEnabled));
             RaisePropertyChanged(nameof(SceneSequenceEnabled));
             RaisePropertyChanged(nameof(SceneSequenceDisabled));
+        }
+        public void NotifyAudioDevicesChanged(string sourceKey)
+        {
+            // Note to self: this is probably here to refresh shown configs
+            // in the bsml file whose "active" state is backed by a variable
+            RaisePropertyChanged(nameof(ObsDesktopAudio1));
+            RaisePropertyChanged(nameof(ObsDesktopAudio2));
+            RaisePropertyChanged(nameof(ObsMicAux1));
+            RaisePropertyChanged(nameof(ObsMicAux2));
+            RaisePropertyChanged(nameof(ObsMicAux3));
+            RaisePropertyChanged(nameof(ObsMicAux4));
         }
 
         [UseConverter(typeof(EnumConverter<RecordStartOption>))]
@@ -234,7 +247,11 @@ namespace OBSControl
         public void RefreshDropdowns()
         {
 #pragma warning disable CS8601 // Possible null reference assignment.
-            DropDownListSetting[]? dropDowns = new DropDownListSetting[] { StartSceneDropDown, GameSceneDropdown, EndSceneDropdown, RestingSceneDropdown };
+            DropDownListSetting[]? dropDowns = new DropDownListSetting[] {
+                StartSceneDropDown, GameSceneDropdown, EndSceneDropdown, RestingSceneDropdown,
+                ObsDesktopAudio1Dropdown, ObsDesktopAudio2Dropdown,
+                ObsMicAux1Dropdown, ObsMicAux2Dropdown,ObsMicAux3Dropdown,ObsMicAux4Dropdown,
+            };
 #pragma warning restore CS8601 // Possible null reference assignment.
             foreach (DropDownListSetting dropDown in dropDowns)
             {
@@ -259,6 +276,14 @@ namespace OBSControl
         [Ignore]
         [UIValue(nameof(RecordStartOptions))]
         public List<object> RecordStartOptions = new List<object>() { RecordStartOption.SongStart, RecordStartOption.LevelStartDelay, RecordStartOption.SceneSequence };
+
+        [Ignore]
+        [UIValue(nameof(ObsDesktopAudioDevices))]
+        public List<object> ObsDesktopAudioDevices = new List<object>() { "default" };
+
+        [Ignore]
+        [UIValue(nameof(ObsMicAuxDevices))]
+        public List<object> ObsMicAuxDevices = new List<object>() { "default" };
 
         [Ignore]
         [UIValue(nameof(RecordStopOptions))]
@@ -290,6 +315,89 @@ namespace OBSControl
         [Ignore]
         [UIComponent("RestingSceneDropdown")]
         public DropDownListSetting? RestingSceneDropdown;
+        [Ignore]
+        [UIComponent("ObsDesktopAudio1Dropdown")]
+        public DropDownListSetting? ObsDesktopAudio1Dropdown;
+        [Ignore]
+        [UIComponent("ObsDesktopAudio2Dropdown")]
+        public DropDownListSetting? ObsDesktopAudio2Dropdown;
+        [Ignore]
+        [UIComponent("ObsMicAux1Dropdown")]
+        public DropDownListSetting? ObsMicAux1Dropdown;
+        [Ignore]
+        [UIComponent("ObsMicAux2Dropdown")]
+        public DropDownListSetting? ObsMicAux2Dropdown;
+        [Ignore]
+        [UIComponent("ObsMicAux3Dropdown")]
+        public DropDownListSetting? ObsMicAux3Dropdown;
+        [Ignore]
+        [UIComponent("ObsMicAux4Dropdown")]
+        public DropDownListSetting? ObsMicAux4Dropdown;
+
+        public void UpdateSystemAudioDevices(IEnumerable<string> desktopAudioDeviceNames, IEnumerable<string> micAuxAudioDeviceNames)
+        {
+            ObsDesktopAudioDevices.Clear();
+            ObsDesktopAudioDevices.Add("default");
+            ObsDesktopAudioDevices.AddRange(desktopAudioDeviceNames);
+            ObsMicAuxDevices.Clear();
+            ObsMicAuxDevices.Add("default");
+            ObsMicAuxDevices.AddRange(micAuxAudioDeviceNames);
+            RefreshDropdowns();
+        }
+
+        [UIValue(nameof(ObsDesktopAudio1))]
+        public virtual string ObsDesktopAudio1
+        {
+            get => obsAudioDevices["desktop-1"];
+            set => this.handleAudioDeviceSelection("desktop-1", value);
+        }
+
+        [UIValue(nameof(ObsDesktopAudio2))]
+        public virtual string ObsDesktopAudio2
+        {
+            get => obsAudioDevices["desktop-2"];
+            set => this.handleAudioDeviceSelection("desktop-2", value);
+        }
+
+        [UIValue(nameof(ObsMicAux1))]
+        public virtual string ObsMicAux1
+        {
+            get => obsAudioDevices["mic-1"];
+            set => this.handleAudioDeviceSelection("mic-1", value);
+        }
+
+        [UIValue(nameof(ObsMicAux2))]
+        public virtual string ObsMicAux2
+        {
+            get => obsAudioDevices["mic-2"];
+            set => this.handleAudioDeviceSelection("mic-2", value);
+        }
+
+        [UIValue(nameof(ObsMicAux3))]
+        public virtual string ObsMicAux3
+        {
+            get => obsAudioDevices["mic-3"];
+            set => this.handleAudioDeviceSelection("mic-3", value);
+        }
+
+        [UIValue(nameof(ObsMicAux4))]
+        public virtual string ObsMicAux4
+        {
+            get => obsAudioDevices["mic-4"];
+            set => this.handleAudioDeviceSelection("mic-4", value);
+        }
+
+        private void handleAudioDeviceSelection(string sourceKey, string deviceName)
+        {
+            if (obsAudioDevices[sourceKey] == deviceName) return;
+            var audioDevicesController = OBSController.instance?.GetOBSComponent<AudioDevicesController>();
+            if (audioDevicesController != null)
+            {
+                audioDevicesController?.setSourceToDeviceByName(sourceKey, deviceName);
+            }
+            obsAudioDevices[sourceKey] = deviceName;
+            NotifyAudioDevicesChanged(sourceKey);
+        }
 
         #region Backing Fields
         private float _levelStartDelay = 3f;
@@ -297,6 +405,15 @@ namespace OBSControl
         private float _startSceneDuration = 1f;
         private float _endSceneDuration = 2f;
         private RecordStartOption _recordStartOption = RecordStartOption.SongStart;
+        private Dictionary<string, string> obsAudioDevices = new Dictionary<string, string>()
+        {
+            { "desktop-1", "default" },
+            { "desktop-2", "default" },
+            { "mic-1", "default" },
+            { "mic-2", "default" },
+            { "mic-3", "default" },
+            { "mic-4", "default" },
+        };
 
         #endregion
 

@@ -14,6 +14,7 @@
       <InputAssemblies Include="obs-websocket-dotnet.dll" />
       <InputAssemblies Include="SuperSocket.ClientEngine.dll" />
       <InputAssemblies Include="WebSocket4Net.dll" />
+      <InputAssemblies Include="CSCore.dll" />
     </ItemGroup>
     <ItemGroup>
       <!-- Must be a fully qualified name -->
