@@ -1,15 +1,12 @@
-﻿using BS_Utils.Utilities;
-using CSCore.CoreAudioAPI;
+﻿using CSCore.CoreAudioAPI;
 using Newtonsoft.Json.Linq;
 using OBSWebsocketDotNet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web.UI.WebControls;
 
 
 namespace OBSControl.OBSComponents
