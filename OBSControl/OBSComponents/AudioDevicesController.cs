@@ -8,11 +8,13 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-
 namespace OBSControl.OBSComponents
 {
     public class AudioDevicesController : OBSComponent
     {
+        public static List<string> obsSourceKeys = new List<string>{
+            "desktop-1", "desktop-2", "mic-1", "mic-2", "mic-3", "mic-4"
+        };
         // Devices available to the system (as returned by NAudio)
         private MMDevice systemDefaultOutputDevice;
         private MMDevice systemDefaultInputDevice;
@@ -26,6 +28,33 @@ namespace OBSControl.OBSComponents
         private Dictionary<String, MMDevice> obsDevices;
         // obs special source keys mapped to OBS Source Names ("Desktop Audio", "Mic/Aux", etc.)
         private Dictionary<String, String> obsSourceNames;
+
+        private string getDeviceNameFromConfig(string sourceKey)
+        {
+            var conf = Plugin.config;
+            return sourceKey switch
+            {
+                "desktop-1" => conf.ObsDesktopAudio1,
+                "desktop-2" => conf.ObsDesktopAudio2,
+                "mic-1" => conf.ObsMicAux1,
+                "mic-2" => conf.ObsMicAux2,
+                "mic-3" => conf.ObsMicAux3,
+                "mic-4" => conf.ObsMicAux4,
+                _ => null,
+            };
+        }
+
+        public async void setDevicesFromConfig()
+        {
+            Logger.log?.Info("|ADC| Setting devices from config");
+            foreach (var sourceKey in obsSourceKeys)
+            {
+                string deviceName = this.getDeviceNameFromConfig(sourceKey);
+                Logger.log?.Info($"|ADC| source \"{sourceKey}\" configured to \"{deviceName}\"");
+                await this.setSourceToDeviceByName(sourceKey, deviceName);
+            }
+            Logger.log?.Info("|ADC| Setting devices from config done");
+        }
 
         private void listSystemDevices()
         {
@@ -43,13 +72,21 @@ namespace OBSControl.OBSComponents
             MMDeviceEnumerator deviceEnumerator = new MMDeviceEnumerator();
             this.systemDefaultOutputDevice = deviceEnumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
             this.systemDefaultInputDevice = deviceEnumerator.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Console);
+
             this.systemDevices = deviceEnumerator.EnumAudioEndpoints(DataFlow.All, DeviceState.Active);
             this.systemDevices.DefaultIfEmpty(null);
             this.listSystemDevices();
+
             this.systemInputDevices = deviceEnumerator.EnumAudioEndpoints(DataFlow.Capture, DeviceState.Active);
             this.systemInputDevices.DefaultIfEmpty(this.systemDefaultInputDevice);
+
             this.systemOutputDevices = deviceEnumerator.EnumAudioEndpoints(DataFlow.Render, DeviceState.Active);
             this.systemOutputDevices.DefaultIfEmpty(this.systemDefaultOutputDevice);
+
+            this.shortDeviceNames.Clear();
+            this.generateShortOutputDeviceNames();
+            this.generateShortInputDeviceNames();
+
             Logger.log?.Debug("|ADC| refreshSystemDevices finished.");
         }
 
@@ -101,7 +138,7 @@ namespace OBSControl.OBSComponents
             }
         }
 
-        public async void setSourceToDeviceByName(string sourceKey, string friendlyName)
+        public async Task setSourceToDeviceByName(string sourceKey, string friendlyName)
         {
             Logger.log?.Debug($"|ADC| Now: Setting source by device Name: \"{sourceKey}\" => \"{friendlyName}\"");
             if (friendlyName == "default") {
@@ -149,61 +186,72 @@ namespace OBSControl.OBSComponents
         // public MMDevice getInputDeviceByFriendlyName(string name) => this.systemInputDevices.FirstOrDefault((device) => device.FriendlyName.Equals(name));
         // public MMDevice getOutputDeviceByFriendlyName(string name) => this.systemOutputDevices.FirstOrDefault((device) => device.FriendlyName.Equals(name));
 
-        private IEnumerable<string> shortOutputDeviceNames()
+        private IEnumerable<string> getShortDeviceNamesFrom(MMDeviceCollection col)
         {
-            var names = this.systemOutputDevices.Select(d => d.FriendlyName);
-            var shortNames = names.Select(name => {
-                string pattern = @"(?<name>.*) \(.*\)";
-                Match m = Regex.Match(name, pattern);
-                if (!m.Success) return name;
-                string shortName = m.Result("${name}");
-                this.shortDeviceNames[shortName] = name;
-                return shortName;
+            var names = col.Select(d => d.FriendlyName);
+            return names.Select((name) => {
+                try {
+                    var shortName = this.shortDeviceNames[name];
+                    if (shortName != null) return shortName;
+                }
+                catch (Exception) {};
+                return name;
             });
-            if (shortNames.GroupBy(n => n).Any(c => c.Count() > 1))
-            {
-                // Just return list with long names if short names have duplicates
-                return names;
-            }
-            Logger.log?.Debug($"|ADC| Returning short names");
-            return shortNames;
         }
-        private IEnumerable<string> shortInputDeviceNames()
+        private IEnumerable<string> getOutputDeviceNamesForConfig() => this.getShortDeviceNamesFrom(this.systemOutputDevices);
+        private IEnumerable<string> getInputDeviceNamesForConfig() => this.getShortDeviceNamesFrom(this.systemInputDevices);
+
+        private void generateShortDeviceName(string pattern, MMDeviceCollection col)
         {
-            var names = this.systemInputDevices.Select(d => d.FriendlyName);
-            var shortNames = names.Select(name => {
-                string pattern = @".* \((?<name>.*)\)";
+            var names = col.Select(d => d.FriendlyName);
+            Dictionary<string, string> nameMapping = new Dictionary<string, string>();
+            var shortNames = names.Select(name =>
+            {
                 Match m = Regex.Match(name, pattern);
                 if (!m.Success) return name;
                 string shortName = m.Result("${name}");
-                this.shortDeviceNames[shortName] = name;
+                nameMapping.Add(shortName,  name);
+                nameMapping.Add(name,  shortName);
                 return shortName;
             });
-            if (shortNames.GroupBy(n => n).Any(c => c.Count() > 1))
-            {
-                // Just return list with long names if short names have duplicates
-                return names;
+
+            if (shortNames.GroupBy(n => n).Any(c => c.Count() > 1)) {
+                // If short names have duplicates we can't map back to long names,
+                // In that case, just don't use short names for now.
+                Logger.log?.Debug($"|ADC| Short Device names had duplicates, not using short names");
+                return;
             }
-            Logger.log?.Debug($"|ADC| Returning short names");
-            return shortNames;
+
+            nameMapping.ToList().ForEach(x => this.shortDeviceNames.Add(x.Key, x.Value));
+            Logger.log?.Debug($"|ADC| Generated short Device names");
+        }
+
+        private void generateShortOutputDeviceNames() {
+            string pattern = @"(?<name>.*) \(.*\)";
+            this.generateShortDeviceName(pattern, this.systemOutputDevices);
+        }
+        private void generateShortInputDeviceNames() {
+            string pattern = @".* \((?<name>.*)\)";
+            this.generateShortDeviceName(pattern, this.systemInputDevices);
         }
 
         public async Task UpdateAudioDevices(bool forceCurrentUpdate = true)
         {
             Logger.log?.Debug("|ADC| UpdateAudioDevices called.");
             refreshSystemDevices();
-            List<string> inputDeviceNames = this.shortInputDeviceNames().ToList();
-            List<string> outputDeviceNames = this.shortOutputDeviceNames().ToList();
+            List<string> inputDeviceNames = this.getInputDeviceNamesForConfig().ToList();
+            List<string> outputDeviceNames = this.getOutputDeviceNamesForConfig().ToList();
             Plugin.config.UpdateSystemAudioDevices(outputDeviceNames, inputDeviceNames);
 
-            OBSWebsocket? obs = Obs.GetConnectedObs();
-            if (obs == null)
-            {
+            try {
+                OBSWebsocket obs = Obs.GetConnectedObs();
+                await refreshOBSDevices(obs);
+                Logger.log?.Debug("|ADC| OBS Devices refreshed");
+            } catch (Exception) {
                 Logger.log?.Warn("|ADC| Unable get OBS devices. OBS not connected.");
-                return;
             }
-            await refreshOBSDevices(obs);
-            Logger.log?.Debug("|ADC| OBS Devices refreshed");
+            Thread.Sleep(2000);
+            setDevicesFromConfig();
         }
 
         #region Setup/Teardown

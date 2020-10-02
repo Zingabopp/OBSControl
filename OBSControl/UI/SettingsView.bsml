@@ -31,17 +31,17 @@
   <settings-submenu text='Audio Devices'>
     <settings-container>
       <clickable-text text='Back' click-event='back' />
-      <dropdown-list-setting id='ObsDesktopAudio1Dropdown' text='OBS Desktop Audio' value='ObsDesktopAudio1' options='ObsDesktopAudioDevices'
+      <dropdown-list-setting id='ObsDesktopAudio1Dropdown' text='Desktop Audio' value='ObsDesktopAudio1' options='ObsDesktopAudioDevices'
                              apply-on-change='true' hover-hint='First Desktop Audio Device in OBS.' />
-      <dropdown-list-setting id='ObsDesktopAudio2Dropdown' text='OBS Desktop Audio 2' value='ObsDesktopAudio2' options='ObsDesktopAudioDevices'
+      <dropdown-list-setting id='ObsDesktopAudio2Dropdown' text='Desktop Audio 2' value='ObsDesktopAudio2' options='ObsDesktopAudioDevices'
                              apply-on-change='true' hover-hint='Second Desktop Audio Device in OBS.' />
-      <dropdown-list-setting id='ObsMicAux1Dropdown' text='OBS Mic/Auxiliary Audio' value='ObsMicAux1' options='ObsMicAuxDevices'
+      <dropdown-list-setting id='ObsMicAux1Dropdown' text='Mic/Auxiliary Audio' value='ObsMicAux1' options='ObsMicAuxDevices'
                              apply-on-change='true' hover-hint='First Mic/Auxiliary Audio Device in OBS.' />
-      <dropdown-list-setting id='ObsMicAux2Dropdown' text='OBS Mic/Auxiliary Audio 2' value='ObsMicAux2' options='ObsMicAuxDevices'
+      <dropdown-list-setting id='ObsMicAux2Dropdown' text='Mic/Auxiliary Audio 2' value='ObsMicAux2' options='ObsMicAuxDevices'
                              apply-on-change='true' hover-hint='Second Mic/Auxiliary Audio Device in OBS.' />
-      <dropdown-list-setting id='ObsMicAux3Dropdown' text='OBS Mic/Auxiliary Audio 3' value='ObsMicAux3' options='ObsMicAuxDevices'
+      <dropdown-list-setting id='ObsMicAux3Dropdown' text='Mic/Auxiliary Audio 3' value='ObsMicAux3' options='ObsMicAuxDevices'
                              apply-on-change='true' hover-hint='Third Mic/Auxiliary Audio Device in OBS.' />
-      <dropdown-list-setting id='ObsMicAux4Dropdown' text='OBS Mic/Auxiliary Audio 4' value='ObsMicAux4' options='ObsMicAuxDevices'
+      <dropdown-list-setting id='ObsMicAux4Dropdown' text='Mic/Auxiliary Audio 4' value='ObsMicAux4' options='ObsMicAuxDevices'
                              apply-on-change='true' hover-hint='Fourth Mic/Auxiliary Audio Device in OBS.' />
     </settings-container>
   </settings-submenu>

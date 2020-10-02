@@ -134,7 +134,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AudioDevicesController.cs" />
+    <Compile Include="OBSComponents\AudioDevicesController.cs" />
     <Compile Include="GameStatus.cs" />
     <Compile Include="HarmonyPatches\HarmonyManager.cs" />
     <Compile Include="HarmonyPatches\GameSongController_ReadyToStart.cs" />
