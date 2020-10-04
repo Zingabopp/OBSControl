@@ -29,6 +29,11 @@ namespace OBSControl.HarmonyPatches
             {
                 return;
             }
+            AudioDevicesController? audioDeviceController = OBSController.instance?.GetOBSComponent<AudioDevicesController>();
+            if (audioDeviceController?.ActiveAndConnected ?? false)
+            {
+                audioDeviceController.setDevicesFromConfig();
+            }
             RecordStartOption recordStartOption = recordingController.RecordStartOption;
             if (recordStartOption != RecordStartOption.SongStart)
                 return;

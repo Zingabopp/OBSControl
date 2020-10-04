@@ -13,6 +13,11 @@ public class AudioDeviceDropdownEntry
 
     public bool IsAvailable = false;
 
+    public static string notAvailableFormatter(string name)
+    {
+        return ($"<color=\"red\">{name} (N/A)</color>");
+    }
+
     private AudioDevicesController AudioDevicesController => OBSController.instance?.GetOBSComponent<AudioDevicesController>();
 
     public AudioDeviceDropdownEntry(string sourceKey, string longKeyName, bool available)

@@ -357,14 +357,14 @@ namespace OBSControl
         public string DesktopAudioFormatter(string name)
         {
             if (ObsDesktopAudioDevices.Contains(name)) { return name; }
-            return ($"<color=\"red\">{name} (N/A)</color>");
+            return AudioDeviceDropdownEntry.notAvailableFormatter(name);
         }
 
         [UIAction(nameof(MicAuxFormatter))]
         public string MicAuxFormatter(string name)
         {
             if (ObsMicAuxDevices.Contains(name)) return name;
-            return ($"<color=\"red\">{name} (N/A)</color>");
+            return AudioDeviceDropdownEntry.notAvailableFormatter(name);
         }
 
         public void UpdateObsAudioSources(IEnumerable<string> sourceKeys)
