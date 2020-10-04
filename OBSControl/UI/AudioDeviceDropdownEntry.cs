@@ -1,18 +1,45 @@
-﻿using System;
+﻿using OBSControl;
+using OBSControl.OBSComponents;
+using System;
+using System.Threading.Tasks;
 
 public class AudioDeviceDropdownEntry
 {
-	public string sourceKey;
-	public string deviceName = "default";
-	public string HoverHint {
-		get => this.IsAvailable ? null : "Device is disabled in OBS!";
-	}
+    public string sourceKey;
+    public string LongKeyName;
+    public string deviceName = "default";
+    public string HoverHint { get => this.IsAvailable ? null : "Device is disabled in OBS!"; }
+    public string Color { get => this.IsAvailable ? "white" : "red"; }
 
     public bool IsAvailable = false;
 
-	public AudioDeviceDropdownEntry(string sourceKey, bool available)
-	{
-		this.sourceKey = sourceKey;
-		this.IsAvailable = available;
-	}
+    private AudioDevicesController AudioDevicesController => OBSController.instance?.GetOBSComponent<AudioDevicesController>();
+
+    public AudioDeviceDropdownEntry(string sourceKey, string longKeyName, bool available)
+    {
+        this.sourceKey = sourceKey;
+        this.LongKeyName = longKeyName;
+        this.IsAvailable = available;
+    }
+    public async Task TrySetDevice(string sourceKey, string deviceName)
+    {
+        try
+        {
+            var audioDevicesController = AudioDevicesController;
+            if (audioDevicesController != null)
+            {
+                await audioDevicesController.setSourceToDeviceByName(sourceKey, deviceName);
+            }
+            else
+            {
+                Logger.log?.Warn($"|ADC| Can't set device, we don't have an AudioDevicesController :( ");
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.log?.Warn($"|ADC| Something went very wrong while setting a device...");
+            Logger.log?.Warn($"|ADC| {e}");
+        }
+    }
+
 }

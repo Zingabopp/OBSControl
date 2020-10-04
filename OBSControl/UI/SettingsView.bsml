@@ -31,24 +31,24 @@
   <settings-submenu text='Audio Devices'>
     <settings-container>
       <clickable-text text='Back' click-event='back' />
-      <dropdown-list-setting id='ObsDesktopAudio1Dropdown' text='Desktop Audio' value='ObsDesktopAudio1' options='ObsDesktopAudioDevicesDropdown'
-						     rich-text='true' formatter='DesktopAudioFormatter' apply-on-change='true' hover-hint='First Desktop Audio Device in OBS.'
-							 interactable='~DesktopAudio1Available' strikethrough='~DesktopAudio1Missing'/>
-      <dropdown-list-setting id='ObsDesktopAudio2Dropdown' text='Desktop Audio 2' value='ObsDesktopAudio2' options='ObsDesktopAudioDevicesDropdown'
-                             rich-text='true' formatter='DesktopAudioFormatter' apply-on-change='true' hover-hint='Second Desktop Audio Device in OBS.'
-							 interactable='~DesktopAudio2Available' strikethrough='~DesktopAudio2Missing'/>
-      <dropdown-list-setting id='ObsMicAux1Dropdown' text='Mic/Auxiliary Audio' value='ObsMicAux1' options='ObsMicAuxDevicesDropdown'
-                             rich-text='true' formatter='MicAuxFormatter' apply-on-change='true' hover-hint='First Mic/Auxiliary Audio Device in OBS.'
-							 interactable='~MicAux1Available' strikethrough='~MicAux1Missing'/>
-      <dropdown-list-setting id='ObsMicAux2Dropdown' text='Mic/Auxiliary Audio 2' value='ObsMicAux2' options='ObsMicAuxDevicesDropdown'
-                             rich-text='true' formatter='MicAuxFormatter' apply-on-change='true' hover-hint='Second Mic/Auxiliary Audio Device in OBS.'
-							 interactable='~MicAux2Available' strikethrough='~MicAux2Missing'/>
-      <dropdown-list-setting id='ObsMicAux3Dropdown' text='Mic/Auxiliary Audio 3' value='ObsMicAux3' options='ObsMicAuxDevicesDropdown'
-                             rich-text='true' formatter='MicAuxFormatter' apply-on-change='true' hover-hint='Third Mic/Auxiliary Audio Device in OBS.'
-							 interactable='~MicAux3Available' strikethrough='~MicAux3Missing'/>
-      <dropdown-list-setting id='ObsMicAux4Dropdown' text='Mic/Auxiliary Audio 4' value='ObsMicAux4' options='ObsMicAuxDevicesDropdown'
-                             rich-text='true' formatter='MicAuxFormatter' apply-on-change='true' hover-hint='Fourth Mic/Auxiliary Audio Device in OBS.'
-							 interactable='~MicAux4Available' strikethrough='~MicAux4Missing'/>
+      <dropdown-list-setting id='ObsDesktopAudio1Dropdown' text='Desktop Audio' value='ObsDesktopAudio1' options='DesktopAudioDevicesDropdown'
+						     rich-text='true' formatter='DesktopAudioFormatter' apply-on-change='true' hover-hint='~DesktopAudio1HoverHint'
+							 interactable='~DesktopAudio1Available' font-color='~DesktopAudio1Color' />
+      <dropdown-list-setting id='ObsDesktopAudio2Dropdown' text='Desktop Audio 2' value='ObsDesktopAudio2' options='DesktopAudioDevicesDropdown'
+                             rich-text='true' formatter='DesktopAudioFormatter' apply-on-change='true' hover-hint='~DesktopAudio2HoverHint'
+							 interactable='~DesktopAudio2Available' font-color='~DesktopAudio2Color' />
+      <dropdown-list-setting id='ObsMicAux1Dropdown' text='Mic/Auxiliary Audio' value='ObsMicAux1' options='MicAuxDevicesDropdown'
+                             rich-text='true' formatter='MicAuxFormatter' apply-on-change='true' hover-hint='~MicAux1HoverHint'
+							 interactable='~MicAux1Available' font-color='~MicAux1Color' />
+      <dropdown-list-setting id='ObsMicAux2Dropdown' text='Mic/Auxiliary Audio 2' value='ObsMicAux2' options='MicAuxDevicesDropdown'
+                             rich-text='true' formatter='MicAuxFormatter' apply-on-change='true' hover-hint='~MicAux2HoverHint'
+							 interactable='~MicAux2Available' font-color='~MicAux2Color' />
+      <dropdown-list-setting id='ObsMicAux3Dropdown' text='Mic/Auxiliary Audio 3' value='ObsMicAux3' options='MicAuxDevicesDropdown'
+                             rich-text='true' formatter='MicAuxFormatter' apply-on-change='true' hover-hint='~MicAux3HoverHint'
+							 interactable='~MicAux3Available' font-color='~MicAux3Color' />
+      <dropdown-list-setting id='ObsMicAux4Dropdown' text='Mic/Auxiliary Audio 4' value='ObsMicAux4' options='MicAuxDevicesDropdown'
+                             rich-text='true' formatter='MicAuxFormatter' apply-on-change='true' hover-hint='~MicAux4HoverHint'
+							 interactable='~MicAux4Available' font-color='~MicAux4Color' />
     </settings-container>
   </settings-submenu>
   
