@@ -13,6 +13,7 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Windows.Forms;
+using System.Threading.Tasks;
 #nullable enable
 [assembly: InternalsVisibleTo(GeneratedStore.AssemblyVisibilityTarget)]
 namespace OBSControl
@@ -271,6 +272,17 @@ namespace OBSControl
         [UIValue("SceneSelectOptions")]
         public List<object> SceneSelectOptions = new List<object>() { string.Empty };
 
+        // Using something needing a converter for the config as dropdown-list-setting options
+        // seems to break BSML, so this exists and gets filled at runtime
+        [Ignore]
+        [UIValue(nameof(ObsDesktopAudioDevicesDropdown))]
+        public virtual List<object> ObsDesktopAudioDevicesDropdown { get; set; } = new List<object>() { "default" };
+
+        // Using something needing a converter for the config as dropdown-list-setting options
+        // seems to break BSML, so this exists and gets filled at runtime
+        [Ignore]
+        [UIValue(nameof(ObsMicAuxDevicesDropdown))]
+        public virtual List<object> ObsMicAuxDevicesDropdown { get; set; } = new List<object>() { "default" };
 
         [Ignore]
         [UIValue(nameof(RecordStartOptions))]
@@ -280,9 +292,17 @@ namespace OBSControl
         [UIValue(nameof(ObsDesktopAudioDevices))]
         public List<object> ObsDesktopAudioDevices = new List<object>() { "default" };
 
+        [UIValue(nameof(ObsDesktopAudioDevicesHistory))]
+        [UseConverter(typeof(CollectionConverter<string, HashSet<string>>))]
+        public virtual HashSet<string> ObsDesktopAudioDevicesHistory { get; set; } = new HashSet<string>() { "default" };
+
         [Ignore]
         [UIValue(nameof(ObsMicAuxDevices))]
         public List<object> ObsMicAuxDevices = new List<object>() { "default" };
+
+        [UIValue(nameof(ObsMicAuxDevicesHistory))]
+        [UseConverter(typeof(CollectionConverter<string, HashSet<string>>))]
+        public virtual HashSet<string> ObsMicAuxDevicesHistory { get; set; } = new HashSet<string>() { "default" };
 
         [Ignore]
         [UIValue(nameof(RecordStopOptions))]
@@ -333,69 +353,179 @@ namespace OBSControl
         [UIComponent("ObsMicAux4Dropdown")]
         public DropDownListSetting? ObsMicAux4Dropdown;
 
-        public void UpdateSystemAudioDevices(IEnumerable<string> desktopAudioDeviceNames, IEnumerable<string> micAuxAudioDeviceNames)
+        [UIAction(nameof(DesktopAudioFormatter))]
+        public string DesktopAudioFormatter(string name)
         {
-            ObsDesktopAudioDevices.Clear();
-            ObsDesktopAudioDevices.Add("default");
-            ObsDesktopAudioDevices.AddRange(desktopAudioDeviceNames);
-            ObsMicAuxDevices.Clear();
-            ObsMicAuxDevices.Add("default");
-            ObsMicAuxDevices.AddRange(micAuxAudioDeviceNames);
+            if (ObsDesktopAudioDevices.Contains(name)) { return name; }
+            return ($"<color=\"red\">{name} (N/A)</color>");
+        }
+
+        [UIAction(nameof(MicAuxFormatter))]
+        public string MicAuxFormatter(string name)
+        {
+            if (ObsMicAuxDevices.Contains(name)) return name;
+            return ($"<color=\"red\">{name} (N/A)</color>");
+        }
+
+        public void UpdateObsAudioSources(IEnumerable<string> sourceKeys)
+        {
+            var keys = this.obsAudioDevices.Keys.ToArray();
+            foreach (var sourceKey in keys) {
+                this.obsAudioDevices[sourceKey].IsAvailable = sourceKeys.Contains(sourceKey);
+            }
+
             RefreshDropdowns();
         }
+
+        public void UpdateSystemAudioDevices(IEnumerable<string> desktopAudioDeviceNames, IEnumerable<string> micAuxAudioDeviceNames)
+        {
+            UpdateSystemAudioDevices(desktopAudioDeviceNames, ObsDesktopAudioDevices, ObsDesktopAudioDevicesHistory, ObsDesktopAudioDevicesDropdown);
+            UpdateSystemAudioDevices(micAuxAudioDeviceNames, ObsMicAuxDevices, ObsMicAuxDevicesHistory, ObsMicAuxDevicesDropdown);
+
+            RefreshDropdowns();
+        }
+
+        private void UpdateSystemAudioDevices(
+            IEnumerable<string> deviceNames,
+            List<object> currentDevices,
+            HashSet<string> devicesHistory,
+            List<object> devicesDropdown)
+        {
+            currentDevices.Clear();
+            currentDevices.Add("default");
+            currentDevices.AddRange(deviceNames);
+
+            foreach (var name in deviceNames) { devicesHistory.Add(name); }
+            devicesDropdown.Clear();
+            foreach (var name in devicesHistory) { devicesDropdown.Add(name); }
+            Changed();
+        }
+
+        [Ignore]
+        [UIValue(nameof(DesktopAudio1Available))]
+        public bool DesktopAudio1Available => this.obsAudioDevices["desktop-1"].IsAvailable;
+
+        [Ignore]
+        [UIValue(nameof(DesktopAudio1Missing))]
+        public bool DesktopAudio1Missing => !this.obsAudioDevices["desktop-1"].IsAvailable;
+
+        [Ignore]
+        [UIValue(nameof(DesktopAudio2Available))]
+        public bool DesktopAudio2Available => this.obsAudioDevices["desktop-2"].IsAvailable;
+
+        [Ignore]
+        [UIValue(nameof(DesktopAudio2Missing))]
+        public bool DesktopAudio2Missing => !this.obsAudioDevices["desktop-2"].IsAvailable;
+
+        [Ignore]
+        [UIValue(nameof(MicAux1Available))]
+        public bool MicAux1Available => this.obsAudioDevices["mic-1"].IsAvailable;
+
+        [Ignore]
+        [UIValue(nameof(MicAux1Missing))]
+        public bool MicAux1Missing => !this.obsAudioDevices["mic-1"].IsAvailable;
+
+        [Ignore]
+        [UIValue(nameof(MicAux2Available))]
+        public bool MicAux2Available => this.obsAudioDevices["mic-2"].IsAvailable;
+
+        [Ignore]
+        [UIValue(nameof(MicAux2Missing))]
+        public bool MicAux2Missing => !this.obsAudioDevices["mic-2"].IsAvailable;
+
+        [Ignore]
+        [UIValue(nameof(MicAux3Available))]
+        public bool MicAux3Available => this.obsAudioDevices["mic-3"].IsAvailable;
+
+        [Ignore]
+        [UIValue(nameof(MicAux3Missing))]
+        public bool MicAux3Missing => !this.obsAudioDevices["mic-3"].IsAvailable;
+
+        [Ignore]
+        [UIValue(nameof(MicAux4Available))]
+        public bool MicAux4Available => this.obsAudioDevices["mic-4"].IsAvailable;
+
+        [Ignore]
+        [UIValue(nameof(MicAux4Missing))]
+        public bool MicAux4Missing => !this.obsAudioDevices["mic-4"].IsAvailable;
 
         [UIValue(nameof(ObsDesktopAudio1))]
         public virtual string ObsDesktopAudio1
         {
-            get => obsAudioDevices["desktop-1"];
-            set => this.handleAudioDeviceSelection("desktop-1", value);
+            get => obsAudioDevices["desktop-1"].deviceName;
+            set => this.HandleAudioDeviceSelection("desktop-1", value);
         }
 
         [UIValue(nameof(ObsDesktopAudio2))]
         public virtual string ObsDesktopAudio2
         {
-            get => obsAudioDevices["desktop-2"];
-            set => this.handleAudioDeviceSelection("desktop-2", value);
+            get => obsAudioDevices["desktop-2"].deviceName;
+            set => this.HandleAudioDeviceSelection("desktop-2", value);
         }
 
         [UIValue(nameof(ObsMicAux1))]
         public virtual string ObsMicAux1
         {
-            get => obsAudioDevices["mic-1"];
-            set => this.handleAudioDeviceSelection("mic-1", value);
+            get => obsAudioDevices["mic-1"].deviceName;
+            set => this.HandleAudioDeviceSelection("mic-1", value);
         }
 
         [UIValue(nameof(ObsMicAux2))]
         public virtual string ObsMicAux2
         {
-            get => obsAudioDevices["mic-2"];
-            set => this.handleAudioDeviceSelection("mic-2", value);
+            get => obsAudioDevices["mic-2"].deviceName;
+            set => this.HandleAudioDeviceSelection("mic-2", value);
         }
 
         [UIValue(nameof(ObsMicAux3))]
         public virtual string ObsMicAux3
         {
-            get => obsAudioDevices["mic-3"];
-            set => this.handleAudioDeviceSelection("mic-3", value);
+            get => obsAudioDevices["mic-3"].deviceName;
+            set => this.HandleAudioDeviceSelection("mic-3", value);
         }
 
         [UIValue(nameof(ObsMicAux4))]
         public virtual string ObsMicAux4
         {
-            get => obsAudioDevices["mic-4"];
-            set => this.handleAudioDeviceSelection("mic-4", value);
+            get => obsAudioDevices["mic-4"].deviceName;
+            set => this.HandleAudioDeviceSelection("mic-4", value);
         }
 
-        private void handleAudioDeviceSelection(string sourceKey, string deviceName)
+        private AudioDevicesController? GetAudioDevicesController() => OBSController.instance?.GetOBSComponent<AudioDevicesController>();
+
+        private async Task TrySetDevice(string sourceKey, string deviceName)
         {
-            if (obsAudioDevices[sourceKey] == deviceName) return;
-            var audioDevicesController = OBSController.instance?.GetOBSComponent<AudioDevicesController>();
-            if (audioDevicesController != null)
+            try
             {
-                audioDevicesController?.setSourceToDeviceByName(sourceKey, deviceName);
+                var audioDevicesController = GetAudioDevicesController();
+                if (audioDevicesController != null)
+                {
+                    await audioDevicesController.setSourceToDeviceByName(sourceKey, deviceName);
+                }
+                else
+                {
+                    Logger.log?.Warn($"|ADC| Can't set device, we don't have an AudioDevicesController :( ");
+                }
             }
-            obsAudioDevices[sourceKey] = deviceName;
+            catch (Exception e) {
+                Logger.log?.Warn($"|ADC| Something went very wrong while setting a device...");
+                Logger.log?.Warn($"|ADC| {e}");
+            }
+        }
+
+        private async void HandleAudioDeviceSelection(string sourceKey, string deviceName)
+        {
+            Logger.log?.Debug($"|ADC| Handling \"{sourceKey}\" - \"{deviceName}\"");
+
+            obsAudioDevices.TryGetValue(sourceKey, out AudioDeviceDropdownEntry oldDevice);
+            if (oldDevice.deviceName!= deviceName) {
+                await TrySetDevice(sourceKey, deviceName);
+            }
+
+            obsAudioDevices[sourceKey].deviceName = deviceName;
+            Changed();
             NotifyAudioDevicesChanged(sourceKey);
+            Logger.log?.Debug($"|ADC| Handled \"{sourceKey}\" - \"{deviceName}\"");
         }
 
         #region Backing Fields
@@ -404,15 +534,16 @@ namespace OBSControl
         private float _startSceneDuration = 1f;
         private float _endSceneDuration = 2f;
         private RecordStartOption _recordStartOption = RecordStartOption.SongStart;
-        private Dictionary<string, string> obsAudioDevices = new Dictionary<string, string>()
+        private Dictionary<string, AudioDeviceDropdownEntry> obsAudioDevices = new Dictionary<string, AudioDeviceDropdownEntry>()
         {
-            { "desktop-1", "default" },
-            { "desktop-2", "default" },
-            { "mic-1", "default" },
-            { "mic-2", "default" },
-            { "mic-3", "default" },
-            { "mic-4", "default" },
+            { "desktop-1", new AudioDeviceDropdownEntry("desktop-1", false) },
+            { "desktop-2", new AudioDeviceDropdownEntry("desktop-2", false) },
+            { "mic-1", new AudioDeviceDropdownEntry("mic-1", false) },
+            { "mic-2", new AudioDeviceDropdownEntry("mic-2", false) },
+            { "mic-3", new AudioDeviceDropdownEntry("mic-3", false) },
+            { "mic-4", new AudioDeviceDropdownEntry("mic-4", false) },
         };
+        
 
         #endregion
 

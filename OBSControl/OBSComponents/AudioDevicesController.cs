@@ -25,9 +25,13 @@ namespace OBSControl.OBSComponents
 
         // Current configuration of OBS. Keys are "SpecialSource" keys ("desktop-1", "mic-1", etc.)
         // obs special source keys mapped to system devices
-        private Dictionary<String, MMDevice> obsDevices;
+        private Dictionary<string, MMDevice> obsDevices = new Dictionary<string, MMDevice>();
         // obs special source keys mapped to OBS Source Names ("Desktop Audio", "Mic/Aux", etc.)
-        private Dictionary<String, String> obsSourceNames;
+        private Dictionary<string, string> obsSourceNames = new Dictionary<string, string>();
+        // Stores the sourceKeys of active OBS Sources.
+        // Sources can be disabled completely in OBS settings and setting them won't work 
+        public HashSet<string> obsActiveSources = new HashSet<string>(); 
+
 
         private string getDeviceNameFromConfig(string sourceKey)
         {
@@ -49,9 +53,14 @@ namespace OBSControl.OBSComponents
             Logger.log?.Info("|ADC| Setting devices from config");
             foreach (var sourceKey in obsSourceKeys)
             {
+                Logger.log?.Info($"|ADC| Trying to get device name for \"{sourceKey}\"");
                 string deviceName = this.getDeviceNameFromConfig(sourceKey);
                 Logger.log?.Info($"|ADC| source \"{sourceKey}\" configured to \"{deviceName}\"");
-                await this.setSourceToDeviceByName(sourceKey, deviceName);
+                try { await this.setSourceToDeviceByName(sourceKey, deviceName); }
+                catch (Exception e) {
+                    Logger.log?.Info($"|ADC| Setting \"{sourceKey}\" configured to \"{deviceName}\" failed");
+                    Logger.log?.Info($"|ADC| {e}");
+                }
             }
             Logger.log?.Info("|ADC| Setting devices from config done");
         }
@@ -104,37 +113,47 @@ namespace OBSControl.OBSComponents
 
         public async Task refreshOBSDevices(OBSWebsocket obs)
         {
-            Logger.log?.Info("|ADC| refreshOBSDevices called.");
-            var obsSources = await obs.GetSpecialSources();
-            this.obsDevices = new Dictionary<String, MMDevice>();
-            this.obsSourceNames = new Dictionary<String, String>();
+            Logger.log?.Debug("|ADC| refreshOBSDevices called.");
+            Dictionary<string, string> obsSources;
+
+            this.obsDevices = new Dictionary<string, MMDevice>();
+            this.obsSourceNames = new Dictionary<string, string>();
+            this.obsActiveSources = new HashSet<string>();
+            try {
+                obsSources = await obs.GetSpecialSources();
+            } catch (Exception) {
+                Logger.log?.Debug("|ADC| refreshOBSDevices failed.");
+                return;
+            }
             foreach (var source in obsSources)
             {
-                Logger.log?.Info($"|ADC| Special device {source.Value} start");
+                this.obsActiveSources.Add(source.Key);
+                Logger.log?.Debug($"|ADC| Special device {source.Value} start");
                 var sourceSettings = await obs.GetSourceSettings(source.Value);
-                var did = sourceSettings.Settings.GetValue("device_id").ToString();
-                Logger.log?.Info($"|ADC| Device ID: \"{did}\"");
-                MMDevice device = this.systemDevices.FirstOrDefault((d) => d.DeviceID == did);
+                var deviceID = sourceSettings.Settings.GetValue("device_id").ToString();
+                Logger.log?.Debug($"|ADC| Device ID: \"{deviceID}\"");
+                MMDevice device = this.systemDevices.FirstOrDefault((d) => d.DeviceID == deviceID);
                 if (device == null)
                 {
-                    if (did == "default")
-                    {
+                    if (deviceID == "default") {
                         device = this.defaultDeviceByKey(source.Key);
-                        Logger.log?.Info($"|ADC| Source set to default: {device.FriendlyName}");
-                    }
-                    else
-                    {
-                        // Device doesn't exist any more. Use default for now
-                        // later, change this to be something from the config
+                        Logger.log?.Debug($"|ADC| Source set to default: {device.FriendlyName}");
+                    } else {
+                        // This case is weird, because here OBS tries to use a device that
+                        // does not exist and will default to whatever "default" means at the
+                        // time, which depends on Windows Audio settings. Technically
+                        // we should just store "default" somewhere here, but I'm not rewriting
+                        // everything to handle an MMDevices AND maybe the string "default"
+                        // so we are going with what the default device is right now...
                         device = this.defaultDeviceByKey(source.Key);
-                        Logger.log?.Info($"|ADC| Source set to default because device was missing");
+                        Logger.log?.Debug($"|ADC| Source set to default because device was missing");
                     }
                 }
                 this.obsDevices[source.Key] = device;
-                Logger.log?.Info($"|ADC| obsDevices[{source.Key}] = {device.FriendlyName}");
+                Logger.log?.Debug($"|ADC| obsDevices[{source.Key}] = {device.FriendlyName}");
                 this.obsSourceNames[source.Key] = sourceSettings.SourceName;
-                Logger.log?.Info($"|ADC| obsSourceNames[{source.Key}] = \"{sourceSettings.SourceName}\"");
-                Logger.log?.Info($"|ADC| Special device {source.Value} end\n");
+                Logger.log?.Debug($"|ADC| obsSourceNames[{source.Key}] = \"{sourceSettings.SourceName}\"");
+                Logger.log?.Debug($"|ADC| Special device {source.Value} end\n");
             }
         }
 
@@ -158,18 +177,59 @@ namespace OBSControl.OBSComponents
 
         public async Task SetSourceToDefault(string sourceKey)
         {
-            String obsSourceName = this.obsSourceNames[sourceKey];
+            string obsSourceName = null;
+            if (!this.obsSourceNames.TryGetValue(sourceKey, out obsSourceName)) {
+                Logger.log?.Info($"|ADC| Aborting, obsSourceNames not yet initialized.");
+                return;
+            }
             JObject settings = new JObject { { "device_id", "default" } };
-            await Obs.GetConnectedObs().SetSourceSettings(obsSourceName, settings, null);
-            this.obsDevices[sourceKey] = this.defaultDeviceByKey(sourceKey);
+            
+            try
+            {
+                var obs = Obs.GetConnectedObs();
+                if (obs == null) {
+                    Logger.log?.Debug($"|ADC| obs is null");
+                } else if (obs.IsConnected) {
+                    await obs.SetSourceSettings(obsSourceName, settings, null);                    this.obsDevices[sourceKey] = this.defaultDeviceByKey(sourceKey);
+                    Logger.log?.Debug($"|ADC| Set \"{sourceKey}\" to \"default\"");
+                } else {
+                    Logger.log?.Debug($"|ADC| obs not connected");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.log?.Debug($"|ADC| Setting \"{sourceKey}\" to \"default\" didn't work:");
+                Logger.log?.Debug($"|ADC| {e}");
+            }
         }
 
         public async Task SetSourceToDevice(string sourceKey, MMDevice device)
         {
-            String obsSourceName = this.obsSourceNames[sourceKey];
+            Logger.log?.Info($"|ADC| Trying to set \"{sourceKey}\" to \"{device.FriendlyName}\"");
+            string obsSourceName = null;
+            if (!this.obsSourceNames.TryGetValue(sourceKey, out obsSourceName)) {
+                Logger.log?.Info($"|ADC| Aborting, obsSourceNames not yet initialized.");
+                return;
+            }
             JObject settings = new JObject { { "device_id", device.DeviceID } };
-            await Obs.GetConnectedObs().SetSourceSettings(obsSourceName, settings, null); ;
-            this.obsDevices[sourceKey] = device;
+            try
+            {
+                var obs = Obs.GetConnectedObs();
+                if (obs == null) {
+                    Logger.log?.Debug($"|ADC| obs is null");
+                } else if (obs.IsConnected) {
+                    await obs.SetSourceSettings(obsSourceName, settings, null); ;
+                    this.obsDevices[sourceKey] = device;
+                    Logger.log?.Debug($"|ADC| Set \"{sourceKey}\" to \"{device.FriendlyName}\"");
+                } else {
+                    Logger.log?.Debug($"|ADC| obs not connected");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.log?.Debug($"|ADC| Setting \"{sourceKey}\" to \"{device.FriendlyName}\" didn't work:");
+                Logger.log?.Debug($"|ADC| {e}");
+            }
         }
 
         // public MMDevice getInputDeviceByID(string id) => this.systemInputDevices.FirstOrDefault((device) => device.DeviceID.Equals(id));
@@ -235,36 +295,48 @@ namespace OBSControl.OBSComponents
             this.generateShortDeviceName(pattern, this.systemInputDevices);
         }
 
-        public async Task UpdateAudioDevices(bool forceCurrentUpdate = true)
+        public void UpdateSystemDevices(bool forceCurrentUpdate = true)
         {
-            Logger.log?.Debug("|ADC| UpdateAudioDevices called.");
+            Logger.log?.Debug("|ADC| UpdateSystemDevices called.");
             refreshSystemDevices();
             List<string> inputDeviceNames = this.getInputDeviceNamesForConfig().ToList();
             List<string> outputDeviceNames = this.getOutputDeviceNamesForConfig().ToList();
             Plugin.config.UpdateSystemAudioDevices(outputDeviceNames, inputDeviceNames);
-
+        }
+        public async Task UpdateOBSDevices(bool forceCurrentUpdate = true)
+        {
+            Logger.log?.Debug("|ADC| UpdateOBSDevices called.");
             try {
                 OBSWebsocket obs = Obs.GetConnectedObs();
                 await refreshOBSDevices(obs);
                 Logger.log?.Debug("|ADC| OBS Devices refreshed");
-            } catch (Exception) {
+            }
+            catch (Exception) {
                 Logger.log?.Warn("|ADC| Unable get OBS devices. OBS not connected.");
             }
-            Thread.Sleep(2000);
-            setDevicesFromConfig();
+            Logger.log?.Debug("|ADC| Updating config data with OBS information");
+            try { Plugin.config.UpdateObsAudioSources(this.obsActiveSources); }
+            catch (Exception e)
+            {
+                Logger.log?.Debug("|ADC| Failed to push active sources to config:");
+                Logger.log?.Debug($"|ADC| {e}");
+            }
+            Logger.log?.Debug("|ADC| Updating OBS devices finished");
+            // Thread.Sleep(2000);
+            // setDevicesFromConfig();
         }
 
         #region Setup/Teardown
         public override async Task InitializeAsync(OBSController obs)
         {
             await base.InitializeAsync(obs);
-            await UpdateAudioDevices().ConfigureAwait(false);
+            UpdateSystemDevices();
         }
 
         protected override async Task OnConnectAsync(CancellationToken cancellationToken)
         {
             await base.OnConnectAsync(cancellationToken);
-            await UpdateAudioDevices().ConfigureAwait(false);
+            await UpdateOBSDevices().ConfigureAwait(false);
         }
 
         protected override void OnDisconnect()

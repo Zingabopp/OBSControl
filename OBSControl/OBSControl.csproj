@@ -154,6 +154,7 @@
     <Compile Include="PluginConfig.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="OBSComponents\RecordingController.cs" />
+    <Compile Include="UI\AudioDeviceDropdownEntry.cs" />
     <Compile Include="UI\ControlScreen_Streaming.cs" />
     <Compile Include="UI\ControlScreen_Recording.cs" />
     <Compile Include="UI\ControlScreenCoordinator.cs" />
