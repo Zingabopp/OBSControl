@@ -301,7 +301,18 @@ namespace OBSControl.OBSComponents
             refreshSystemDevices();
             List<string> inputDeviceNames = this.getInputDeviceNamesForConfig().ToList();
             List<string> outputDeviceNames = this.getOutputDeviceNamesForConfig().ToList();
-            Plugin.config.UpdateSystemAudioDevices(outputDeviceNames, inputDeviceNames);
+            HMMainThreadDispatcher.instance.Enqueue(() =>
+            {
+                try
+                {
+                    Plugin.config.UpdateSystemAudioDevices(outputDeviceNames, inputDeviceNames);
+                }
+                catch (Exception ex)
+                {
+                    Logger.log?.Error($"Error Updating System Audio devices: {ex.Message}");
+                    Logger.log?.Debug(ex);
+                }
+            });
         }
         public async Task UpdateOBSDevices(bool forceCurrentUpdate = true)
         {
@@ -315,12 +326,18 @@ namespace OBSControl.OBSComponents
                 Logger.log?.Warn("|ADC| Unable get OBS devices. OBS not connected.");
             }
             Logger.log?.Debug("|ADC| Updating config data with OBS information");
-            try { Plugin.config.UpdateObsAudioSources(this.obsActiveSources); }
-            catch (Exception e)
+            HMMainThreadDispatcher.instance.Enqueue(() =>
             {
-                Logger.log?.Debug("|ADC| Failed to push active sources to config:");
-                Logger.log?.Debug($"|ADC| {e}");
-            }
+                try
+                {
+                    Plugin.config.UpdateObsAudioSources(this.obsActiveSources);
+                }
+                catch (Exception e)
+                {
+                    Logger.log?.Debug($"|ADC| Failed to push active sources to config:");
+                    Logger.log?.Debug($"|ADC| {e}");
+                }
+            });
             Logger.log?.Debug("|ADC| Updating OBS devices finished");
             // Thread.Sleep(2000);
             // setDevicesFromConfig();

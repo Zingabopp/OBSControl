@@ -261,6 +261,7 @@ namespace OBSControl
                     dropDown.ReceiveValue();
                 }
             }
+            Logger.log?.Debug("Refreshed Dropdowns");
         }
         [UIAction("formatter-seconds")]
         public string floatToSeconds(float val)
@@ -370,9 +371,13 @@ namespace OBSControl
         public void UpdateObsAudioSources(IEnumerable<string> sourceKeys)
         {
             var keys = this.ObsAudioDevices.Keys.ToArray();
-            foreach (var sourceKey in keys) {
+            Logger.log?.Debug($"|ADC| Active devices start");
+            foreach (var sourceKey in keys)
+            {
+                Logger.log?.Debug($"|ADC| {sourceKey} is now {sourceKeys.Contains(sourceKey)}");
                 this.ObsAudioDevices[sourceKey].IsAvailable = sourceKeys.Contains(sourceKey);
             }
+            Logger.log?.Debug($"|ADC| Active devices end");
 
             RefreshDropdowns();
         }
@@ -404,109 +409,108 @@ namespace OBSControl
         #region desktopaudio1
         [Ignore]
         [UIValue(nameof(DesktopAudio1Available))]
-        public bool DesktopAudio1Available => this.ObsAudioDevices["desktop-1"].IsAvailable;
-
+        public bool DesktopAudio1Available { get => this.ObsAudioDevices["desktop-1"].IsAvailable; }
         [Ignore]
         [UIValue(nameof(DesktopAudio1Missing))]
-        public bool DesktopAudio1Missing => !this.ObsAudioDevices["desktop-1"].IsAvailable;
+        public bool DesktopAudio1Missing { get => !this.ObsAudioDevices["desktop-1"].IsAvailable; }
 
         [Ignore]
         [UIValue(nameof(DesktopAudio1HoverHint))]
-        public string DesktopAudio1HoverHint => this.ObsAudioDevices["desktop-1"].HoverHint;
+        public string DesktopAudio1HoverHint { get => this.ObsAudioDevices["desktop-1"].HoverHint; }
 
         [Ignore]
         [UIValue(nameof(DesktopAudio1Color))]
-        public string DesktopAudio1Color => this.ObsAudioDevices["desktop-1"].Color;
+        public string DesktopAudio1Color { get => this.ObsAudioDevices["desktop-1"].Color; }
         #endregion
 
         #region desktopaudio2
         [Ignore]
         [UIValue(nameof(DesktopAudio2Available))]
-        public bool DesktopAudio2Available => this.ObsAudioDevices["desktop-2"].IsAvailable;
+        public bool DesktopAudio2Available { get => this.ObsAudioDevices["desktop-2"].IsAvailable; }
 
         [Ignore]
         [UIValue(nameof(DesktopAudio2Missing))]
-        public bool DesktopAudio2Missing => !this.ObsAudioDevices["desktop-2"].IsAvailable;
+        public bool DesktopAudio2Missing { get => !this.ObsAudioDevices["desktop-2"].IsAvailable; }
 
         [Ignore]
         [UIValue(nameof(DesktopAudio2HoverHint))]
-        public string DesktopAudio2HoverHint => this.ObsAudioDevices["desktop-2"].HoverHint;
+        public string DesktopAudio2HoverHint { get => this.ObsAudioDevices["desktop-2"].HoverHint; }
 
         [Ignore]
         [UIValue(nameof(DesktopAudio2Color))]
-        public string DesktopAudio2Color => this.ObsAudioDevices["desktop-2"].Color;
+        public string DesktopAudio2Color { get => this.ObsAudioDevices["desktop-2"].Color; }
         #endregion
 
         #region micaux1
         [Ignore]
         [UIValue(nameof(MicAux1Available))]
-        public bool MicAux1Available => this.ObsAudioDevices["mic-1"].IsAvailable;
+        public bool MicAux1Available { get => this.ObsAudioDevices["mic-1"].IsAvailable; }
 
         [Ignore]
         [UIValue(nameof(MicAux1Missing))]
-        public bool MicAux1Missing => !this.ObsAudioDevices["mic-1"].IsAvailable;
+        public bool MicAux1Missing { get => !this.ObsAudioDevices["mic-1"].IsAvailable; }
 
         [Ignore]
         [UIValue(nameof(MicAux1HoverHint))]
-        public string MicAux1HoverHint => this.ObsAudioDevices["mic-1"].HoverHint;
+        public string MicAux1HoverHint { get => this.ObsAudioDevices["mic-1"].HoverHint; }
 
         [Ignore]
         [UIValue(nameof(MicAux1Color))]
-        public string MicAux1Color => this.ObsAudioDevices["mic-1"].Color;
+        public string MicAux1Color { get => this.ObsAudioDevices["mic-1"].Color; }
         #endregion
 
         #region micaux2
         [Ignore]
         [UIValue(nameof(MicAux2Available))]
-        public bool MicAux2Available => this.ObsAudioDevices["mic-2"].IsAvailable;
+        public bool MicAux2Available { get => this.ObsAudioDevices["mic-2"].IsAvailable; }
 
         [Ignore]
         [UIValue(nameof(MicAux2Missing))]
-        public bool MicAux2Missing => !this.ObsAudioDevices["mic-2"].IsAvailable;
+        public bool MicAux2Missing { get => !this.ObsAudioDevices["mic-2"].IsAvailable; }
 
         [Ignore]
         [UIValue(nameof(MicAux2HoverHint))]
-        public string MicAux2HoverHint => this.ObsAudioDevices["mic-2"].HoverHint;
+        public string MicAux2HoverHint { get => this.ObsAudioDevices["mic-2"].HoverHint; }
 
         [Ignore]
         [UIValue(nameof(MicAux2Color))]
-        public string MicAux2Color => this.ObsAudioDevices["mic-2"].Color;
+        public string MicAux2Color { get => this.ObsAudioDevices["mic-2"].Color; }
         #endregion
 
         #region micaux3
         [Ignore]
         [UIValue(nameof(MicAux3Available))]
-        public bool MicAux3Available => this.ObsAudioDevices["mic-3"].IsAvailable;
+        public bool MicAux3Available { get => this.ObsAudioDevices["mic-3"].IsAvailable; }
 
         [Ignore]
         [UIValue(nameof(MicAux3Missing))]
-        public bool MicAux3Missing => !this.ObsAudioDevices["mic-3"].IsAvailable;
+        public bool MicAux3Missing { get => !this.ObsAudioDevices["mic-3"].IsAvailable; }
 
         [Ignore]
         [UIValue(nameof(MicAux3HoverHint))]
-        public string MicAux3HoverHint => this.ObsAudioDevices["mic-3"].HoverHint;
+        public string MicAux3HoverHint { get => this.ObsAudioDevices["mic-3"].HoverHint; }
 
         [Ignore]
         [UIValue(nameof(MicAux3Color))]
-        public string MicAux3Color => this.ObsAudioDevices["mic-3"].Color;
+        public string MicAux3Color { get => this.ObsAudioDevices["mic-3"].Color; }
         #endregion
 
         #region micaux4
         [Ignore]
         [UIValue(nameof(MicAux4Available))]
-        public bool MicAux4Available => this.ObsAudioDevices["mic-4"].IsAvailable;
+        public bool MicAux4Available { get => this.ObsAudioDevices["mic-4"].IsAvailable; }
 
         [Ignore]
         [UIValue(nameof(MicAux4Missing))]
-        public bool MicAux4Missing => !this.ObsAudioDevices["mic-4"].IsAvailable;
+        public bool MicAux4Missing { get => !this.ObsAudioDevices["mic-4"].IsAvailable; }
 
         [Ignore]
         [UIValue(nameof(MicAux4HoverHint))]
-        public string MicAux4HoverHint => this.ObsAudioDevices["mic-4"].HoverHint;
+        public string MicAux4HoverHint { get => this.ObsAudioDevices["mic-4"].HoverHint; }
 
         [Ignore]
         [UIValue(nameof(MicAux4Color))]
-        public string MicAux4Color => this.ObsAudioDevices["mic-4"].Color;
+        public string MicAux4Color { get => this.ObsAudioDevices["mic-4"].Color; }
         #endregion
 
         [UIValue(nameof(ObsDesktopAudio1))]
