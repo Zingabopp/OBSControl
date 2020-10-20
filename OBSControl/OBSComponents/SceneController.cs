@@ -618,7 +618,7 @@ namespace OBSControl.OBSComponents
             StartIntroSceneSequence(AllTasksCancelSource?.Token ?? CancellationToken.None).ContinueWith(result =>
             {
                 LevelStartEventArgs levelStartInfo = e;
-                e.StartLevel(levelStartInfo.Coordinator, levelStartInfo.DifficultyBeatmap, levelStartInfo.BeforeSceneSwitchCallback, levelStartInfo.Practice);
+                e.StartLevel(levelStartInfo.Coordinator, levelStartInfo.BeforeSceneSwitchCallback, levelStartInfo.Practice);
                 e.ResetPlayButton();
             });
             StartLevelPatch.LevelStart -= OnLevelStart;

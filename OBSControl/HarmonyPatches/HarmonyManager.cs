@@ -73,7 +73,9 @@ namespace OBSControl.HarmonyPatches
         {
             if(LevelDelayPatch == null)
             {
-                MethodInfo original = typeof(LevelSelectionFlowCoordinator).GetMethod("StartLevel", allBindingFlags);
+                MethodInfo original = typeof(SinglePlayerLevelSelectionFlowCoordinator).GetMethod("StartLevel", allBindingFlags); 
+                if (original == null)
+                    throw new MissingMethodException("Could not find method 'StartLevel' for Harmony patch.");
                 HarmonyMethod prefix = new HarmonyMethod(typeof(StartLevelPatch).GetMethod("Prefix", allBindingFlags));
                 LevelDelayPatch = new HarmonyPatchInfo(Harmony, original, prefix, null);
             }
@@ -83,7 +85,9 @@ namespace OBSControl.HarmonyPatches
         {
             if (ReadyToStartPatch == null)
             {
-                MethodInfo original = typeof(GameSongController).GetMethod("get_waitUntilIsReadyToStartTheSong", allBindingFlags);
+                MethodInfo original = typeof(GameSongController).GetMethod("get_waitUntilIsReadyToStartTheSong", allBindingFlags); 
+                if (original == null)
+                    throw new MissingMethodException("Could not find method 'get_waitUntilIsReadyToStartTheSong' for Harmony patch.");
                 HarmonyMethod postFix = new HarmonyMethod(typeof(GameSongController_ReadyToStart).GetMethod("Postfix", allBindingFlags));
                 ReadyToStartPatch = new HarmonyPatchInfo(Harmony, original, null, postFix);
             }
@@ -93,7 +97,9 @@ namespace OBSControl.HarmonyPatches
         {
             if (LevelDidFinishPatch == null)
             {
-                MethodInfo original = typeof(LevelSelectionFlowCoordinator).GetMethod("HandleStandardLevelDidFinish", allBindingFlags);
+                MethodInfo original = typeof(SinglePlayerLevelSelectionFlowCoordinator).GetMethod("HandleStandardLevelDidFinish", allBindingFlags);
+                if (original == null)
+                    throw new MissingMethodException("Could not find method 'HandleStandardLevelDidFinish' for Harmony patch.");
                 HarmonyMethod postFix = new HarmonyMethod(typeof(HandleStandardLevelDidFinishPatch).GetMethod("Postfix", allBindingFlags));
                 LevelDidFinishPatch = new HarmonyPatchInfo(Harmony, original, null, postFix);
             }
