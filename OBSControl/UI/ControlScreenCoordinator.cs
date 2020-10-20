@@ -90,7 +90,7 @@ namespace OBSControl.UI
                 ControlScreen = CreateFloatingScreen();
                 ControlScreenView = BeatSaberUI.CreateViewController<ControlScreen>();
                 ControlScreenView.ParentCoordinator = this;
-                ControlScreen.SetRootViewController(ControlScreenView, false);
+                ControlScreen.SetRootViewController(ControlScreenView, HMUI.ViewController.AnimationType.None);
                 SetScreenTransform(ControlScreen, Plugin.config);
                 Logger.log?.Critical($"Control screen created: {ControlScreen != null}");
             }

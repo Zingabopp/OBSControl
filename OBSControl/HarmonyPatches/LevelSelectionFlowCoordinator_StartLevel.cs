@@ -97,7 +97,7 @@ namespace OBSControl.HarmonyPatches
             }
             StandardLevelDetailViewController detailViewController = AccessDetailViewController(ref ____levelSelectionNavigationController);
             StandardLevelDetailView levelView = AccessDetailView(ref detailViewController);
-            Button playButton = levelView.playButton;
+            Button playButton = levelView.actionButton;
             PlayButton = playButton;
             PreviousText = playButton.GetComponentInChildren<TextMeshProUGUI>()?.text;
             playButton.interactable = false;

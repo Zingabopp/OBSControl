@@ -210,14 +210,12 @@ namespace OBSControl
 
         public void RefreshDropdowns()
         {
-#pragma warning disable CS8601 // Possible null reference assignment.
-            DropDownListSetting[]? dropDowns = new DropDownListSetting[] { StartSceneDropDown, GameSceneDropdown, EndSceneDropdown, RestingSceneDropdown };
-#pragma warning restore CS8601 // Possible null reference assignment.
-            foreach (DropDownListSetting dropDown in dropDowns)
+            DropDownListSetting?[] dropDowns = new DropDownListSetting?[] { StartSceneDropDown, GameSceneDropdown, EndSceneDropdown, RestingSceneDropdown };
+            foreach (DropDownListSetting? dropDown in dropDowns)
             {
                 if (dropDown != null)
                 {
-                    dropDown.tableView.ReloadData();
+                    dropDown.dropdown.ReloadData();
                     dropDown.ReceiveValue();
                 }
             }

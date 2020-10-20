@@ -50,7 +50,10 @@ namespace OBSControl.Wrappers
 		None = 0,
 		Quit = 1,
 		Restart = 2,
-		LostConnection = 3,
-		RoomDestroyed = 4
+		MultiplayerInactive = 3,
+		LostConnection = 4,
+		StartupFailed = 5,
+		HostEndedLevel = 6,
+		ConnectedAfterLevelEnded = 7
 	}
 }
