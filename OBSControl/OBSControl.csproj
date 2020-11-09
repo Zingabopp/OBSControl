@@ -22,6 +22,7 @@
     <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
     <DisableCopyToPlugins>false</DisableCopyToPlugins>
+    <VersionType>Unofficial</VersionType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(NCrunch)' == '1' ">
     <DisableCopyToPlugins>True</DisableCopyToPlugins>
@@ -197,9 +198,6 @@
   <ItemGroup>
     <EmbeddedResource Include="Icons\reset.png" />
     <None Include="Icons\reset.svg" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="ILRepack.targets" />
   <Target Name="PreBuild" BeforeTargets="BeforeBuild" Condition="'$(NCRUNCH)' != '1'">
