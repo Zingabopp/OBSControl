@@ -144,11 +144,11 @@ namespace OBSControl
             Logger.log?.Info($"Current Color: '{renderer.sharedMaterial.color}'");
         }
 #endif
-            /// <summary>
-            /// Called when the plugin is disabled. It is important to clean up any Harmony patches, GameObjects, and Monobehaviours here.
-            /// The game should be left in a state as if the plugin was never started.
-            /// </summary>
-            [OnDisable]
+        /// <summary>
+        /// Called when the plugin is disabled. It is important to clean up any Harmony patches, GameObjects, and Monobehaviours here.
+        /// The game should be left in a state as if the plugin was never started.
+        /// </summary>
+        [OnDisable]
         public void OnDisable()
         {
             Logger.log?.Debug("OnDisable()");

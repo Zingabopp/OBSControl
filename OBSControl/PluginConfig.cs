@@ -1,6 +1,5 @@
 ﻿using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components.Settings;
-using BeatSaberMarkupLanguage.Notify;
 using IPA.Config.Stores;
 using IPA.Config.Stores.Attributes;
 using IPA.Config.Stores.Converters;
@@ -14,11 +13,12 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Windows.Forms;
 using System.Threading.Tasks;
+using System.ComponentModel;
 #nullable enable
 [assembly: InternalsVisibleTo(GeneratedStore.AssemblyVisibilityTarget)]
 namespace OBSControl
 {
-    internal class PluginConfig : INotifiableHost
+    internal class PluginConfig : INotifyPropertyChanged
     {
         [UIValue(nameof(Enabled))]
         public virtual bool Enabled { get; set; } = true;
@@ -257,7 +257,7 @@ namespace OBSControl
             {
                 if (dropDown != null)
                 {
-                    dropDown.tableView.ReloadData();
+                    dropDown.dropdown.ReloadData();
                     dropDown.ReceiveValue();
                 }
             }
