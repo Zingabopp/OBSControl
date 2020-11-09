@@ -223,6 +223,12 @@ namespace OBSControl.Utilities
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="TResult">Result returned by the task.</typeparam>
+    /// <typeparam name="TEventArgs">Event argument(s) provided with the event.</typeparam>
+    /// <typeparam name="TArg"></typeparam>
     public class AsyncEventListenerWithArg<TResult, TEventArgs, TArg> : AsyncEventListener<TResult, TEventArgs>
     {
         public TArg Argument { get; protected set; }
@@ -241,7 +247,7 @@ namespace OBSControl.Utilities
 
         Func<object, TEventArgs, TArg, EventListenerResult<TResult>> FunctionWithArg;
         /// <summary>
-        /// Creates a new <see cref="AsyncEventListener{TResult, TEventArgs}"/> with an optional timeout (in milliseconds) and <see cref="CancellationToken"/>.
+        /// Creates a new <see cref="AsyncEventListenerWithArg{TResult, TEventArgs, TArg}"/> with an optional timeout (in milliseconds) and <see cref="CancellationToken"/> and will not complete the task until the provided function is satisifed.
         /// </summary>
         /// <param name="function">Function that will operate on the parameters given by the raised event.</param>
         /// <param name="timeout">Timeout in milliseconds (0 for none). The clock starts when <see cref="StartListening"/> is called.</param>
