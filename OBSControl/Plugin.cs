@@ -48,25 +48,6 @@ namespace OBSControl
         }
         #region IDisablable
 
-        public void AudioTest()
-        {
-            try
-            {
-                int count = NAudio.Wave.DirectSoundOut.Devices.Count();
-                if (count == 0)
-                    Logger.log?.Warn($"No devices.");
-                foreach (var dev in NAudio.Wave.DirectSoundOut.Devices)
-                {
-
-                    Logger.log?.Info($"Device {dev.Description}: {dev.ModuleName}|{dev.Guid}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.log?.Debug(ex);
-            }
-        }
-
         /// <summary>
         /// Called when the plugin is enabled (including when the game starts if the plugin is enabled).
         /// </summary>
@@ -76,8 +57,6 @@ namespace OBSControl
             //config.Value.FillDefaults();
             Logger.log?.Debug("OnEnable()");
             new GameObject("OBSControl_OBSController").AddComponent<OBSController>();
-
-            AudioTest();
 
             ApplyHarmonyPatches();
             Enabled = true;
