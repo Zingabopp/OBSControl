@@ -536,6 +536,7 @@ namespace OBSControl
         {
             Logger.log?.Debug("OBSController Start()");
             await AddOBSComponentAsync<SceneController>();
+            await AddOBSComponentAsync<AudioDevicesController>();
             await AddOBSComponentAsync<RecordingController>();
             await AddOBSComponentAsync<StreamingController>();
             await RepeatTryConnect(CancellationToken.None);
