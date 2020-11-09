@@ -3,6 +3,8 @@
 ""HMLib.dll?virt?alias=Beat Saber_Data\Managed\HMLib.dll
 ""HMUI.dll?virt?alias=Beat Saber_Data\Managed\HMUI.dll
 ""Main.dll?virt?alias=Beat Saber_Data\Managed\Main.dll
+""GameplayCore.dll?virt?alias=Beat Saber_Data\Managed\GameplayCore.dll
+""BeatmapCore.dll?virt?alias=Beat Saber_Data\Managed\BeatmapCore.dll
 ""netstandard.dll?alias=Beat Saber_Data\Managed\netstandard.dll
 ""Unity.TextMeshPro.dll?alias=Beat Saber_Data\Managed\Unity.TextMeshPro.dll
 ""UnityEngine.

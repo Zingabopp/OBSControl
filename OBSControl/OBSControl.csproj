@@ -42,6 +42,11 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BeatmapCore">
+      <HintPath>$(BeatSaberReferences)\Beat Saber_Data\Managed\BeatmapCore.dll</HintPath>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="BSML">
       <HintPath>$(BeatSaberReferences)\Plugins\BSML.dll</HintPath>
       <Private>True</Private>
@@ -50,6 +55,11 @@
     <Reference Include="BS_Utils">
       <HintPath>$(BeatSaberReferences)\Plugins\BS_Utils.dll</HintPath>
       <Private>True</Private>
+    </Reference>
+    <Reference Include="GameplayCore">
+      <HintPath>$(BeatSaberReferences)\Beat Saber_Data\Managed\GameplayCore.dll</HintPath>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="HMLib">
       <HintPath>$(BeatSaberReferences)\Beat Saber_Data\Managed\HMLib.dll</HintPath>

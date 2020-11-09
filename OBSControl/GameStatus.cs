@@ -60,7 +60,7 @@ namespace OBSControl
         {
             try
             {
-                MaxScore = ScoreModel.MaxRawScoreForNumberOfNotes(DifficultyBeatmap?.beatmapData.notesCount ?? 0);
+                MaxScore = ScoreModel.MaxRawScoreForNumberOfNotes(DifficultyBeatmap?.beatmapData.cuttableNotesType ?? 0);
                 Logger.log?.Debug($"MaxScore: {MaxScore}");
                 MaxModifiedScore = GameStatus.GpModSO?.GetModifiedScoreForGameplayModifiers(GameStatus.MaxScore, GameSetupData?.gameplayModifiers) ?? 0;
                 Logger.log?.Debug($"MaxModifiedScore: {MaxModifiedScore}");

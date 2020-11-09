@@ -14,13 +14,13 @@ namespace OBSControl.Wrappers
             _modifiers = modifiers;
         }
         public EnergyType EnergyType => _modifiers.energyType.ToEnergyType();
-        public bool BatteryEnergy => _modifiers.batteryEnergy;
+        public bool BatteryEnergy => _modifiers.energyType == GameplayModifiers.EnergyType.Battery;
         public bool NoFail => _modifiers.noFail;
         public bool DemoNoFail => _modifiers.demoNoFail;
         public bool InstaFail => _modifiers.instaFail;
         public bool FailOnSaberClash => _modifiers.failOnSaberClash;
         public EnabledObstacleType EnabledObstacleType => _modifiers.enabledObstacleType.ToEnabledObstacleType();
-        public bool NoObstacles => _modifiers.noObstacles;
+        public bool NoObstacles => _modifiers.enabledObstacleType == GameplayModifiers.EnabledObstacleType.NoObstacles;
         public bool DemoNoObstacles => _modifiers.demoNoObstacles;
         public bool FastNotes => _modifiers.fastNotes;
         public bool StrictAngles => _modifiers.strictAngles;

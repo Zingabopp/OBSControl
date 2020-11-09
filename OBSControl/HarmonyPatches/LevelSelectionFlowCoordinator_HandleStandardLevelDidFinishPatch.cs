@@ -5,7 +5,7 @@ using System;
 namespace OBSControl.HarmonyPatches
 {
 
-    [HarmonyPatch(typeof(LevelSelectionFlowCoordinator), "HandleStandardLevelDidFinish",
+    [HarmonyPatch(typeof(SinglePlayerLevelSelectionFlowCoordinator), "HandleStandardLevelDidFinish",
         new Type[] {
         typeof(LevelCompletionResults),
         typeof(IDifficultyBeatmap),
@@ -15,10 +15,10 @@ namespace OBSControl.HarmonyPatches
     internal class HandleStandardLevelDidFinishPatch
     {
         public static event EventHandler? LevelDidFinish;
-        static void Postfix(LevelSelectionFlowCoordinator __instance)
+        static void Postfix(SinglePlayerLevelSelectionFlowCoordinator __instance)
         {
             // Does not trigger in Multiplayer
-            LevelSelectionFlowCoordinator flowCoordinator = __instance;
+            SinglePlayerLevelSelectionFlowCoordinator flowCoordinator = __instance;
             LevelDidFinish.RaiseEventSafe(flowCoordinator, nameof(LevelDidFinish));
         }
     }

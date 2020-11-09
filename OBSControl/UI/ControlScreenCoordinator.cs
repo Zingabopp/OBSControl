@@ -90,9 +90,9 @@ namespace OBSControl.UI
                 _controlScreen = CreateFloatingScreen();
                 ControlScreenView = BeatSaberUI.CreateViewController<ControlScreen>();
                 ControlScreenView.ParentCoordinator = this;
-                _controlScreen.SetRootViewController(ControlScreenView, false);
+                _controlScreen.SetRootViewController(ControlScreen, HMUI.ViewController.AnimationType.None);
                 SetScreenTransform(_controlScreen, Plugin.config);
-                Logger.log?.Critical($"Control screen created: {_controlScreen != null}");
+                Logger.log?.Critical($"Control screen created: {ControlScreen != null}");
             }
             _controlScreen?.gameObject.SetActive(true);
         }
@@ -122,7 +122,7 @@ namespace OBSControl.UI
         /// <param name="isGameScene"></param>
         private void ResetScreenMover(bool isGameScene)
         {
-            FloatingScreenMoverPointer? screenMover = ControlScreen?.screenMover;
+            FloatingScreenMoverPointer? screenMover = _controlScreen?.screenMover;
             if (ControlScreen != null && screenMover != null)
             {
                 VRPointer pointer;
@@ -133,7 +133,7 @@ namespace OBSControl.UI
 
                 if (pointer != null)
                 {
-                    screenMover.Init(ControlScreen, pointer);
+                    screenMover.Init(_controlScreen, pointer);
                 }
                 else
                     Logger.log?.Warn($"Couldn't find VRPointer.");
