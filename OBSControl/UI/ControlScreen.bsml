@@ -146,7 +146,7 @@
           <horizontal background='round-rect-panel' pad-left='3' pad-right='-3'
                         preferred-height='6'
                         child-control-width='false' child-expand-width='false'>
-            <checkbox text='Enable AutoRecord:' font-size='4' size-delta-x='41' align='MidlineLeft' />
+            <checkbox text='Enable AutoRecord:' value='EnableAutoRecord' bind-value='true' apply-on-change='true' font-size='4' size-delta-x='41' align='MidlineLeft' />
           </horizontal>
           <horizontal background='round-rect-panel' pad-left='3' pad-right='-3'
                       preferred-height='6'

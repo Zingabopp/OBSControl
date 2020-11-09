@@ -19,8 +19,8 @@ namespace OBSControl.UI
 
     public partial class ControlScreen : BSMLAutomaticViewController
     {
-        private string? connectionState;
-        internal ControlScreenCoordinator ParentCoordinator;
+        private string _connectionState = "Disconnected";
+        internal ControlScreenCoordinator? ParentCoordinator;
         private OBSController? _obsController;
         protected OBSController OBSController
         {
@@ -40,9 +40,9 @@ namespace OBSControl.UI
                     _obsController = value;
             }
         }
-        protected SceneController SceneController;
-        protected RecordingController RecordingController;
-        protected StreamingController StreamingController;
+        protected SceneController SceneController = null!;
+        protected RecordingController RecordingController = null!;
+        protected StreamingController StreamingController = null!;
         public ControlScreen()
         {
             OBSController = OBSController.instance!;
@@ -112,9 +112,9 @@ namespace OBSControl.UI
             SetConnectionState(e);
         }
 
-        private void OnSceneChange(object sender, string sceneName)
+        private void OnSceneChange(object sender, string? sceneName)
         {
-            CurrentScene = sceneName;
+            CurrentScene = sceneName ?? string.Empty;
         }
 
         private void OnHeartbeat(object sender, OBSWebsocketDotNet.HeartBeatEventArgs e)
@@ -152,7 +152,7 @@ namespace OBSControl.UI
         // For this method of setting the ResourceName, this class must be the first class in the file.
         //public override string ResourceName => string.Join(".", GetType().Namespace, GetType().Name);
         [UIComponent(nameof(TabSelector))]
-        public TabSelector TabSelector { get; protected set; }
+        public TabSelector TabSelector { get; protected set; } = null!;
 
         #region Properties
         [UIValue(nameof(BoolFormatter))]
@@ -188,7 +188,7 @@ namespace OBSControl.UI
                 _windowLocked = value;
                 NotifyPropertyChanged();
                 NotifyPropertyChanged(nameof(WindowUnlocked));
-                ParentCoordinator.SetControlScreenLock(value);
+                ParentCoordinator?.SetControlScreenLock(value);
             }
         }
         [UIValue(nameof(WindowUnlocked))]
@@ -249,12 +249,12 @@ namespace OBSControl.UI
         [UIValue(nameof(ConnectionState))]
         public string ConnectionState
         {
-            get => connectionState;
+            get => _connectionState;
             set
             {
-                if (connectionState == value)
+                if (_connectionState == value)
                     return;
-                connectionState = value;
+                _connectionState = value;
                 NotifyPropertyChanged();
             }
         }
@@ -320,11 +320,11 @@ namespace OBSControl.UI
             }
         }
 
-        private string _currentScene;
+        private string? _currentScene;
         [UIValue(nameof(CurrentScene))]
         public string CurrentScene
         {
-            get { return _currentScene; }
+            get { return _currentScene ?? string.Empty; }
             set
             {
                 if (_currentScene == value) return;

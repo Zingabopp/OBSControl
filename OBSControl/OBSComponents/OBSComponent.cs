@@ -44,7 +44,7 @@ namespace OBSControl.OBSComponents
                     {
                         try
                         {
-                            _ = OnConnectAsync(AllTasksCancelSource.Token);
+                            _ = OnConnectAsync(CancellationToken.None);
                         }
                         catch (Exception ex)
                         {
@@ -65,7 +65,7 @@ namespace OBSControl.OBSComponents
                 {
                     if (AllTasksCancelSource == null)
                         AllTasksCancelSource = new CancellationTokenSource();
-                    _ = OnConnectAsync(AllTasksCancelSource?.Token ?? CancellationToken.None);
+                    _ = OnConnectAsync(CancellationToken.None);
                 }
                 else
                     OnDisconnect();
@@ -91,13 +91,14 @@ namespace OBSControl.OBSComponents
         }
         protected void CancelAll()
         {
+            Logger.log?.Debug($"Canceling all previous tasks for {GetType().Name}.");
             CancellationTokenSource? lastSource;
             lock (_allCancelLock)
             {
                 lastSource = AllTasksCancelSource;
                 AllTasksCancelSource = new CancellationTokenSource();
             }
-            if (lastSource != null && lastSource.IsCancellationRequested)
+            if (lastSource != null)
             {
                 lastSource.Cancel();
                 lastSource.Dispose();
@@ -143,14 +144,15 @@ namespace OBSControl.OBSComponents
 #endif
             CancelAll();
             SetEvents(obs);
-            try
-            {
+            // TODO: What was this going to be for?
+            //try
+            //{
                 
-            }
-            catch (Exception ex)
-            {
+            //}
+            //catch (Exception ex)
+            //{
 
-            }
+            //}
         }
 
         protected virtual void OnDestroyingObs(object sender, OBSWebsocket obs)
@@ -210,8 +212,9 @@ namespace OBSControl.OBSComponents
                 CancellationTokenSource? lastSource = _allTasksCancelSource;
                 if (lastSource == null || lastSource.IsCancellationRequested)
                 {
-                    lastSource?.Dispose();
                     _allTasksCancelSource = new CancellationTokenSource();
+                    lastSource?.Cancel();
+                    lastSource?.Dispose();
                 }
             }
             ActiveChanged?.Invoke(this, true);

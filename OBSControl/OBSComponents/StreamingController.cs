@@ -45,7 +45,7 @@ namespace OBSControl.OBSComponents
                 }
                 catch (OperationCanceledException ex)
                 {
-                    taskCompletion.TrySetCanceled(cancellationToken);
+                    taskCompletion.TrySetCanceled(ex.CancellationToken);
                 }
                 catch (Exception ex)
                 {
@@ -70,8 +70,8 @@ namespace OBSControl.OBSComponents
         /// <exception cref="OperationCanceledException"></exception>
         public async Task<bool> StartStreaming(CancellationToken cancellationToken = default)
         {
-            using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, AllTasksCancelSource.Token);
-            cts.Token.ThrowIfCancellationRequested();
+            //using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, AllTasksCancelSource.Token);
+            //cts.Token.ThrowIfCancellationRequested();
             TaskCompletionSource<bool> taskCompletion;
             bool taskStarted = false;
             lock (startLock)
@@ -116,7 +116,7 @@ namespace OBSControl.OBSComponents
                 }
                 catch (OperationCanceledException ex)
                 {
-                    taskCompletion.TrySetCanceled(cancellationToken);
+                    taskCompletion.TrySetCanceled(ex.CancellationToken);
                 }
                 catch (Exception ex)
                 {
@@ -141,8 +141,8 @@ namespace OBSControl.OBSComponents
         /// <exception cref="OperationCanceledException"></exception>
         public async Task<bool> StopStreaming(CancellationToken cancellationToken = default)
         {
-            using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, AllTasksCancelSource.Token);
-            cts.Token.ThrowIfCancellationRequested();
+            //using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, AllTasksCancelSource.Token);
+            //cts.Token.ThrowIfCancellationRequested();
             TaskCompletionSource<bool> taskCompletion;
             bool taskStarted = false;
             lock (stopLock)

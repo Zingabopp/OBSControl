@@ -83,6 +83,7 @@ namespace OBSControl.HarmonyPatches
         {
             if (WaitingToStart)
             {
+                Logger.log?.Debug($"StartLevelPatch was waiting to start, starting level.");
                 WaitingToStart = false;
                 return true;
             }
@@ -93,6 +94,7 @@ namespace OBSControl.HarmonyPatches
             if (obs == null || !obs.IsConnected)
             {
                 Logger.log?.Warn($"Skipping StartLevel sequence, OBS is unavailable.");
+                WaitingToStart = false;
                 return true;
             }
             StandardLevelDetailViewController detailViewController = AccessDetailViewController(ref ____levelSelectionNavigationController);
@@ -101,6 +103,7 @@ namespace OBSControl.HarmonyPatches
             PlayButton = playButton;
             PreviousText = playButton.GetComponentInChildren<TextMeshProUGUI>()?.text;
             playButton.interactable = false;
+            bool practiceButtonEnabled = levelView.practiceButton.isActiveAndEnabled;
             levelView.hidePracticeButton = true;
             bool returnValue = false;
             try
@@ -150,7 +153,7 @@ namespace OBSControl.HarmonyPatches
                 }
                 if (response == LevelStartResponse.Handled)
                 {
-                    Logger.log?.Debug($"LevelStartResponse is handled, skipping delayed start.");
+                    Logger.log?.Debug($"LevelStartResponse is handled by {args.ResponseSource}.");
                     FadeOutPreview();
                     Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, startEventArgs, nameof(LevelStart));
                     returnValue = false;
@@ -187,12 +190,13 @@ namespace OBSControl.HarmonyPatches
             {
                 if (returnValue)
                 {
+                    WaitingToStart = false;
                     playButton.interactable = true;
-                    levelView.hidePracticeButton = true;
+                    levelView.hidePracticeButton = !practiceButtonEnabled;
                 }
             }
             playButton.interactable = true;
-            levelView.hidePracticeButton = true;
+            levelView.hidePracticeButton = !practiceButtonEnabled;
             return true;
         }
 
@@ -277,8 +281,8 @@ namespace OBSControl.HarmonyPatches
         }
 
         static string DefaultText = "Play";
-        static string NotRecording = "Waiting for OBS";
-        static string RecordingText = "Recording";
+        // static string NotRecording = "Waiting for OBS";
+        // static string RecordingText = "Recording";
 
         private static StartLevelDelegate? _startLevel;
         private static StartLevelDelegate StartLevel

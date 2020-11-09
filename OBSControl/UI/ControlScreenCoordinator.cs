@@ -31,9 +31,9 @@ namespace OBSControl.UI
 
 
         private List<Tab> Tabs = new List<Tab>();
-        protected FloatingScreen? ControlScreen;
+        protected FloatingScreen? _controlScreen;
         protected ControlScreen? ControlScreenView;
-
+        public ControlScreen? ControlScreen => ControlScreenView;
         protected ControlScreenCoordinator()
         {
             BSEvents.earlyMenuSceneLoadedFresh += BSEvents_earlyMenuSceneLoadedFresh;
@@ -57,8 +57,8 @@ namespace OBSControl.UI
 
         public void SetControlScreenLock(bool locked)
         {
-            if (ControlScreen != null)
-                ControlScreen.ShowHandle = !locked;
+            if (_controlScreen != null)
+                _controlScreen.ShowHandle = !locked;
         }
 
         private void OnMenuSceneActive()
@@ -74,27 +74,27 @@ namespace OBSControl.UI
 
         private void BSEvents_earlyMenuSceneLoadedFresh(ScenesTransitionSetupDataSO obj)
         {
-            if (ControlScreen != null)
+            if (_controlScreen != null)
             {
                 Logger.log?.Warn("Destroying ControlScreen");
-                GameObject.Destroy(ControlScreen.gameObject);
-                ControlScreen = null;
+                GameObject.Destroy(_controlScreen.gameObject);
+                _controlScreen = null;
             }
         }
 
 
         public void ShowControlScreen()
         {
-            if (ControlScreen == null)
+            if (_controlScreen == null)
             {
-                ControlScreen = CreateFloatingScreen();
+                _controlScreen = CreateFloatingScreen();
                 ControlScreenView = BeatSaberUI.CreateViewController<ControlScreen>();
                 ControlScreenView.ParentCoordinator = this;
-                ControlScreen.SetRootViewController(ControlScreenView, false);
-                SetScreenTransform(ControlScreen, Plugin.config);
-                Logger.log?.Critical($"Control screen created: {ControlScreen != null}");
+                _controlScreen.SetRootViewController(ControlScreenView, false);
+                SetScreenTransform(_controlScreen, Plugin.config);
+                Logger.log?.Critical($"Control screen created: {_controlScreen != null}");
             }
-            ControlScreen?.gameObject.SetActive(true);
+            _controlScreen?.gameObject.SetActive(true);
         }
 
         public FloatingScreen CreateFloatingScreen()

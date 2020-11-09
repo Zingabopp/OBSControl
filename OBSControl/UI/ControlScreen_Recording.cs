@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Web.UI;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
@@ -9,6 +10,7 @@ using OBSControl.UI.Formatters;
 using OBSWebsocketDotNet;
 using OBSWebsocketDotNet.Types;
 using UnityEngine;
+#nullable enable
 
 namespace OBSControl.UI
 {
@@ -144,7 +146,7 @@ namespace OBSControl.UI
             RecordButtonInteractable = false;
             try
             {
-                await RecordingController.TryStopRecordingAsync();
+                await RecordingController.TryStopRecordingAsync(CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -154,7 +156,23 @@ namespace OBSControl.UI
             if (GetOutputStateIsSettled(RecordingController.OutputState))
                 StartCoroutine(DelayedRecordInteractableEnable());
         }
-#endregion
+
+        private bool _enableAutoRecord = true;
+        [UIValue(nameof(EnableAutoRecord))]
+        public bool EnableAutoRecord
+        {
+            get { return _enableAutoRecord; }
+            set
+            {
+                if (_enableAutoRecord == value) return;
+                Logger.log?.Debug($"EnableAutoRecord: {value}");
+                _enableAutoRecord = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+
+        #endregion
 
         public static bool GetOutputStateIsSettled(OutputState state)
         {
