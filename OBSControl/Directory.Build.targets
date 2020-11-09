@@ -16,12 +16,20 @@
   <Target Name="CheckBSMTInstalled" AfterTargets="BeforeBuild" Condition="'$(BSMTTaskAssembly)' == ''">
     <Error Text="The BeatSaberModdingTools.Tasks nuget package doesn't seem to be installed, advanced build targets will not work." ContinueOnError="true" />
   </Target>
-  <Target Name="GetProjectInfo" AfterTargets="BeforeBuild" Condition="'$(BSMTTaskAssembly)' != ''">
-    <GetManifestInfo ErrorOnMismatch="False">
+  <Target Name="GetProjectInfo" AfterTargets="BeforeBuild" DependsOnTargets="CheckBSMTInstalled" Condition="'$(BSMTTaskAssembly)' != ''">
+    <GetManifestInfo FailOnError="$(ErrorOnMismatchedVersions)">
       <Output TaskParameter="PluginVersion" PropertyName="PluginVersion" />
+      <Output TaskParameter="BasePluginVersion" PropertyName="BasePluginVersion" />
       <Output TaskParameter="GameVersion" PropertyName="GameVersion" />
-      <Output TaskParameter="AssemblyVersion" PropertyName="AssemblyVersion" />
     </GetManifestInfo>
+    <PropertyGroup>
+      <AssemblyVersion>$(BasePluginVersion)</AssemblyVersion>
+    </PropertyGroup>
+    <!--<GetAssemblyInfo FailOnError="$(ErrorOnMismatchedVersions)" Condition="'$(AssemblyVersion)' == ''">
+      <Output TaskParameter="AssemblyVersion" PropertyName="AssemblyVersion" />
+    </GetAssemblyInfo>-->
+    <Message Text="$(BasePluginVersion) | $(AssemblyVersion)" Importance="high" />
+    <CompareVersions PluginVersion="$(BasePluginVersion)" AssemblyVersion="$(AssemblyVersion)" ErrorOnMismatch="$(ErrorOnMismatchedVersions)" />
     <GetCommitInfo ProjectDir="$(ProjectDir)">
       <Output TaskParameter="CommitHash" PropertyName="CommitHash" />
       <Output TaskParameter="Branch" PropertyName="Branch" />

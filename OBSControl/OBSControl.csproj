@@ -1,17 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{51B976F3-3672-4A64-9C23-7FE3F8D4AC79}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>OBSControl</RootNamespace>
     <AssemblyName>OBSControl</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
+    <Version>0.0.0</Version>
+    <Authors>Zingabopp</Authors>
+    <Copyright>Copyright © Zingabopp 2020</Copyright>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/Zingabopp/OBSControl</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Zingabopp/OBSControl</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Description>A Beat Saber mod to automatically start/stop recording in OBS when you play a song.</Description>
+    <TargetFramework>net472</TargetFramework>
     <!--<PathMap Condition="'$(SolutionDir)' != ''">$(SolutionDir)=C:\</PathMap>-->
     <DebugType>portable</DebugType>
     <BeatSaberReferences>..\Refs</BeatSaberReferences>
@@ -144,49 +146,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="OBSComponents\AudioDevicesController.cs" />
-    <Compile Include="GameStatus.cs" />
-    <Compile Include="HarmonyPatches\HarmonyManager.cs" />
-    <Compile Include="HarmonyPatches\GameSongController_ReadyToStart.cs" />
-    <Compile Include="HarmonyPatches\HarmonyPatchInfo.cs" />
-    <Compile Include="HarmonyPatches\LevelSelectionFlowCoordinator_StartLevel.cs" />
-    <Compile Include="HarmonyPatches\LevelSelectionFlowCoordinator_HandleStandardLevelDidFinishPatch.cs" />
-    <Compile Include="NotificationController.cs" />
-    <Compile Include="OBSComponents\OBSComponent.cs" />
-    <Compile Include="OBSComponents\RecordingController_EventHandlers.cs" />
-    <Compile Include="OBSComponents\RecordingController_Types.cs" />
-    <Compile Include="OBSComponents\SceneController.cs" />
-    <Compile Include="OBSComponents\StreamingController.cs" />
-    <Compile Include="OBSController.cs" />
-    <Compile Include="OBSLogger.cs" />
-    <Compile Include="Plugin.cs" />
-    <Compile Include="Logger.cs" />
-    <Compile Include="PluginConfig.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="OBSComponents\RecordingController.cs" />
-    <Compile Include="UI\AudioDeviceDropdownEntry.cs" />
-    <Compile Include="UI\ControlScreen_Streaming.cs" />
-    <Compile Include="UI\ControlScreen_Recording.cs" />
-    <Compile Include="UI\ControlScreenCoordinator.cs" />
-    <Compile Include="UI\ControlScreen.cs" />
-    <Compile Include="UI\Formatters\TimeFormatter.cs" />
-    <Compile Include="UI\Formatters\BoolFormatter.cs" />
-    <Compile Include="Utilities\AsyncEventListener.cs" />
-    <Compile Include="Utilities\FileRenaming.cs" />
-    <Compile Include="Wrappers\BeatmapLevelWrapper.cs" />
-    <Compile Include="Wrappers\ConversionExtensions.cs" />
-    <Compile Include="Wrappers\GameplayModifiersWrapper.cs" />
-    <Compile Include="Wrappers\IGameplayModifiers.cs" />
-    <Compile Include="Wrappers\ILevelData.cs" />
-    <Compile Include="Utilities\Utilities.cs" />
-    <Compile Include="Utilities\VersionCheck.cs" />
-    <Compile Include="Wrappers\ILevelCompletionResults.cs" />
-    <Compile Include="Wrappers\LevelCompletionResultsWrapper.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="manifest.json" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
     <None Include="Directory.Build.props" />
     <None Include="Directory.Build.targets" />
     <None Include=".gitignore" />
@@ -198,7 +164,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BeatSaberModdingTools.Tasks">
-      <Version>1.2.3</Version>
+      <Version>1.3.2</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -209,9 +175,6 @@
       <Version>2.0.13</Version>
       <IncludeAssets>build</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Newtonsoft.Json">
-      <Version>12.0.3</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
@@ -235,10 +198,29 @@
     <EmbeddedResource Include="Icons\reset.png" />
     <None Include="Icons\reset.svg" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
   <Import Project="ILRepack.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
-  </PropertyGroup>
+  <Target Name="PreBuild" BeforeTargets="BeforeBuild" Condition="'$(NCRUNCH)' != '1'">
+    <Error Text="The BeatSaberModdingTools.Tasks nuget package doesn't seem to be installed." Condition="'$(BSMTTaskAssembly)' == ''" />
+    <GetCommitInfo ProjectDir="$(ProjectDir)">
+      <Output TaskParameter="CommitHash" PropertyName="CommitHash" />
+      <Output TaskParameter="Branch" PropertyName="GitBranch" />
+      <Output TaskParameter="IsPullRequest" PropertyName="IsPullRequest" />
+      <Output TaskParameter="Modified" PropertyName="GitModified" />
+      <Output TaskParameter="GitUser" PropertyName="GitUser" />
+    </GetCommitInfo>
+    <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true' AND '$(GitUser)' == 'Zingabopp' AND '$(IsPullRequest)' != 'true'">
+      <VersionType>Official</VersionType>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(GitModified)' != 'Modified'">
+      <InformationalVersion>$(VersionType)-$(GitBranch)-$(CommitHash)</InformationalVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(GitModified)' == 'Modified'">
+      <InformationalVersion>$(VersionType)-$(GitBranch)-$(CommitHash)-$(GitModified)</InformationalVersion>
+    </PropertyGroup>
+    <Message Text="Version $(InformationalVersion)" Importance="high" />
+  </Target>
+  
 </Project>
