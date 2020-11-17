@@ -160,12 +160,17 @@ namespace OBSControl
         public async Task<bool> TryConnect()
         {
             string message;
-
+            string? serverAddress = Config.ServerAddress;
+            if(serverAddress == null || serverAddress.Length == 0)
+            {
+                Logger.log?.Error($"ServerAddress cannot be null or empty.");
+                return false;
+            }
             if (Obs != null && !Obs.IsConnected)
             {
                 try
                 {
-                    await Obs.Connect(Config.ServerAddress, Config.ServerPassword).ConfigureAwait(false);
+                    await Obs.Connect(serverAddress, Config.ServerPassword).ConfigureAwait(false);
                     message = $"Finished attempting to connect to {Config.ServerAddress}";
                     if (message != lastTryConnectMessage)
                     {
