@@ -99,7 +99,7 @@ namespace OBSControl
         {
             Logger.log?.Debug("CreateObsInstance()");
             var newObs = new OBSWebsocket();
-            newObs.WSTimeout = new TimeSpan(0, 0, 30);
+            //newObs. = new TimeSpan(0, 0, 30);
             newObs.Connected += OnConnect;
             newObs.Disconnected += OnDisconnect;
             newObs.StreamingStateChanged += Obs_StreamingStateChanged;
@@ -131,11 +131,11 @@ namespace OBSControl
             }
         }
 
-        protected void OnRecordingStateChanged(OBSWebsocket sender, OutputState outputState)
+        protected void OnRecordingStateChanged(object sender, OutputStateChangedEventArgs outputState)
         {
             foreach (var handler in _recordingStateChangedHandlers)
             {
-                handler.Invoke(this, outputState);
+                handler.Invoke(this, outputState.OutputState);
             }
         }
         private void DestroyObsInstance(OBSWebsocket? target)
@@ -288,13 +288,13 @@ namespace OBSControl
             }
         }
 
-        private void Obs_StreamingStateChanged(OBSWebsocket sender, OutputState type)
+        private void Obs_StreamingStateChanged(object sender, OutputStateChangedEventArgs e)
         {
-            Logger.log?.Info($"Streaming State Changed: {type.ToString()}");
+            Logger.log?.Info($"Streaming State Changed: {e.OutputState.ToString()}");
         }
 
 
-        private void Obs_StreamStatus(OBSWebsocket sender, StreamStatus status)
+        private void Obs_StreamStatus(object sender, StreamStatusEventArgs status)
         {
             Logger.log?.Info($"Stream Time: {status.TotalStreamTime.ToString()} sec");
             Logger.log?.Info($"Bitrate: {(status.KbitsPerSec / 1024f).ToString("N2")} Mbps");

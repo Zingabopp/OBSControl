@@ -10,6 +10,8 @@ namespace OBSControl
 {
     public class OBSLogger : IOBSLogger
     {
+        public OBSLoggerSettings LoggerSettings { get; set; } = OBSLoggerSettings.None;
+
         public void Log(string message, OBSLogLevel level)
         {
             Logger.log?.Log(level.ToIPALogLevel(), "[OBSWebSocket] " + message);

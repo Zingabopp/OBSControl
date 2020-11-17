@@ -129,7 +129,7 @@ namespace OBSControl
             {
                 if (dropDown != null)
                 {
-                    dropDown.tableView.ReloadData();
+                    dropDown.dropdown.ReloadData();
                     dropDown.ReceiveValue();
                 }
             }

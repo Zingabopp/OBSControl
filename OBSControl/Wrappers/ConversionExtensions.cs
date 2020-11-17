@@ -56,7 +56,6 @@ namespace OBSControl.Wrappers
                 LevelCompletionResults.LevelEndAction.Quit => SongEndAction.Quit,
                 LevelCompletionResults.LevelEndAction.Restart => SongEndAction.Restart,
                 LevelCompletionResults.LevelEndAction.LostConnection => SongEndAction.LostConnection,
-                LevelCompletionResults.LevelEndAction.RoomDestroyed => SongEndAction.RoomDestroyed,
                 _ => SongEndAction.None,
             };
         }

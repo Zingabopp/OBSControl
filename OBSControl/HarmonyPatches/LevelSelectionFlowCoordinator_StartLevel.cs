@@ -8,16 +8,17 @@ using UnityEngine;
 #nullable enable
 namespace OBSControl.HarmonyPatches
 {
-    [HarmonyPatch(typeof(LevelSelectionFlowCoordinator), "StartLevel",
+    [HarmonyPatch(typeof(SinglePlayerLevelSelectionFlowCoordinator), "StartLevel",
         new Type[] {
-        typeof(IDifficultyBeatmap),
         typeof(Action),
         typeof(bool)
         })]
     internal class LevelSelectionNavigationController_StartLevel
     {
-        internal static FieldAccessor<LevelSelectionNavigationController, StandardLevelDetailViewController>.Accessor AccessDetailViewController =
-            FieldAccessor<LevelSelectionNavigationController, StandardLevelDetailViewController>.GetAccessor("_levelDetailViewController");
+        internal static FieldAccessor<LevelSelectionNavigationController, LevelCollectionNavigationController>.Accessor AccessNavigationController =
+            FieldAccessor<LevelSelectionNavigationController, LevelCollectionNavigationController>.GetAccessor("_levelCollectionNavigationController");
+        internal static FieldAccessor<LevelCollectionNavigationController, StandardLevelDetailViewController>.Accessor AccessDetailViewController =
+            FieldAccessor<LevelCollectionNavigationController, StandardLevelDetailViewController>.GetAccessor("_levelDetailViewController");
         internal static FieldAccessor<StandardLevelDetailViewController, StandardLevelDetailView>.Accessor AccessDetailView =
             FieldAccessor<StandardLevelDetailViewController, StandardLevelDetailView>.GetAccessor("_standardLevelDetailView");
         public static bool DelayedStartActive { get; private set; }
@@ -26,9 +27,9 @@ namespace OBSControl.HarmonyPatches
         /// Coroutine to start the level is active.
         /// </summary>
         public static bool WaitingToStart { get; private set; }
-        static bool Prefix(LevelSelectionFlowCoordinator __instance, ref IDifficultyBeatmap difficultyBeatmap,
+        static bool Prefix(SinglePlayerLevelSelectionFlowCoordinator __instance,
             ref Action beforeSceneSwitchCallback, ref bool practice,
-            LevelSelectionNavigationController ____levelSelectionNavigationController)
+            LevelSelectionNavigationController ___levelSelectionNavigationController)
         {
             if(RecordingController.instance == null)
             {
@@ -56,16 +57,17 @@ namespace OBSControl.HarmonyPatches
             DelayedStartActive = true;
             WaitingToStart = true;
             Logger.log?.Debug("LevelSelectionNavigationController_StartLevel");
-            StandardLevelDetailViewController detailViewController = AccessDetailViewController(ref ____levelSelectionNavigationController);
+            LevelCollectionNavigationController navigationController = AccessNavigationController(ref ___levelSelectionNavigationController);
+            StandardLevelDetailViewController detailViewController = AccessDetailViewController(ref navigationController);
             StandardLevelDetailView levelView = AccessDetailView(ref detailViewController);
             if (levelView != null)
-                levelView.playButton.interactable = false;
-            SharedCoroutineStarter.instance.StartCoroutine(DelayedLevelStart(__instance, difficultyBeatmap, beforeSceneSwitchCallback, practice, levelView?.playButton));
+                levelView.actionButton.interactable = false;
+            SharedCoroutineStarter.instance.StartCoroutine(DelayedLevelStart(__instance, beforeSceneSwitchCallback, practice, levelView?.actionButton));
             return false;
         }
 
-        private static IEnumerator DelayedLevelStart(LevelSelectionFlowCoordinator coordinator,
-            IDifficultyBeatmap difficultyBeatmap, Action beforeSceneSwitchCallback, bool practice,
+        private static IEnumerator DelayedLevelStart(SinglePlayerLevelSelectionFlowCoordinator coordinator,
+            Action beforeSceneSwitchCallback, bool practice,
             UnityEngine.UI.Button? playButton)
         {
             if (playButton != null)
@@ -77,7 +79,7 @@ namespace OBSControl.HarmonyPatches
             yield return new WaitForSeconds(Plugin.config.LevelStartDelay); ;
             WaitingToStart = false;
             //playButton.interactable = true;
-            StartLevel(coordinator, difficultyBeatmap, beforeSceneSwitchCallback, practice);
+            StartLevel(coordinator, beforeSceneSwitchCallback, practice);
             if (RecordingController.instance != null)
                 SharedCoroutineStarter.instance.StartCoroutine(RecordingController.instance.GameStatusSetup());
         }
@@ -89,14 +91,14 @@ namespace OBSControl.HarmonyPatches
             {
                 if (_startLevel == null)
                 {
-                    MethodInfo presentMethod = typeof(LevelSelectionFlowCoordinator).GetMethod("StartLevel", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    MethodInfo presentMethod = typeof(SinglePlayerLevelSelectionFlowCoordinator).GetMethod("StartLevel", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                     _startLevel = (StartLevelDelegate)Delegate.CreateDelegate(typeof(StartLevelDelegate), presentMethod);
                 }
                 return _startLevel;
             }
         }
     }
-    public delegate void StartLevelDelegate(LevelSelectionFlowCoordinator coordinator, IDifficultyBeatmap difficultyBeatmap, Action beforeSceneSwitchCallback, bool practice);
+    public delegate void StartLevelDelegate(SinglePlayerLevelSelectionFlowCoordinator coordinator, Action? beforeSceneSwitchCallback, bool practice);
 
 
 
