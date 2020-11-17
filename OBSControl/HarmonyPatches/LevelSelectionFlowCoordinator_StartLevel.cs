@@ -23,7 +23,6 @@ namespace OBSControl.HarmonyPatches
     // TODO: Patch MenuTransitionHelpers.StartStandardLevel instead/also?
     [HarmonyPatch(typeof(SinglePlayerLevelSelectionFlowCoordinator), "StartLevel",
         new Type[] {
-        typeof(IDifficultyBeatmap),
         typeof(Action),
         typeof(bool)
         })]

@@ -217,7 +217,12 @@ namespace OBSControl
         {
             cancellationToken.ThrowIfCancellationRequested();
             string message;
-
+            string? serverAddress = Config.ServerAddress;
+            if(serverAddress == null || serverAddress.Length == 0)
+            {
+                Logger.log?.Error($"ServerAddress cannot be null or empty.");
+                return false;
+            }
             if (Obs != null && !Obs.IsConnected)
             {
                 try
