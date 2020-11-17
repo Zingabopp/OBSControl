@@ -221,7 +221,7 @@ namespace OBSControl
             if(serverAddress == null || serverAddress.Length == 0)
             {
                 Logger.log?.Error($"ServerAddress cannot be null or empty.");
-                return false;
+                return TryConnectResponse.NoRetry;
             }
             if (Obs != null && !Obs.IsConnected)
             {

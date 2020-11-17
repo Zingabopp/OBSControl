@@ -5,15 +5,11 @@ using IPA.Config.Stores.Attributes;
 using IPA.Config.Stores.Converters;
 using OBSControl.OBSComponents;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using System.Windows.Forms;
-using System.Threading.Tasks;
-using System.ComponentModel;
 #nullable enable
 [assembly: InternalsVisibleTo(GeneratedStore.AssemblyVisibilityTarget)]
 namespace OBSControl
@@ -370,9 +366,9 @@ namespace OBSControl
 
         public void UpdateObsAudioSources(IEnumerable<string> sourceKeys)
         {
-            var keys = this.ObsAudioDevices.Keys.ToArray();
+            string[]? keys = this.ObsAudioDevices.Keys.ToArray();
             Logger.log?.Debug($"|ADC| Active devices start");
-            foreach (var sourceKey in keys)
+            foreach (string? sourceKey in keys)
             {
                 Logger.log?.Debug($"|ADC| {sourceKey} is now {sourceKeys.Contains(sourceKey)}");
                 this.ObsAudioDevices[sourceKey].IsAvailable = sourceKeys.Contains(sourceKey);
@@ -400,9 +396,9 @@ namespace OBSControl
             currentDevices.Add("default");
             currentDevices.AddRange(deviceNames);
 
-            foreach (var name in deviceNames) { devicesHistory.Add(name); }
+            foreach (string? name in deviceNames) { devicesHistory.Add(name); }
             devicesDropdown.Clear();
-            foreach (var name in devicesHistory) { devicesDropdown.Add(name); }
+            foreach (string? name in devicesHistory) { devicesDropdown.Add(name); }
             Changed();
         }
 
