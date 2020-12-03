@@ -4,6 +4,7 @@ using OBSControl.OBSComponents;
 using System;
 using System.Collections;
 using System.Reflection;
+using System.Threading.Tasks;
 using UnityEngine;
 #nullable enable
 namespace OBSControl.HarmonyPatches
@@ -31,7 +32,7 @@ namespace OBSControl.HarmonyPatches
             ref Action beforeSceneSwitchCallback, ref bool practice,
             LevelSelectionNavigationController ___levelSelectionNavigationController)
         {
-            if(RecordingController.instance == null)
+            if (RecordingController.instance == null)
             {
                 Logger.log?.Warn($"RecordingController is null, unable to start recording.");
                 return true;
@@ -75,8 +76,10 @@ namespace OBSControl.HarmonyPatches
             else
                 Logger.log?.Warn($"playButton is null for DelayedLevelStart, unable to disable while waiting.");
             Logger.log?.Debug($"Delaying level start by {Plugin.config.LevelStartDelay} seconds...");
-            RecordingController.instance?.StartRecordingLevel();
-            yield return new WaitForSeconds(Plugin.config.LevelStartDelay); ;
+            Task? startTask = RecordingController.instance?.StartRecordingLevel();
+            if (startTask != null)
+                yield return IPA.Utilities.Async.Coroutines.WaitForTask(startTask);
+            yield return new WaitForSeconds(Plugin.config.LevelStartDelay);
             WaitingToStart = false;
             //playButton.interactable = true;
             StartLevel(coordinator, beforeSceneSwitchCallback, practice);

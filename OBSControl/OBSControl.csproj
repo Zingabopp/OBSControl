@@ -135,6 +135,7 @@
     <Compile Include="PluginConfig.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="OBSComponents\RecordingController.cs" />
+    <Compile Include="Utilities\AsyncEventListener.cs" />
     <Compile Include="Utilities\FileRenaming.cs" />
     <Compile Include="Wrappers\BeatmapLevelWrapper.cs" />
     <Compile Include="Wrappers\ConversionExtensions.cs" />

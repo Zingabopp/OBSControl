@@ -1,10 +1,12 @@
-﻿using OBSControl.Wrappers;
+﻿using OBSControl.Utilities;
+using OBSControl.Wrappers;
 using OBSWebsocketDotNet;
 using OBSWebsocketDotNet.Types;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 #nullable enable
@@ -27,6 +29,8 @@ namespace OBSControl.OBSComponents
         {
             return dateTime.ToString(DefaultDateTimeFormat);
         }
+
+        private int CurrentRecordingId;
 
         public string? RecordingFolder { get; protected set; }
         public async Task TryStartRecordingAsync(string fileFormat = DefaultFileFormat)
@@ -92,7 +96,7 @@ namespace OBSControl.OBSComponents
                     Logger.log?.Info($"Setting intro OBS scene to '{startScene}'");
                     await obs.SetCurrentScene(startScene).ConfigureAwait(false);
                     await obs.SetTransitionDuration(transitionDuration).ConfigureAwait(false);
-                    await obs.StartRecording().ConfigureAwait(false);
+                    await StartRecording().ConfigureAwait(false);
                     await Task.Delay(TimeSpan.FromSeconds(Plugin.config.StartSceneDuration)).ConfigureAwait(false);
                     Logger.log?.Info($"Setting game OBS scene to '{gameScene}'");
                     await obs.SetCurrentScene(gameScene).ConfigureAwait(false);
@@ -101,7 +105,7 @@ namespace OBSControl.OBSComponents
                 {
                     if (!string.IsNullOrEmpty(gameScene))
                         await obs.SetCurrentScene(gameScene).ConfigureAwait(false);
-                    await obs.StartRecording().ConfigureAwait(false);
+                    await StartRecording().ConfigureAwait(false);
                 }
 
             }
@@ -112,6 +116,83 @@ namespace OBSControl.OBSComponents
                 Logger.log?.Debug(ex);
             }
 #pragma warning restore CA1031 // Do not catch general exception types
+        }
+
+        private async Task<bool> StartRecording(bool forceStartFresh = false)
+        {
+            OBSController controller = OBSController.instance ?? throw new InvalidOperationException("OBSController is null.");
+            OBSWebsocket obs = _obs ?? throw new InvalidOperationException("_obs is null.");
+            using var cts = new CancellationTokenSource(5000);
+            CurrentRecordingId++;
+            AsyncEventListener<bool, OutputState>? listener = null;
+            try
+            {
+                listener = new AsyncEventListener<bool, OutputState>(WaitForRecordStop, cts.Token);
+                controller.RecordingStateChanged += listener.OnEvent;
+                listener.Reset();
+                listener.StartListening();
+                if (CurrentState != OutputState.Stopped)
+                {
+                    if (CurrentState != OutputState.Stopping)
+                    {
+                        try
+                        {
+                            await StopRecording(0).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.log?.Error($"Error stopping previous recording: {ex.Message}");
+                        }
+                    }
+                    if (listener.Task.Status == TaskStatus.Running || listener.Task.Status == TaskStatus.WaitingForActivation)
+                        Logger.log?.Debug("Waiting for previous recording to stop.");
+                    await listener.Task.ConfigureAwait(false);
+                    await Task.Delay(500).ConfigureAwait(false);
+                }
+                Logger.log?.Debug($"Telling OBS to start recording (current state is {CurrentState})");
+                await obs.StartRecording().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Logger.log?.Error($"Error in StartRecording: {ex.Message}");
+                return false;
+            }
+            finally
+            {
+                if (listener != null)
+                {
+                    listener.TrySetCanceled();
+                    controller.RecordingStateChanged -= listener.OnEvent;
+                }
+            }
+            return true;
+        }
+        private async Task<bool> StopRecording(int recordingId)
+        {
+            OBSWebsocket obs = _obs ?? throw new InvalidOperationException("_obs is null.");
+
+            try
+            {
+                if (CurrentRecordingId == recordingId || CurrentRecordingId == 0 || recordingId == 0)
+                    await obs.StopRecording();
+                else
+                    Logger.log?.Warn($"Unable to stop recording: Another recording seems to have already started.");
+            }
+            catch (Exception ex)
+            {
+                Logger.log?.Error($"Error stopping recording: {ex.Message}");
+                return false;
+            }
+            return true;
+        }
+
+        private EventListenerResult<bool> WaitForRecordStop(object _, OutputState outputState)
+        {
+            return new EventListenerResult<bool>(outputState == OutputState.Stopped, outputState == OutputState.Stopped);
+        }
+        private EventListenerResult<bool> WaitForRecordStart(object _, OutputState outputState)
+        {
+            return new EventListenerResult<bool>(outputState == OutputState.Started, outputState == OutputState.Started);
         }
 
         public async Task<string[]> GetAvailableScenes()
@@ -166,9 +247,15 @@ namespace OBSControl.OBSComponents
         public async Task TryStopRecordingAsync(string? renameTo, bool stopImmediate = false)
         {
             OBSWebsocket? obs = _obs;
+            int recordingId = CurrentRecordingId;
             if (obs == null)
             {
                 Logger.log?.Error($"Unable to stop recording, obs instance is null.");
+                return;
+            }
+            if (CurrentState == OutputState.Stopped || CurrentState == OutputState.Stopping)
+            {
+                Logger.log?.Warn($"Recording is already {CurrentState}.");
                 return;
             }
             string endScene = Plugin.config.EndSceneName ?? string.Empty;
@@ -189,17 +276,29 @@ namespace OBSControl.OBSComponents
                     if (delay > 0)
                         await Task.Delay(TimeSpan.FromSeconds(delay)).ConfigureAwait(false);
 
+                    if (CurrentState == OutputState.Stopped || CurrentState == OutputState.Stopping)
+                    {
+                        Logger.log?.Warn($"Recording is already {CurrentState}.");
+                        return;
+                    }
                     if (validOutro)
                     {
                         Logger.log?.Info($"Setting outro OBS scene to '{endScene}'");
                         await obs.SetCurrentScene(endScene);
                         await Task.Delay(TimeSpan.FromSeconds(Plugin.config.EndSceneDuration));
+
+                        if (CurrentState == OutputState.Stopped || CurrentState == OutputState.Stopping)
+                        {
+                            Logger.log?.Warn($"Recording is already {CurrentState}.");
+                            await obs.SetCurrentScene(gameScene);
+                            return;
+                        }
                     }
                 }
-                await obs.StopRecording().ConfigureAwait(false);
+                await StopRecording(recordingId).ConfigureAwait(false);
                 if (!stopImmediate && validOutro)
                 {
-		    await Task.Delay(100).ConfigureAwait(false); // To ensure recording has fully stopped.
+                    await Task.Delay(100).ConfigureAwait(false); // To ensure recording has fully stopped.
                     Logger.log?.Info($"Setting game OBS scene to '{gameScene}'");
                     await obs.SetCurrentScene(gameScene).ConfigureAwait(false);
                 }
@@ -290,13 +389,14 @@ namespace OBSControl.OBSComponents
         }
 
         public bool recordingCurrentLevel;
+        private OutputState _currentState;
 
-        public void StartRecordingLevel()
+        public Task StartRecordingLevel()
         {
             string fileFormat = ToDateTimeFileFormat(DateTime.Now);
             Logger.log?.Debug($"Starting recording, file format: {fileFormat}");
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-            TryStartRecordingAsync(fileFormat);
+            return TryStartRecordingAsync(fileFormat);
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         }
 
@@ -331,7 +431,7 @@ namespace OBSControl.OBSComponents
                 if (GameStatus.DifficultyBeatmap != null)
                 {
                     newFileName = Utilities.FileRenaming.GetFilenameString(Plugin.config.RecordingFileFormat,
-                        new BeatmapLevelWrapper(GameStatus.DifficultyBeatmap), resultsWrapper, 
+                        new BeatmapLevelWrapper(GameStatus.DifficultyBeatmap), resultsWrapper,
                         Plugin.config.InvalidCharacterSubstitute, Plugin.config.ReplaceSpacesWith);
                 }
             }
@@ -349,7 +449,7 @@ namespace OBSControl.OBSComponents
 
         private void Obs_RecordingStateChanged(object sender, OutputState type)
         {
-            Logger.log?.Info($"Recording State Changed: {type}");
+            CurrentState = type;
             switch (type)
             {
                 case OutputState.Starting:
@@ -372,6 +472,18 @@ namespace OBSControl.OBSComponents
             }
         }
 
+        public OutputState CurrentState
+        {
+            get => _currentState;
+            private set
+            {
+                if (_currentState == value)
+                    return;
+                _currentState = value;
+                Logger.log?.Info($"Recording State Changed: {value}");
+            }
+        }
+
         #endregion
 
 
@@ -389,7 +501,10 @@ namespace OBSControl.OBSComponents
             GameObject.DontDestroyOnLoad(this);
             instance = this;
             if (OBSController.instance != null)
+            {
                 OBSController.instance.RecordingStateChanged += Obs_RecordingStateChanged;
+                CurrentState = OBSController.instance.CurrentRecordingState;
+            }
         }
 
         /// <summary>
@@ -401,6 +516,17 @@ namespace OBSControl.OBSComponents
             BS_Utils.Plugin.LevelDidFinishEvent += OnLevelFinished;
             if (!LevelDelayPatch.IsApplied)
                 LevelDelayPatch.ApplyPatch();
+            if (OBSController.instance != null)
+            {
+                CurrentState = OBSController.instance.CurrentRecordingState;
+                OBSController.instance.Connected += OnOBSControllerConnected;
+            }
+        }
+
+        private void OnOBSControllerConnected(object sender, EventArgs e)
+        {
+            if (sender is OBSController controller)
+                CurrentState = controller.CurrentRecordingState;
         }
 
         /// <summary>

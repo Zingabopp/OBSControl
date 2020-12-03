@@ -36,30 +36,32 @@ namespace OBSControl
             }
         }
 
+        public OutputState CurrentRecordingState { get; private set; }
+
         //private static float PlayerHeight;
 
-//        private PlayerSpecificSettings _playerSettings;
-//        private PlayerSpecificSettings PlayerSettings
-//        {
-//            get
-//            {
-//                if (_playerSettings == null)
-//                {
-//                    _playerSettings = GameStatus.gameSetupData?.playerSpecificSettings;
-//                    if (_playerSettings != null)
-//                    {
-//                        Logger.log?.Debug("Found PlayerSettings");
-//                    }
-//                    else
-//                        Logger.log?.Warn($"Unable to find PlayerSettings");
-//                }
-//#if DEBUG
-//                else
-//                    Logger.log?.Debug("PlayerSettings already exists, don't need to find it");
-//#endif
-//                return _playerSettings;
-//            }
-//        }
+        //        private PlayerSpecificSettings _playerSettings;
+        //        private PlayerSpecificSettings PlayerSettings
+        //        {
+        //            get
+        //            {
+        //                if (_playerSettings == null)
+        //                {
+        //                    _playerSettings = GameStatus.gameSetupData?.playerSpecificSettings;
+        //                    if (_playerSettings != null)
+        //                    {
+        //                        Logger.log?.Debug("Found PlayerSettings");
+        //                    }
+        //                    else
+        //                        Logger.log?.Warn($"Unable to find PlayerSettings");
+        //                }
+        //#if DEBUG
+        //                else
+        //                    Logger.log?.Debug("PlayerSettings already exists, don't need to find it");
+        //#endif
+        //                return _playerSettings;
+        //            }
+        //        }
 
         private PlayerDataModel? _playerData;
         public PlayerDataModel? PlayerData
@@ -133,6 +135,7 @@ namespace OBSControl
 
         protected void OnRecordingStateChanged(object sender, OutputStateChangedEventArgs outputState)
         {
+            CurrentRecordingState = outputState.OutputState;
             foreach (var handler in _recordingStateChangedHandlers)
             {
                 handler.Invoke(this, outputState.OutputState);
@@ -161,7 +164,7 @@ namespace OBSControl
         {
             string message;
             string? serverAddress = Config.ServerAddress;
-            if(serverAddress == null || serverAddress.Length == 0)
+            if (serverAddress == null || serverAddress.Length == 0)
             {
                 Logger.log?.Error($"ServerAddress cannot be null or empty.");
                 return false;
@@ -221,7 +224,7 @@ namespace OBSControl
         private async Task RepeatTryConnect()
         {
             OBSWebsocket? obs = Obs;
-            if(obs == null)
+            if (obs == null)
             {
                 Logger.log?.Error($"Obs instance is null in RepeatTryConnect()");
                 return;
@@ -250,7 +253,7 @@ namespace OBSControl
         }
 
         #endregion
-
+        public event EventHandler? Connected;
         #region Event Handlers
         private async void OnConnect(object sender, EventArgs e)
         {
@@ -265,12 +268,17 @@ namespace OBSControl
                 {
                     Plugin.config.UpdateSceneOptions(availableScenes);
                 });
+                var thing = await obs.ListOutputs();
+                var recordingOutput = thing.FirstOrDefault(o => o is FileOutput) as FileOutput;
+                if (recordingOutput != null)
+                    CurrentRecordingState = recordingOutput.Active ? OutputState.Started : OutputState.Stopped;
             }
             catch (Exception ex)
             {
                 Logger.log?.Error($"Error getting scene list: {ex.Message}");
                 Logger.log?.Debug(ex);
             }
+            Connected?.Invoke(this, EventArgs.Empty);
         }
 
         private async void OnObsSceneListChanged(object sender, EventArgs e)
