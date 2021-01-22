@@ -27,22 +27,22 @@ namespace OBSControl
 
         public void NotifyRecordStartChanged()
         {
-            RaisePropertyChanged(nameof(RecordStartOption));
-            RaisePropertyChanged(nameof(DelayedLevelStartEnabled));
-            RaisePropertyChanged(nameof(SongStartEnabled));
-            RaisePropertyChanged(nameof(SceneSequenceEnabled));
-            RaisePropertyChanged(nameof(SceneSequenceDisabled));
+            RaiseNotifyPropertyChanged(nameof(RecordStartOption));
+            RaiseNotifyPropertyChanged(nameof(DelayedLevelStartEnabled));
+            RaiseNotifyPropertyChanged(nameof(SongStartEnabled));
+            RaiseNotifyPropertyChanged(nameof(SceneSequenceEnabled));
+            RaiseNotifyPropertyChanged(nameof(SceneSequenceDisabled));
         }
         public void NotifyAudioDevicesChanged(string sourceKey)
         {
             // Note to self: this is probably here to refresh shown configs
             // in the bsml file whose "active" state is backed by a variable
-            RaisePropertyChanged(nameof(ObsDesktopAudio1));
-            RaisePropertyChanged(nameof(ObsDesktopAudio2));
-            RaisePropertyChanged(nameof(ObsMicAux1));
-            RaisePropertyChanged(nameof(ObsMicAux2));
-            RaisePropertyChanged(nameof(ObsMicAux3));
-            RaisePropertyChanged(nameof(ObsMicAux4));
+            RaiseNotifyPropertyChanged(nameof(ObsDesktopAudio1));
+            RaiseNotifyPropertyChanged(nameof(ObsDesktopAudio2));
+            RaiseNotifyPropertyChanged(nameof(ObsMicAux1));
+            RaiseNotifyPropertyChanged(nameof(ObsMicAux2));
+            RaiseNotifyPropertyChanged(nameof(ObsMicAux3));
+            RaiseNotifyPropertyChanged(nameof(ObsMicAux4));
         }
 
         [UseConverter(typeof(EnumConverter<RecordStartOption>))]
@@ -583,7 +583,7 @@ namespace OBSControl
         #endregion
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        public void RaisePropertyChanged([CallerMemberName] string? propertyName = null)
+        public void RaiseNotifyPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             if (propertyName != null)
             {
