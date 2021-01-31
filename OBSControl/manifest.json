@@ -2,18 +2,17 @@
   "$schema": "https://raw.githubusercontent.com/bsmg/BSIPA-MetadataFileSchema/master/Schema.json",
   "author": "Zingabopp",
   "description": "Automatically record videos using OBS Websocket.",
-  "gameVersion": "1.13.0",
+  "gameVersion": "1.13.2",
   "id": "OBSControl",
   "name": "OBSControl",
   "version": "2.0.0",
   "dependsOn": {
-    "BSIPA": "^4.1.3",
-    "BeatSaberMarkupLanguage": "^1.4.1",
-    "BS Utils": "^1.6.1"
+    "BSIPA": "^4.1.4",
+    "BeatSaberMarkupLanguage": "^1.4.5",
+    "BS Utils": "^1.7.0"
   },
   "links": {
     "project-source": "https://github.com/Zingabopp/OBSControl",
     "donate": "https://ko-fi.com/zingabopp"
-  },
-  "features": []
+  }
 }

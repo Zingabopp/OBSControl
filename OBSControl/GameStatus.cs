@@ -62,7 +62,8 @@ namespace OBSControl
             {
                 MaxScore = ScoreModel.MaxRawScoreForNumberOfNotes(DifficultyBeatmap?.beatmapData.cuttableNotesType ?? 0);
                 Logger.log?.Debug($"MaxScore: {MaxScore}");
-                MaxModifiedScore = GameStatus.GpModSO?.GetModifiedScoreForGameplayModifiers(GameStatus.MaxScore, GameSetupData?.gameplayModifiers) ?? 0;
+                // TODO: Handle no-fail properly
+                MaxModifiedScore = GameStatus.GpModSO?.GetModifiedScoreForGameplayModifiers(GameStatus.MaxScore, GameSetupData?.gameplayModifiers, 1) ?? 0;
                 Logger.log?.Debug($"MaxModifiedScore: {MaxModifiedScore}");
             }
 #pragma warning disable CA1031 // Do not catch general exception types

@@ -15,7 +15,7 @@ namespace OBSControl.Wrappers
         }
         public EnergyType EnergyType => _modifiers.energyType.ToEnergyType();
         public bool BatteryEnergy => _modifiers.energyType == GameplayModifiers.EnergyType.Battery;
-        public bool NoFail => _modifiers.noFail;
+        public bool NoFail => _modifiers.noFailOn0Energy;
         public bool DemoNoFail => _modifiers.demoNoFail;
         public bool InstaFail => _modifiers.instaFail;
         public bool FailOnSaberClash => _modifiers.failOnSaberClash;
