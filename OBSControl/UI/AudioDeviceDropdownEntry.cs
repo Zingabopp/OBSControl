@@ -8,7 +8,7 @@ public class AudioDeviceDropdownEntry
     public string sourceKey;
     public string LongKeyName;
     public string deviceName = "default";
-    public string HoverHint { get => this.IsAvailable ? null : "Device is disabled in OBS!"; }
+    public string HoverHint { get => this.IsAvailable ? string.Empty : "Device is disabled in OBS!"; }
     public string Color { get => this.IsAvailable ? "white" : "red"; }
 
     public bool IsAvailable = false;
@@ -18,7 +18,7 @@ public class AudioDeviceDropdownEntry
         return ($"<color=\"red\">{name} (N/A)</color>");
     }
 
-    private AudioDevicesController AudioDevicesController => OBSController.instance?.GetOBSComponent<AudioDevicesController>();
+    private AudioDevicesController? AudioDevicesController => OBSController.instance?.GetOBSComponent<AudioDevicesController>();
 
     public AudioDeviceDropdownEntry(string sourceKey, string longKeyName, bool available)
     {
