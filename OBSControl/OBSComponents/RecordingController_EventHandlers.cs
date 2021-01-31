@@ -1,4 +1,5 @@
-﻿using OBSControl.HarmonyPatches;
+﻿using BS_Utils.Utilities;
+using OBSControl.HarmonyPatches;
 using OBSControl.Wrappers;
 using OBSWebsocketDotNet;
 using OBSWebsocketDotNet.Types;
@@ -87,8 +88,14 @@ namespace OBSControl.OBSComponents
         /// </summary>
         /// <param name="levelScenesTransitionSetupDataSO"></param>
         /// <param name="levelCompletionResults"></param>
-        private async void OnLevelFinished(StandardLevelScenesTransitionSetupDataSO levelScenesTransitionSetupDataSO, LevelCompletionResults levelCompletionResults)
+        private async void OnLevelFinished(object sender, LevelFinishedEventArgs e)
         {
+            ScenesTransitionSetupDataSO levelScenesTransitionSetupDataSO = e.ScenesTransitionSetupDataSO;
+            LevelCompletionResults? levelCompletionResults = null;
+            if (e is LevelFinishedWithResultsEventArgs resultArgs)
+            {
+                levelCompletionResults = resultArgs.CompletionResults;
+            }
             Logger.log?.Debug($"RecordingController OnLevelFinished: {SceneManager.GetActiveScene().name}. RecordStopOption: {RecordStopOption}.");
             bool multipleLevelData = LastLevelData?.LevelResults != null || (LastLevelData?.MultipleLastLevels ?? false) == true;
             try
@@ -104,8 +111,9 @@ namespace OBSControl.OBSComponents
                         stats = playerData.playerData.GetPlayerLevelStatsData(
                             levelInfo.levelID, difficultyBeatmap.difficulty, difficultyBeatmap.parentDifficultyBeatmapSet.beatmapCharacteristic);
                     }
-
-                    LevelCompletionResultsWrapper levelResults = new LevelCompletionResultsWrapper(levelCompletionResults, stats?.playCount ?? 0, GameStatus.MaxModifiedScore);
+                    LevelCompletionResultsWrapper? levelResults = null;
+                    if(levelCompletionResults != null)
+                        levelResults = new LevelCompletionResultsWrapper(levelCompletionResults, stats?.playCount ?? 0, GameStatus.MaxModifiedScore);
                     RecordingData? recordingData = LastLevelData;
                     if (recordingData == null)
                     {

@@ -112,7 +112,7 @@ namespace OBSControl.OBSComponents
                 LevelData = levelData;
                 PlayerLevelStats = playerLevelStats;
             }
-            public RecordingData(BeatmapLevelWrapper levelData, LevelCompletionResultsWrapper levelResults, PlayerLevelStatsData? playerLevelStats)
+            public RecordingData(BeatmapLevelWrapper levelData, LevelCompletionResultsWrapper? levelResults, PlayerLevelStatsData? playerLevelStats)
             {
                 LevelResults = levelResults;
                 LevelData = levelData;

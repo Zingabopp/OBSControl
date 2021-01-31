@@ -642,7 +642,7 @@ namespace OBSControl.OBSComponents
             CurrentScene = null;
         }
 
-        private void OnLevelDidFinish(StandardLevelScenesTransitionSetupDataSO levelScenesTransitionSetupDataSO, LevelCompletionResults levelCompletionResults)
+        private void OnLevelDidFinish(object sender, LevelFinishedEventArgs e)
         {
             if (OutroSceneSequenceEnabled)
             {
@@ -653,14 +653,14 @@ namespace OBSControl.OBSComponents
         protected override void SetEvents(OBSController obs)
         {
             base.SetEvents(obs);
-            BS_Utils.Plugin.LevelDidFinishEvent += OnLevelDidFinish;
+            BSEvents.LevelFinished += OnLevelDidFinish;
             StartLevelPatch.LevelStarting += OnLevelStarting;
         }
 
         protected override void RemoveEvents(OBSController obs)
         {
             base.RemoveEvents(obs);
-            BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelDidFinish;
+            BSEvents.LevelFinished -= OnLevelDidFinish;
             StartLevelPatch.LevelStarting -= OnLevelStarting;
         }
         protected override void SetEvents(OBSWebsocket obs)

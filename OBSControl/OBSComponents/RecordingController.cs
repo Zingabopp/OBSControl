@@ -621,7 +621,7 @@ namespace OBSControl.OBSComponents
             BSEvents.menuSceneActive += OnLevelDidFinish;
             //HandleStandardLevelDidFinishPatch.LevelDidFinish += OnLevelDidFinish;
             BSEvents.gameSceneActive += OnGameSceneActive;
-            BS_Utils.Plugin.LevelDidFinishEvent += OnLevelFinished;
+            BSEvents.LevelFinished += OnLevelFinished;
         }
 
 
@@ -636,7 +636,7 @@ namespace OBSControl.OBSComponents
             BSEvents.menuSceneActive += OnLevelDidFinish;
             //HandleStandardLevelDidFinishPatch.LevelDidFinish -= OnLevelDidFinish;
             BSEvents.gameSceneActive -= OnGameSceneActive;
-            BS_Utils.Plugin.LevelDidFinishEvent -= OnLevelFinished;
+            BSEvents.LevelFinished -= OnLevelFinished;
         }
 
         private async Task SceneSequenceCallback(SceneStage sceneStage, CancellationToken cancellationToken)
