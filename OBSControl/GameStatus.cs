@@ -12,7 +12,7 @@ namespace OBSControl
         private static GameplayModifiersModelSO? _gpModSO;
         private static GameplayCoreSceneSetupData? _gameSetupData;
         public static int MaxScore;
-        public static int MaxModifiedScore;
+        //public static int MaxModifiedScore;
 
         public static GameplayCoreSceneSetupData? GameSetupData
         {
@@ -56,15 +56,32 @@ namespace OBSControl
             }
         }
 
+        public static int GetMaxModifiedScore(float endEnergy)
+        {
+            int maxModifiedScore = 0;
+            GameplayModifiersModelSO? gpModSo = GameStatus.GpModSO;
+            GameplayModifiers? mods = GameSetupData?.gameplayModifiers;
+            List<GameplayModifierParamsSO> modifiers;
+            if (gpModSo != null && mods != null)
+            {
+                modifiers = gpModSo.CreateModifierParamsList(mods);
+                maxModifiedScore = gpModSo.GetModifiedScoreForGameplayModifiers(GameStatus.MaxScore, modifiers, 1);
+                Logger.log?.Debug($"MaxModifiedScore: {maxModifiedScore}");
+
+            }
+            else
+            {
+                Logger.log?.Warn("Could not determine gameplay modifiers.");
+            }
+            return maxModifiedScore;
+        }
+
         public static void Setup()
         {
             try
             {
                 MaxScore = ScoreModel.MaxRawScoreForNumberOfNotes(DifficultyBeatmap?.beatmapData.cuttableNotesType ?? 0);
                 Logger.log?.Debug($"MaxScore: {MaxScore}");
-                // TODO: Handle no-fail properly
-                MaxModifiedScore = GameStatus.GpModSO?.GetModifiedScoreForGameplayModifiers(GameStatus.MaxScore, GameSetupData?.gameplayModifiers, 1) ?? 0;
-                Logger.log?.Debug($"MaxModifiedScore: {MaxModifiedScore}");
             }
 #pragma warning disable CA1031 // Do not catch general exception types
             catch (Exception ex)

@@ -11,8 +11,8 @@ namespace OBSControl.Wrappers
         private LevelCompletionResults _results;
         public LevelCompletionResultsWrapper(LevelCompletionResults results, int playCount, int maxModifiedScore)
         {
-            _results = results;
-            GameplayModifiers = new GameplayModifiersWrapper(results.gameplayModifiers);
+            _results = results; 
+            GameplayModifiers = new GameplayModifiersWrapper(results.gameplayModifiers, results.energy);
             PlayCount = playCount;
             MaxModifiedScore = maxModifiedScore;
             if (MaxModifiedScore != 0) // Should never be 0, but check anyway to be safe.

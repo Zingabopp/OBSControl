@@ -113,7 +113,7 @@ namespace OBSControl.OBSComponents
                     }
                     LevelCompletionResultsWrapper? levelResults = null;
                     if(levelCompletionResults != null)
-                        levelResults = new LevelCompletionResultsWrapper(levelCompletionResults, stats?.playCount ?? 0, GameStatus.MaxModifiedScore);
+                        levelResults = new LevelCompletionResultsWrapper(levelCompletionResults, stats?.playCount ?? 0, GameStatus.GetMaxModifiedScore(levelCompletionResults.energy));
                     RecordingData? recordingData = LastLevelData;
                     if (recordingData == null)
                     {

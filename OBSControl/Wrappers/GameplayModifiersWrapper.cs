@@ -9,9 +9,11 @@ namespace OBSControl.Wrappers
     public class GameplayModifiersWrapper : IGameplayModifiers
     {
         private GameplayModifiers _modifiers;
-        public GameplayModifiersWrapper(GameplayModifiers modifiers)
+        private readonly float _endEnergy;
+        public GameplayModifiersWrapper(GameplayModifiers modifiers, float endEnergy)
         {
             _modifiers = modifiers;
+            _endEnergy = endEnergy;
         }
 
         bool IGameplayModifiers.SmallCubes => _modifiers.smallCubes;
@@ -19,7 +21,7 @@ namespace OBSControl.Wrappers
         bool IGameplayModifiers.ProMode => _modifiers.proMode;
         public EnergyType EnergyType => _modifiers.energyType.ToEnergyType();
         public bool BatteryEnergy => _modifiers.energyType == GameplayModifiers.EnergyType.Battery;
-        public bool NoFail => _modifiers.noFailOn0Energy;
+        public bool NoFail => _modifiers.noFailOn0Energy && _endEnergy < float.Epsilon;
         public bool DemoNoFail => _modifiers.demoNoFail;
         public bool InstaFail => _modifiers.instaFail;
         public bool FailOnSaberClash => _modifiers.failOnSaberClash;
