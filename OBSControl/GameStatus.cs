@@ -65,8 +65,8 @@ namespace OBSControl
             if (gpModSo != null && mods != null)
             {
                 modifiers = gpModSo.CreateModifierParamsList(mods);
-                maxModifiedScore = gpModSo.GetModifiedScoreForGameplayModifiers(GameStatus.MaxScore, modifiers, 1);
-                Logger.log?.Debug($"MaxModifiedScore: {maxModifiedScore}");
+                maxModifiedScore = gpModSo.GetModifiedScoreForGameplayModifiers(GameStatus.MaxScore, modifiers, endEnergy);
+                Logger.log?.Debug($"MaxModifiedScore with energy '{endEnergy}': {maxModifiedScore}");
 
             }
             else
