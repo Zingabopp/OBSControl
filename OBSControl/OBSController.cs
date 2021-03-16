@@ -453,7 +453,7 @@ namespace OBSControl
         protected void OnHeartbeat(object sender, HeartBeatEventArgs heartbeat)
         {
 #if DEBUG
-            Logger.log?.Debug("Heartbeat Received");
+            //Logger.log?.Debug("Heartbeat Received");
 #endif
             try
             {
