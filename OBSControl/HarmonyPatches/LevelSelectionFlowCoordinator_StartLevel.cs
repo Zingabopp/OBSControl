@@ -210,7 +210,7 @@ namespace OBSControl.HarmonyPatches
                 SongPreviewPlayer? previewPlayer = GameObject.FindObjectsOfType<SongPreviewPlayer>().FirstOrDefault();
                 if (previewPlayer != null)
                 {
-                    previewPlayer.FadeOut();
+                    previewPlayer.FadeOut(0.1f);
                 }
                 else
                     Logger.log?.Debug($"Couldn't find SongPreviewPlayer.");
