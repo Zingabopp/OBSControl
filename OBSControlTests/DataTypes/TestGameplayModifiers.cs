@@ -7,6 +7,9 @@ namespace OBSControlTests.DataTypes
 {
     public class TestGameplayModifiers : IGameplayModifiers
     {
+        public bool SmallCubes { get; set; }
+        public bool ZenMode { get; set; }
+        public bool ProMode { get; set; }
         public EnergyType EnergyType { get; set; }
         public bool BatteryEnergy { get; set; }
         public bool NoFail { get; set; }
