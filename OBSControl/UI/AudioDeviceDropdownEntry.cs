@@ -26,14 +26,14 @@ public class AudioDeviceDropdownEntry
         this.LongKeyName = longKeyName;
         this.IsAvailable = available;
     }
-    public async Task TrySetDevice(string sourceKey, string deviceName)
+    public async Task TrySetDevice(string sourceKey, string shortDeviceName, bool isOutput)
     {
         try
         {
             var audioDevicesController = AudioDevicesController;
             if (audioDevicesController != null)
             {
-                await audioDevicesController.setSourceToDeviceByName(sourceKey, deviceName);
+                await audioDevicesController.setSourceToDeviceByName(sourceKey, shortDeviceName, isOutput);
             }
             else
             {

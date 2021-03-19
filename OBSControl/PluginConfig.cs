@@ -550,19 +550,19 @@ namespace OBSControl
             get => ObsAudioDevices["mic-4"].deviceName;
             set => this.HandleAudioDeviceSelection("mic-4", value);
         }
-        private async void HandleAudioDeviceSelection(string sourceKey, string deviceName)
+        private async void HandleAudioDeviceSelection(string sourceKey, string shortDeviceName)
         {
-            Logger.log?.Debug($"|ADC| Handling \"{sourceKey}\" - \"{deviceName}\"");
+            Logger.log?.Debug($"|ADC| Handling \"{sourceKey}\" - \"{shortDeviceName}\"");
 
             ObsAudioDevices.TryGetValue(sourceKey, out AudioDeviceDropdownEntry oldDevice);
-            if (oldDevice.deviceName!= deviceName) {
-                await oldDevice.TrySetDevice(sourceKey, deviceName);
+            if (oldDevice.deviceName!= shortDeviceName) {
+                await oldDevice.TrySetDevice(sourceKey, shortDeviceName, sourceKey.StartsWith("desktop"));
             }
 
-            ObsAudioDevices[sourceKey].deviceName = deviceName;
+            ObsAudioDevices[sourceKey].deviceName = shortDeviceName;
             Changed();
             NotifyAudioDevicesChanged(sourceKey);
-            Logger.log?.Debug($"|ADC| Handled \"{sourceKey}\" - \"{deviceName}\"");
+            Logger.log?.Debug($"|ADC| Handled \"{sourceKey}\" - \"{shortDeviceName}\"");
         }
 
         #region Backing Fields
