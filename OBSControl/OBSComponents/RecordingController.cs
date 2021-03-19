@@ -560,10 +560,10 @@ namespace OBSControl.OBSComponents
         public async Task<string?> GetCurrentRecordFile(CancellationToken cancellationToken = default)
         {
             OBSOutputInfo[] outputList = await GetOutputsAsync(cancellationToken).ConfigureAwait(false);
-            FileOutput[] fileOutputs = outputList.Where(o => o is FileOutput).Select(fo => (FileOutput)fo).ToArray();
+            FileOutputInfo[] fileOutputs = outputList.Where(o => o is FileOutputInfo).Select(fo => (FileOutputInfo)fo).ToArray();
             if (fileOutputs.Length > 1)
             {
-                FileOutput chosenOutput = fileOutputs.FirstOrDefault(f => f.Active && !string.IsNullOrEmpty(f.Settings.Path));
+                FileOutputInfo chosenOutput = fileOutputs.FirstOrDefault(f => f.Active && !string.IsNullOrEmpty(f.Settings.Path));
                 if (chosenOutput != null)
                 {
                     Logger.log?.Warn($"Multiple file outputs received: {string.Join(", ", fileOutputs.Select(f => f.Name))}, getting the first active one with a path.");

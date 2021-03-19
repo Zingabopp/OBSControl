@@ -225,7 +225,7 @@ namespace OBSControl.OBSComponents
             {
                 try
                 {
-                    FileOutput? output = (FileOutput?)(await obs.ListOutputs().ConfigureAwait(false)).FirstOrDefault(o => o is FileOutput);
+                    FileOutputInfo? output = (FileOutputInfo?)(await obs.ListOutputs().ConfigureAwait(false)).FirstOrDefault(o => o is FileOutputInfo);
                     if (output != null)
                     {
                         Logger.log?.Debug($"Got FileOutput from OBS: {output.Name} | '{output.Settings.Path}'");
