@@ -12,16 +12,19 @@ namespace OBSControl.OBSComponents
 {
     public class AudioDevicesController : OBSComponent
     {
-        public static List<string> obsSourceKeys = new List<string>{
-            "desktop-1", "desktop-2", "mic-1", "mic-2", "mic-3", "mic-4"
+        public static List<string> obsOutputSourceKeys = new List<string>{
+            "desktop-1", "desktop-2"
+        };
+        public static List<string> obsInputSourceKeys = new List<string>{
+            "mic-1", "mic-2", "mic-3", "mic-4"
         };
         // Devices available to the system (as returned by NAudio)
         private MMDevice? systemDefaultOutputDevice;
         private MMDevice? systemDefaultInputDevice;
-        private MMDeviceCollection? systemDevices;
         private MMDeviceCollection? systemInputDevices;
         private MMDeviceCollection? systemOutputDevices;
-        private Dictionary<string, string> shortDeviceNames = new Dictionary<string, string>();
+        private Dictionary<string, string> shortInputDeviceNames = new Dictionary<string, string>();
+        private Dictionary<string, string> shortOutputDeviceNames = new Dictionary<string, string>();
 
         // Current configuration of OBS. Keys are "SpecialSource" keys ("desktop-1", "mic-1", etc.)
         // obs special source keys mapped to system devices
@@ -51,7 +54,7 @@ namespace OBSControl.OBSComponents
         public async void setDevicesFromConfig()
         {
             Logger.log?.Info("|ADC| Setting devices from config");
-            foreach (string sourceKey in obsSourceKeys)
+            foreach (string sourceKey in obsOutputSourceKeys.Concat(obsInputSourceKeys))
             {
                 Logger.log?.Info($"|ADC| Trying to get device name for \"{sourceKey}\"");
                 string? deviceName = this.getDeviceNameFromConfig(sourceKey);
@@ -60,7 +63,7 @@ namespace OBSControl.OBSComponents
                     Logger.log?.Info($"|ADC| source \"{sourceKey}\" configured to \"{deviceName}\"");
                     try
                     {
-                        await setSourceToDeviceByName(sourceKey, deviceName);
+                        await setSourceToDeviceByName(sourceKey, deviceName, sourceKey.StartsWith("desktop"));
                     }
                     catch (Exception e)
                     {
@@ -74,15 +77,15 @@ namespace OBSControl.OBSComponents
             Logger.log?.Info("|ADC| Setting devices from config done");
         }
 
-        private void listSystemDevices()
+        private void listDevices(MMDeviceCollection? devices)
         {
-            if (systemDevices == null)
+            if (devices == null)
             {
                 Logger.log?.Info("|ADC| MMDeviceCollection systemDevices is null.");
                 return;
             }
             Logger.log?.Info("|ADC| system devices start");
-            foreach (MMDevice? device in this.systemDevices)
+            foreach (MMDevice? device in devices)
             {
                 Logger.log?.Info($"|ADC| FriendlyName: \"{device.FriendlyName}\"");
                 Logger.log?.Info($"|ADC| DeviceID: \"{device.DeviceID}\"");
@@ -96,18 +99,17 @@ namespace OBSControl.OBSComponents
             this.systemDefaultOutputDevice = deviceEnumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
             this.systemDefaultInputDevice = deviceEnumerator.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Console);
 
-            this.systemDevices = deviceEnumerator.EnumAudioEndpoints(DataFlow.All, DeviceState.Active);
-            this.systemDevices.DefaultIfEmpty(null);
-            this.listSystemDevices();
-
             this.systemInputDevices = deviceEnumerator.EnumAudioEndpoints(DataFlow.Capture, DeviceState.Active);
             this.systemInputDevices.DefaultIfEmpty(this.systemDefaultInputDevice);
+            this.listDevices(this.systemInputDevices);
 
             this.systemOutputDevices = deviceEnumerator.EnumAudioEndpoints(DataFlow.Render, DeviceState.Active);
             this.systemOutputDevices.DefaultIfEmpty(this.systemDefaultOutputDevice);
+            this.listDevices(this.systemOutputDevices);
 
-            this.shortDeviceNames.Clear();
+            this.shortOutputDeviceNames.Clear();
             this.generateShortOutputDeviceNames();
+            this.shortInputDeviceNames.Clear();
             this.generateShortInputDeviceNames();
 
             Logger.log?.Debug("|ADC| refreshSystemDevices finished.");
@@ -147,11 +149,25 @@ namespace OBSControl.OBSComponents
             foreach (KeyValuePair<string, string> source in obsSources)
             {
                 this.obsActiveSources.Add(source.Key);
-                Logger.log?.Debug($"|ADC| Special device {source.Value} start");
+                Logger.log?.Debug($"|ADC| Special device \"{source.Value}\" start");
                 OBSWebsocketDotNet.Types.SourceSettings? sourceSettings = await obs.GetSourceSettings(source.Value);
                 string? deviceID = sourceSettings.Settings.GetValue("device_id")?.ToString();
                 Logger.log?.Debug($"|ADC| Device ID: \"{deviceID}\"");
-                MMDevice? device = this.systemDevices.FirstOrDefault((d) => d.DeviceID == deviceID);
+                MMDevice? device = this.systemInputDevices.FirstOrDefault((d) => d.DeviceID == deviceID);
+                if (device == null)
+                {
+                    device = this.systemOutputDevices.FirstOrDefault((d) => d.DeviceID == deviceID);
+                    if (device == null)
+                    {
+                        Logger.log?.Debug($"|ADC| Did not find device in Inputs or Outputs");
+                        Logger.log?.Debug($"|ADC| CurrentInputs start");
+                        this.listDevices(this.systemInputDevices);
+                        Logger.log?.Debug($"|ADC| CurrentInputs end");
+                        Logger.log?.Debug($"|ADC| CurrentOutputs start");
+                        this.listDevices(this.systemOutputDevices);
+                        Logger.log?.Debug($"|ADC| CurrentOutputs end");
+                    }
+                }
                 if (device == null)
                 {
                     if (deviceID == "default")
@@ -182,35 +198,52 @@ namespace OBSControl.OBSComponents
                 else
                     Logger.log?.Warn($"|ADC| OBS audio device {source.Key} ({sourceSettings.SourceName}) is null.");
             }
+            Logger.log?.Debug("|ADC| refreshOBSDevices finished.");
         }
 
-        public async Task setSourceToDeviceByName(string sourceKey, string friendlyName)
+        public async Task setSourceToDeviceByName(string sourceKey, string shortDeviceName, bool isOutput)
         {
-            Logger.log?.Debug($"|ADC| Now: Setting source by device Name: \"{sourceKey}\" => \"{friendlyName}\"");
-            if (friendlyName == "default")
+            Logger.log?.Debug($"|ADC| Now: Setting source by device Name: \"{sourceKey}\" => \"{shortDeviceName}\"");
+            if (shortDeviceName == "default")
             {
                 await this.SetSourceToDefault(sourceKey);
                 return;
             }
-            MMDevice? device = this.getDeviceByFriendlyName(friendlyName);
+            MMDevice? device = isOutput ? this.getOutputDeviceByShortName(shortDeviceName) : this.getInputDeviceByShortName(shortDeviceName);
             if (device == null)
             {
                 Logger.log?.Info($"|ADC| device not found :(");
-                this.listSystemDevices();
+                this.listDevices(isOutput ? this.systemOutputDevices : this.systemInputDevices);
                 return;
             }
             await SetSourceToDevice(sourceKey, device);
-            Logger.log?.Debug($"|ADC| Done Setting source by device Name: {sourceKey} => {friendlyName}");
+            Logger.log?.Debug($"|ADC| Done Setting source by device Name: {sourceKey} => {shortDeviceName}");
+        }
+
+        async Task<string?> getSourceNameByKey(string sourceKey)
+        {
+            if (this.obsSourceNames.Count < 5)
+            {
+                await this.UpdateOBSDevices();
+            }
+            if (!this.obsSourceNames.TryGetValue(sourceKey, out string? obsSourceName))
+            {
+                Logger.log?.Info($"|ADC| Aborting, can't find source.");
+                Logger.log?.Info($"|ADC| obsSourceNames:");
+                foreach (var source in this.obsSourceNames)
+                {
+                    Logger.log?.Info($"|ADC| {source.Key}: {source.Value}");
+                }
+                return null;
+            }
+            return obsSourceName;
         }
 
         public async Task SetSourceToDefault(string sourceKey)
         {
-            string? obsSourceName = null;
-            if (!this.obsSourceNames.TryGetValue(sourceKey, out obsSourceName))
-            {
-                Logger.log?.Info($"|ADC| Aborting, obsSourceNames not yet initialized.");
-                return;
-            }
+            string? obsSourceName = await getSourceNameByKey(sourceKey);
+            if (obsSourceName == null) return;
+
             JObject settings = new JObject { { "device_id", "default" } };
 
             try
@@ -240,13 +273,9 @@ namespace OBSControl.OBSComponents
 
         public async Task SetSourceToDevice(string sourceKey, MMDevice device)
         {
-            Logger.log?.Info($"|ADC| Trying to set \"{sourceKey}\" to \"{device.FriendlyName}\"");
-            string? obsSourceName;
-            if (!this.obsSourceNames.TryGetValue(sourceKey, out obsSourceName))
-            {
-                Logger.log?.Info($"|ADC| Aborting, obsSourceNames not yet initialized.");
-                return;
-            }
+            string? obsSourceName = await getSourceNameByKey(sourceKey);
+            if (obsSourceName == null) return;
+
             JObject settings = new JObject { { "device_id", device.DeviceID } };
             try
             {
@@ -275,27 +304,23 @@ namespace OBSControl.OBSComponents
 
         // public MMDevice getInputDeviceByID(string id) => this.systemInputDevices.FirstOrDefault((device) => device.DeviceID.Equals(id));
         // public MMDevice getOutputDeviceByID(string id) => this.systemOutputDevices.FirstOrDefault((device) => device.DeviceID.Equals(id));
-        public MMDevice getDeviceByFriendlyName(string name)
-        {
-            try
-            {
-                string? longName = this.shortDeviceNames[name];
-                if (longName != null) name = longName;
-            }
-            catch (Exception) { }
-            return this.systemDevices.FirstOrDefault((device) => device.FriendlyName.Equals(name));
+        public MMDevice getInputDeviceByShortName(string name) {
+            if (this.shortInputDeviceNames.TryGetValue(name, out string longName)) name = longName;
+            return this.systemInputDevices.FirstOrDefault((device) => device.FriendlyName.Equals(name));
         }
-        // public MMDevice getInputDeviceByFriendlyName(string name) => this.systemInputDevices.FirstOrDefault((device) => device.FriendlyName.Equals(name));
-        // public MMDevice getOutputDeviceByFriendlyName(string name) => this.systemOutputDevices.FirstOrDefault((device) => device.FriendlyName.Equals(name));
+        public MMDevice getOutputDeviceByShortName(string name) {
+            if (this.shortOutputDeviceNames.TryGetValue(name, out string longName)) name = longName;
+            return this.systemOutputDevices.FirstOrDefault((device) => device.FriendlyName.Equals(name));
+        }
 
-        private IEnumerable<string> getShortDeviceNamesFrom(MMDeviceCollection col)
+        private IEnumerable<string> getShortDeviceNamesFrom(MMDeviceCollection col, Dictionary<string, string> mapping)
         {
             IEnumerable<string>? names = col.Select(d => d.FriendlyName);
             return names.Select((name) =>
             {
                 try
                 {
-                    string? shortName = this.shortDeviceNames[name];
+                    string? shortName = mapping[name];
                     if (shortName != null) return shortName;
                 }
                 catch (Exception) { };
@@ -303,11 +328,11 @@ namespace OBSControl.OBSComponents
             });
         }
         private IEnumerable<string> getOutputDeviceNamesForConfig() 
-            => systemOutputDevices != null ? this.getShortDeviceNamesFrom(this.systemOutputDevices) : Array.Empty<string>();
+            => systemOutputDevices != null ? this.getShortDeviceNamesFrom(this.systemOutputDevices, this.shortOutputDeviceNames) : Array.Empty<string>();
         private IEnumerable<string> getInputDeviceNamesForConfig() 
-            => systemInputDevices != null ? this.getShortDeviceNamesFrom(this.systemInputDevices) : Array.Empty<string>();
+            => systemInputDevices != null ? this.getShortDeviceNamesFrom(this.systemInputDevices, this.shortInputDeviceNames) : Array.Empty<string>();
 
-        private void generateShortDeviceName(string pattern, MMDeviceCollection col)
+        private void generateShortDeviceName(string pattern, MMDeviceCollection col, Dictionary<string, string> deviceNameDict)
         {
             IEnumerable<string>? names = col.Select(d => d.FriendlyName);
             Dictionary<string, string> nameMapping = new Dictionary<string, string>();
@@ -315,9 +340,22 @@ namespace OBSControl.OBSComponents
             {
                 Match m = Regex.Match(name, pattern);
                 if (!m.Success) return name;
-                string shortName = m.Result("${name}");
+                string shortName = m.Result("${name}").Replace(" Device", "").Replace("VB-Audio ", "");
+
+                // Remove "Device" and "VB-Audio" from device names. Doesn't fit and the rest of the name is obvious
+                shortName = shortName.Replace(" Device", "").Replace("VB-Audio ", "");
+
+                // Remove leading "NUMBER- " from device name. Windows does some weird stuff with some devices
+                // when you unplug and replug certain USB dongles for audio devices, e.g. wireless headsets
+                // Removing the number should make sure the correct device in selected, even when the number increases
+                Match m2 = Regex.Match(shortName, @"\d+- (?<name>.+)");
+                if (m2.Success) shortName = m2.Result("${name}");
+
+                Logger.log?.Debug($"|ADC| Adding \"{shortName}\" -> \"{name}\"");
                 nameMapping.Add(shortName, name);
+                Logger.log?.Debug($"|ADC| Adding \"{name}\" -> \"{shortName}\"");
                 nameMapping.Add(name, shortName);
+                Logger.log?.Debug($"|ADC| Adding done");
                 return shortName;
             });
 
@@ -329,7 +367,7 @@ namespace OBSControl.OBSComponents
                 return;
             }
 
-            nameMapping.ToList().ForEach(x => this.shortDeviceNames.Add(x.Key, x.Value));
+            nameMapping.ToList().ForEach(x => deviceNameDict.Add(x.Key, x.Value));
             Logger.log?.Debug($"|ADC| Generated short Device names");
         }
 
@@ -337,15 +375,23 @@ namespace OBSControl.OBSComponents
         {
             if (systemOutputDevices == null)
                 return;
-            string pattern = @"(?<name>.*) \(.*\)";
-            this.generateShortDeviceName(pattern, this.systemOutputDevices);
+            try
+            {
+                string pattern = @".* \((?<name>.+)\)";
+                this.generateShortDeviceName(pattern, this.systemOutputDevices, this.shortOutputDeviceNames);
+            }
+            catch (Exception)
+            {
+                string pattern = @"(?<name>.+) \(.+\)";
+                this.generateShortDeviceName(pattern, this.systemOutputDevices, this.shortOutputDeviceNames);
+            }
         }
         private void generateShortInputDeviceNames()
         {
             if (systemInputDevices == null)
                 return;
-            string pattern = @".* \((?<name>.*)\)";
-            this.generateShortDeviceName(pattern, this.systemInputDevices);
+            string pattern = @".* \((?<name>.+)\)";
+            this.generateShortDeviceName(pattern, this.systemInputDevices, this.shortInputDeviceNames);
         }
 
         public void UpdateSystemDevices(bool forceCurrentUpdate = true)
