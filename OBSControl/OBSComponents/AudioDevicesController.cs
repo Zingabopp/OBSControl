@@ -51,6 +51,8 @@ namespace OBSControl.OBSComponents
             };
         }
 
+        public override bool ActiveAndConnected => base.ActiveAndConnected && Plugin.config.EnableAudioControl;
+
         public async void setDevicesFromConfig()
         {
             Logger.log?.Info("|ADC| Setting devices from config");

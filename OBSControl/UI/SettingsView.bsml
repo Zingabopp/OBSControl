@@ -11,8 +11,32 @@
   </settings-submenu>
 
   <settings-submenu text='Recording'>
-    <settings-container>
+    <scrollable-settings-container>
       <clickable-text text='Back' click-event='back' />
+      <settings-submenu text='Intro' hover-hint='Set an intro scene to transition from (applies to all start options)'>
+        <settings-container>
+          <clickable-text text='Back' click-event='back' />
+          <bool-setting text='Enabled' value='IntroSceneEnabled' hover-hint='Enable scene to transition from at the start of the recording' />
+          <dropdown-list-setting id='IntroSceneDropdown' text='Scene Name' value='IntroSceneName' options='SceneSelectOptions'
+                                 apply-on-change='true' hover-hint='Name of the scene to switch to before recording starts.' />
+          <slider-setting text='Scene Duration' value='IntroSceneDuration' integer-only='false' min='0' max='20' increment='0.1'
+                      formatter='formatter-seconds' hover-hint='How long the Intro Scene is shown after recording starts.' />
+          <slider-setting text='Transition Duration' value='IntroTransitionDuration' integer-only='false' min='0' max='2' increment='0.1'
+                      formatter='formatter-seconds' hover-hint='Duration of the scene transition.' />
+        </settings-container>
+      </settings-submenu>
+      <settings-submenu text='Outro' hover-hint='Set an intro scene to transition from (applies to all start options)'>
+        <settings-container>
+          <clickable-text text='Back' click-event='back' />
+          <bool-setting text='Enabled' value='OutroSceneEnabled' hover-hint='Enable scene to transition from at the start of the recording' />
+          <dropdown-list-setting id='OutroSceneDropdown' text='Scene Name' value='OutroSceneName' options='SceneSelectOptions'
+                                 apply-on-change='true' hover-hint='Name of the scene to switch to before recording starts.' />
+          <slider-setting text='Scene Duration' value='OutroSceneDuration' integer-only='false' min='0' max='20' increment='0.1'
+                      formatter='formatter-seconds' hover-hint='How long the Outro Scene is shown after recording starts.' />
+          <slider-setting text='Transition Duration' value='OutroSceneDuration' integer-only='false' min='0' max='2' increment='0.1'
+                      formatter='formatter-seconds' hover-hint='Duration of the scene transition.' />
+        </settings-container>
+      </settings-submenu>
       <bool-setting text='Auto-Stop on Manual' value='AutoStopOnManual' hover-hint='Enable automatic stop when recording is manually triggered.' />
       <dropdown-list-setting id='RecordOptionsDropdown' text='Record Start Option' value='RecordStartOption' options='RecordStartOptions'
                              apply-on-change='true' hover-hint='How recording should be started.' />
@@ -25,7 +49,7 @@
                              apply-on-change='true' hover-hint='How recording should be stopped, ignored for recordings started with SceneSequence.' />
       <slider-setting text='Recording Stop Delay' value='RecordingStopDelay' integer-only='false' min='0' max='20' increment='0.1'
                       formatter='formatter-seconds' hover-hint='Amount of time to delay before stopping recording, ignored for recordings started with SceneSequence..' />
-    </settings-container>
+    </scrollable-settings-container>
   </settings-submenu>
 
   <settings-submenu text='Audio Devices'>

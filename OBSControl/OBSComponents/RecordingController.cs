@@ -277,6 +277,12 @@ namespace OBSControl.OBSComponents
             {
                 RecordStartSource = startType;
                 // RecordStartOption = recordStartOption;
+                SceneController? sceneController = SceneController;
+                if (Plugin.config.IntroSceneEnabled && sceneController != null)
+                {
+                    await sceneController.SetScene(Plugin.config.IntroSceneName);
+                    
+                }
                 await obs.StartRecording().ConfigureAwait(false);
                 RecordStopOption = recordStartOption switch
                 {
