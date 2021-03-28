@@ -277,7 +277,7 @@ namespace OBSControl.OBSComponents
             {
                 RecordStartSource = startType;
                 // RecordStartOption = recordStartOption;
-                await obs.StartRecording().ConfigureAwait(false);
+                await EnsureRecording().ConfigureAwait(false);
                 RecordStopOption = recordStartOption switch
                 {
                     RecordStartOption.None => RecordStopOption.None,
@@ -299,6 +299,60 @@ namespace OBSControl.OBSComponents
             }
 #pragma warning restore CA1031 // Do not catch general exception types
         }
+
+        private async Task EnsureRecording(CancellationToken cancellationToken = default)
+        {
+            int attempt = 1;
+            OBSWebsocket obs = Obs.Obs ?? throw new InvalidOperationException("OBS is null");
+            AsyncEventListener<OutputState, OutputStateChangedEventArgs> listener = new AsyncEventListener<OutputState, OutputStateChangedEventArgs>((s, e) =>
+            {
+                Logger.log?.Warn($"State Changed: {e.OutputState}");
+                if (e.OutputState == OutputState.Started)
+                    return new EventListenerResult<OutputState>(e.OutputState, true);
+                return new EventListenerResult<OutputState>(e.OutputState, false);
+            }, 1000, cancellationToken);
+            obs.RecordingStateChanged += listener.OnEvent;
+            try
+            {
+                do
+                {
+                    
+                    Logger.log?.Debug($"Starting recording (attempt {attempt})...");
+                    try
+                    {
+                        listener.Reset();
+                        listener.StartListening();
+                        Logger.log?.Debug($"Started listening (attempt {attempt}) ({listener.Listening}) ({listener.Task.Status}) ...");
+                        //await obs.StartRecording(cancellationToken).ConfigureAwait(false);
+                        OutputState result = await listener.Task.ConfigureAwait(false);
+                        if (result == OutputState.Started)
+                        {
+                            Logger.log?.Debug($"Recording started confirmed.");
+                            break;
+                        }
+                        else
+                        {
+                            Logger.log?.Warn($"Recording seems to have failed to start (attempt {attempt}).");
+                            break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.log?.Error($"Error starting recording (attempt {attempt}): {ex.Message}");
+                        Logger.log?.Debug(ex);
+                        if (attempt > 3)
+                            throw;
+                    }
+                    attempt++;
+                } while (attempt <= 3);
+            }
+            finally
+            {
+                obs.RecordingStateChanged -= listener.OnEvent;
+                listener.TrySetCanceled();
+            }
+        }
+
 
         public async Task<string[]> GetAvailableScenes()
         {
