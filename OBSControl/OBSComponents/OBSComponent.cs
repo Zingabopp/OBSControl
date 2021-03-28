@@ -13,7 +13,7 @@ namespace OBSControl.OBSComponents
     {
         public event EventHandler<bool>? ActiveChanged;
         public event EventHandler? Destroyed;
-        public bool ActiveAndConnected => isActiveAndEnabled && Connected;
+        public virtual bool ActiveAndConnected => isActiveAndEnabled && Connected;
         public bool Connected { get; private set; }
         private OBSController? _obs;
         protected T? GetService<T>() where T : OBSComponent, new() => _obs?.GetOBSComponent<T>();

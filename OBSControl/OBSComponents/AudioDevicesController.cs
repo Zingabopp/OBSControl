@@ -51,8 +51,12 @@ namespace OBSControl.OBSComponents
             };
         }
 
+        public override bool ActiveAndConnected => base.ActiveAndConnected && Plugin.config.EnableAudioControl;
+
         public async void setDevicesFromConfig()
         {
+            if (!isActiveAndEnabled)
+                return;
             Logger.log?.Info("|ADC| Setting devices from config");
             foreach (string sourceKey in obsOutputSourceKeys.Concat(obsInputSourceKeys))
             {
@@ -203,6 +207,8 @@ namespace OBSControl.OBSComponents
 
         public async Task setSourceToDeviceByName(string sourceKey, string shortDeviceName, bool isOutput)
         {
+            if (!ActiveAndConnected)
+                return;
             Logger.log?.Debug($"|ADC| Now: Setting source by device Name: \"{sourceKey}\" => \"{shortDeviceName}\"");
             if (shortDeviceName == "default")
             {
@@ -241,6 +247,8 @@ namespace OBSControl.OBSComponents
 
         public async Task SetSourceToDefault(string sourceKey)
         {
+            if (!ActiveAndConnected)
+                return;
             string? obsSourceName = await getSourceNameByKey(sourceKey);
             if (obsSourceName == null) return;
 
@@ -255,7 +263,7 @@ namespace OBSControl.OBSComponents
                 }
                 else if (obs.IsConnected)
                 {
-                    await obs.SetSourceSettings(obsSourceName, settings, null); 
+                    await obs.SetSourceSettings(obsSourceName, settings, null);
                     this.obsDevices[sourceKey] = this.defaultDeviceByKey(sourceKey);
                     Logger.log?.Debug($"|ADC| Set \"{sourceKey}\" to \"default\"");
                 }
@@ -273,6 +281,8 @@ namespace OBSControl.OBSComponents
 
         public async Task SetSourceToDevice(string sourceKey, MMDevice device)
         {
+            if (!ActiveAndConnected)
+                return;
             string? obsSourceName = await getSourceNameByKey(sourceKey);
             if (obsSourceName == null) return;
 
@@ -304,11 +314,13 @@ namespace OBSControl.OBSComponents
 
         // public MMDevice getInputDeviceByID(string id) => this.systemInputDevices.FirstOrDefault((device) => device.DeviceID.Equals(id));
         // public MMDevice getOutputDeviceByID(string id) => this.systemOutputDevices.FirstOrDefault((device) => device.DeviceID.Equals(id));
-        public MMDevice getInputDeviceByShortName(string name) {
+        public MMDevice getInputDeviceByShortName(string name)
+        {
             if (this.shortInputDeviceNames.TryGetValue(name, out string longName)) name = longName;
             return this.systemInputDevices.FirstOrDefault((device) => device.FriendlyName.Equals(name));
         }
-        public MMDevice getOutputDeviceByShortName(string name) {
+        public MMDevice getOutputDeviceByShortName(string name)
+        {
             if (this.shortOutputDeviceNames.TryGetValue(name, out string longName)) name = longName;
             return this.systemOutputDevices.FirstOrDefault((device) => device.FriendlyName.Equals(name));
         }
@@ -327,9 +339,9 @@ namespace OBSControl.OBSComponents
                 return name;
             });
         }
-        private IEnumerable<string> getOutputDeviceNamesForConfig() 
+        private IEnumerable<string> getOutputDeviceNamesForConfig()
             => systemOutputDevices != null ? this.getShortDeviceNamesFrom(this.systemOutputDevices, this.shortOutputDeviceNames) : Array.Empty<string>();
-        private IEnumerable<string> getInputDeviceNamesForConfig() 
+        private IEnumerable<string> getInputDeviceNamesForConfig()
             => systemInputDevices != null ? this.getShortDeviceNamesFrom(this.systemInputDevices, this.shortInputDeviceNames) : Array.Empty<string>();
 
         private void generateShortDeviceName(string pattern, MMDeviceCollection col, Dictionary<string, string> deviceNameDict)
@@ -419,7 +431,7 @@ namespace OBSControl.OBSComponents
             try
             {
                 OBSWebsocket? obs = Obs.GetConnectedObs();
-                if(obs == null)
+                if (obs == null)
                 {
                     Logger.log?.Warn("|ADC| Unable get OBS devices. OBS not connected.");
                     return;

@@ -31,6 +31,7 @@
   <settings-submenu text='Audio Devices'>
     <settings-container>
       <clickable-text text='Back' click-event='back' />
+      <bool-setting text='Enable Audio Control' value='EnableAudioControl' hover-hint='Enable control of OBS audio devices' />
       <dropdown-list-setting id='ObsDesktopAudio1Dropdown' text='Desktop Audio' value='ObsDesktopAudio1' options='DesktopAudioDevicesDropdown'
 						     rich-text='true' formatter='DesktopAudioFormatter' apply-on-change='true' hover-hint='~DesktopAudio1HoverHint'
 							 interactable='~DesktopAudio1Available' font-color='~DesktopAudio1Color' />

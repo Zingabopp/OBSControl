@@ -43,6 +43,8 @@ namespace OBSControl.UI
         protected SceneController SceneController = null!;
         protected RecordingController RecordingController = null!;
         protected StreamingController StreamingController = null!;
+        protected AudioDevicesController AudioDevicesController = null!;
+
         public ControlScreen()
         {
             OBSController = OBSController.instance!;
@@ -57,6 +59,7 @@ namespace OBSControl.UI
             SceneController = obs.GetOBSComponent<SceneController>()!;
             RecordingController = obs.GetOBSComponent<RecordingController>()!;
             StreamingController = obs.GetOBSComponent<StreamingController>()!;
+            AudioDevicesController = obs.GetComponent<AudioDevicesController>();
         }
 
         protected void SetEvents(OBSController obs)
