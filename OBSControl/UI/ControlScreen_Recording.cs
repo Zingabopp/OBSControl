@@ -157,16 +157,15 @@ namespace OBSControl.UI
                 StartCoroutine(DelayedRecordInteractableEnable());
         }
 
-        private bool _enableAutoRecord = true;
         [UIValue(nameof(EnableAutoRecord))]
         public bool EnableAutoRecord
         {
-            get { return _enableAutoRecord; }
+            get { return Plugin.config.EnableAutoRecord; }
             set
             {
-                if (_enableAutoRecord == value) return;
+                if (Plugin.config.EnableAutoRecord == value) return;
                 Logger.log?.Debug($"EnableAutoRecord: {value}");
-                _enableAutoRecord = value;
+                Plugin.config.EnableAutoRecord = value;
                 NotifyPropertyChanged();
             }
         }

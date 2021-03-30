@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -72,10 +73,17 @@ namespace OBSControl.UI
             obs.RecordingStateChanged += OnRecordingStateChanged;
             obs.StreamingStateChanged += OnStreamingStateChanged;
             obs.StreamStatus += OnStreamStatus;
+            Plugin.config.PropertyChanged += OnConfigPropertyChanged;
             if (SceneController != null)
             {
                 SceneController.SceneChanged += OnSceneChange;
             }
+        }
+
+        private void OnConfigPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(Plugin.config.EnableAutoRecord))
+                NotifyPropertyChanged(nameof(EnableAutoRecord));
         }
 
         protected void RemoveEvents(OBSController obs)
@@ -86,6 +94,7 @@ namespace OBSControl.UI
             obs.RecordingStateChanged -= OnRecordingStateChanged;
             obs.StreamingStateChanged -= OnStreamingStateChanged;
             obs.StreamStatus -= OnStreamStatus;
+            Plugin.config.PropertyChanged -= OnConfigPropertyChanged;
             if (SceneController != null)
             {
                 SceneController.SceneChanged -= OnSceneChange;

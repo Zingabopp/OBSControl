@@ -13,6 +13,7 @@
   <settings-submenu text='Recording'>
     <settings-container>
       <clickable-text text='Back' click-event='back' />
+      <bool-setting text='Enable AutoRecord' value='EnableAutoRecord' hover-hint='Enable or Disable automatic recording.'/>
       <bool-setting text='Auto-Stop on Manual' value='AutoStopOnManual' hover-hint='Enable automatic stop when recording is manually triggered.' />
       <dropdown-list-setting id='RecordOptionsDropdown' text='Record Start Option' value='RecordStartOption' options='RecordStartOptions'
                              apply-on-change='true' hover-hint='How recording should be started.' />
