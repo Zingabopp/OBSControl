@@ -380,6 +380,8 @@ namespace OBSControl.OBSComponents
             string shortName = m.Result("${name}").Replace(" Device", "").Replace("VB-Audio ", "");
             if (shortName.Equals("NVIDIA High Definition Audio"))
             {
+                // Anything connected through an NVIDIA GPU will have this name in the brackets,
+                // so we use the part before the brackts in this case.
                 string beforeBracketsPattern = @"(?<name>.+) \(.+\)";
                 return ShortenName(name, beforeBracketsPattern, col, deviceNameDict, nameMapping);
             }
@@ -477,7 +479,7 @@ namespace OBSControl.OBSComponents
             }
             catch (Exception e)
             {
-                Logger.log?.Warn($"|ADC| Unable to get OBS devices. Error1: \n{e}");
+                Logger.log?.Warn($"|ADC| Unable to get OBS devices. Error: \n{e}");
             }
             Logger.log?.Debug("|ADC| Updating config data with OBS information");
             HMMainThreadDispatcher.instance.Enqueue(() =>
@@ -503,9 +505,7 @@ namespace OBSControl.OBSComponents
 
             try
             {
-                Logger.log?.Debug("|ADC| Before UpdateSystemDevices");
                 UpdateSystemDevices();
-                Logger.log?.Debug("|ADC| After UpdateSystemDevices");
             }
             catch (Exception e)
             {
