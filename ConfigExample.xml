@@ -1,0 +1,24 @@
+<OBSCProfile Name="Default">
+    <!-- MacroGroup's define a set of macros inside a range of triggers (i.e. Play button clicked through the level ending) -->
+    <MacroGroup id="AutoRecord" FirstTrigger="PlayClicked" LastTrigger="LevelEnd" Condition="'$(Streaming)' != 'True'">
+        <!-- Macros define a set of actions to take place after a trigger. --> 
+        <Macro OnTrigger="PlayClicked">
+            <SceneChange SceneName="BlackBackground" Transition="Fade" TransitionDuration="100" WaitForFinish="True" />
+            <StartRecording Retries="3" StopPreviousRecording="True" />
+            <Delay Time="500" />
+            <SceneChange SceneName="MenuScene" />
+            <Delay Time="3000" />
+            <SceneChange SceneName="BlackBackground" Transition="Fade" TransitionDuration="100" />
+            <LevelStart WaitForFinish="True" /> <!-- Without this action, level starts immediately when play button is clicked (base game behavior) -->
+            <SceneChange SceneName="GameScene" />
+            <BeatmapStart /> <!-- Without this action, beatmap starts immediately when the level is loaded (base game behavior) -->
+        </Macro>
+        <Macro OnTrigger="LevelEnd" Condition="'$(LevelEndType)' == 'Cleared'">
+            <Delay Time="5000" />
+            <StopRecording Retries="3" Rename="[SomeFileFormat]" Move="[SomeDirectoryPath]" />
+        </Macro>
+        <Macro OnTrigger="LevelEnd" Condition="'$(LevelEndType)' != 'Cleared'">
+            <StopRecording Retries="3" Rename="[SomeFileFormat]" Move="[SomeDirectoryPath]" />
+        </Macro>
+    </MacroGroup>
+</OBSCProfile>
