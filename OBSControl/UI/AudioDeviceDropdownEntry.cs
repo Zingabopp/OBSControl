@@ -33,7 +33,8 @@ public class AudioDeviceDropdownEntry
             var audioDevicesController = AudioDevicesController;
             if (audioDevicesController != null)
             {
-                await audioDevicesController.setSourceToDeviceByName(sourceKey, shortDeviceName, isOutput);
+                if (audioDevicesController.ActiveAndConnected)
+                    await audioDevicesController.setSourceToDeviceByName(sourceKey, shortDeviceName, isOutput);
             }
             else
             {

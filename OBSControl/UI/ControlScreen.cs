@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -43,6 +44,8 @@ namespace OBSControl.UI
         protected SceneController SceneController = null!;
         protected RecordingController RecordingController = null!;
         protected StreamingController StreamingController = null!;
+        protected AudioDevicesController AudioDevicesController = null!;
+
         public ControlScreen()
         {
             OBSController = OBSController.instance!;
@@ -57,6 +60,7 @@ namespace OBSControl.UI
             SceneController = obs.GetOBSComponent<SceneController>()!;
             RecordingController = obs.GetOBSComponent<RecordingController>()!;
             StreamingController = obs.GetOBSComponent<StreamingController>()!;
+            AudioDevicesController = obs.GetComponent<AudioDevicesController>();
         }
 
         protected void SetEvents(OBSController obs)
@@ -69,10 +73,17 @@ namespace OBSControl.UI
             obs.RecordingStateChanged += OnRecordingStateChanged;
             obs.StreamingStateChanged += OnStreamingStateChanged;
             obs.StreamStatus += OnStreamStatus;
+            Plugin.config.PropertyChanged += OnConfigPropertyChanged;
             if (SceneController != null)
             {
                 SceneController.SceneChanged += OnSceneChange;
             }
+        }
+
+        private void OnConfigPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(Plugin.config.EnableAutoRecord))
+                NotifyPropertyChanged(nameof(EnableAutoRecord));
         }
 
         protected void RemoveEvents(OBSController obs)
@@ -83,6 +94,7 @@ namespace OBSControl.UI
             obs.RecordingStateChanged -= OnRecordingStateChanged;
             obs.StreamingStateChanged -= OnStreamingStateChanged;
             obs.StreamStatus -= OnStreamStatus;
+            Plugin.config.PropertyChanged -= OnConfigPropertyChanged;
             if (SceneController != null)
             {
                 SceneController.SceneChanged -= OnSceneChange;

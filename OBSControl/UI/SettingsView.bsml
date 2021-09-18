@@ -13,6 +13,7 @@
   <settings-submenu text='Recording'>
     <settings-container>
       <clickable-text text='Back' click-event='back' />
+      <bool-setting text='Enable AutoRecord' value='EnableAutoRecord' hover-hint='Enable or Disable automatic recording.'/>
       <bool-setting text='Auto-Stop on Manual' value='AutoStopOnManual' hover-hint='Enable automatic stop when recording is manually triggered.' />
       <dropdown-list-setting id='RecordOptionsDropdown' text='Record Start Option' value='RecordStartOption' options='RecordStartOptions'
                              apply-on-change='true' hover-hint='How recording should be started.' />
@@ -31,6 +32,7 @@
   <settings-submenu text='Audio Devices'>
     <settings-container>
       <clickable-text text='Back' click-event='back' />
+      <bool-setting text='Enable Audio Control' value='EnableAudioControl' hover-hint='Enable control of OBS audio devices' />
       <dropdown-list-setting id='ObsDesktopAudio1Dropdown' text='Desktop Audio' value='ObsDesktopAudio1' options='DesktopAudioDevicesDropdown'
 						     rich-text='true' formatter='DesktopAudioFormatter' apply-on-change='true' hover-hint='~DesktopAudio1HoverHint'
 							 interactable='~DesktopAudio1Available' font-color='~DesktopAudio1Color' />
