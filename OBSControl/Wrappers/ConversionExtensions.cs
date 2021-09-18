@@ -55,11 +55,11 @@ namespace OBSControl.Wrappers
                 LevelCompletionResults.LevelEndAction.None => SongEndAction.None,
                 LevelCompletionResults.LevelEndAction.Quit => SongEndAction.Quit,
                 LevelCompletionResults.LevelEndAction.Restart => SongEndAction.Restart,
-                LevelCompletionResults.LevelEndAction.LostConnection => SongEndAction.LostConnection,
-                LevelCompletionResults.LevelEndAction.MultiplayerInactive => SongEndAction.MultiplayerInactive,
-                LevelCompletionResults.LevelEndAction.StartupFailed => SongEndAction.StartupFailed,
-                LevelCompletionResults.LevelEndAction.HostEndedLevel => SongEndAction.HostEndedLevel,
-                LevelCompletionResults.LevelEndAction.ConnectedAfterLevelEnded => SongEndAction.ConnectedAfterLevelEnded,
+                //LevelCompletionResults.LevelEndAction.LostConnection => SongEndAction.LostConnection,
+                //LevelCompletionResults.LevelEndAction.MultiplayerInactive => SongEndAction.MultiplayerInactive,
+                //LevelCompletionResults.LevelEndAction.StartupFailed => SongEndAction.StartupFailed,
+                //LevelCompletionResults.LevelEndAction.HostEndedLevel => SongEndAction.HostEndedLevel,
+                //LevelCompletionResults.LevelEndAction.ConnectedAfterLevelEnded => SongEndAction.ConnectedAfterLevelEnded,
                 _ => SongEndAction.None,
             };
         }

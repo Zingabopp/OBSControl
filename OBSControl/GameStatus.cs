@@ -80,7 +80,7 @@ namespace OBSControl
         {
             try
             {
-                MaxScore = ScoreModel.MaxRawScoreForNumberOfNotes(DifficultyBeatmap?.beatmapData.cuttableNotesType ?? 0);
+                MaxScore = ScoreModel.MaxRawScoreForNumberOfNotes(DifficultyBeatmap?.beatmapData.cuttableNotesCount ?? 0);
                 Logger.log?.Debug($"MaxScore: {MaxScore}");
             }
 #pragma warning disable CA1031 // Do not catch general exception types

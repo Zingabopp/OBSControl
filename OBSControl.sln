@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OBSControl", "OBSControl\OBSControl.csproj", "{51B976F3-3672-4A64-9C23-7FE3F8D4AC79}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OBSControl", "OBSControl\OBSControl.csproj", "{51B976F3-3672-4A64-9C23-7FE3F8D4AC79}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OBSControlTests", "OBSControlTests\OBSControlTests.csproj", "{E868ABBC-84A7-4AFD-A6F1-0451BC25159C}"
 EndProject
@@ -15,6 +15,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CollectDependencies", "BS-Plugin-BuildTools\CollectDependencies\CollectDependencies.csproj", "{5F33B310-DC8D-4C0D-877E-BAC3908DE10F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "obs-websocket-dotnet", "obs-websocket-dotnet\obs-websocket-dotnet\obs-websocket-dotnet.csproj", "{C8668815-F21E-49C0-8F1A-58BC698153AF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{6C99A6E7-8EDA-4F75-B5C1-CDC3A81D8A95}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
