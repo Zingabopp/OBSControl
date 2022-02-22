@@ -13,7 +13,7 @@ public class AudioDeviceDropdownEntry
 
     public bool IsAvailable = false;
 
-    public static string notAvailableFormatter(string name)
+    public static string NotAvailableFormatter(string name)
     {
         return ($"<color=\"red\">{name} (N/A)</color>");
     }
@@ -31,10 +31,9 @@ public class AudioDeviceDropdownEntry
         try
         {
             var audioDevicesController = AudioDevicesController;
-            if (audioDevicesController != null)
+            if (audioDevicesController != null && audioDevicesController.ActiveAndConnected)
             {
-                if (audioDevicesController.ActiveAndConnected)
-                    await audioDevicesController.setSourceToDeviceByName(sourceKey, shortDeviceName, isOutput);
+                await audioDevicesController.SetSourceToDeviceByName(sourceKey, shortDeviceName, isOutput);
             }
             else
             {

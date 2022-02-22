@@ -570,14 +570,14 @@ namespace OBSControl
         public string DesktopAudioFormatter(string name)
         {
             if (ObsDesktopAudioDevices.Contains(name)) { return name; }
-            return AudioDeviceDropdownEntry.notAvailableFormatter(name);
+            return AudioDeviceDropdownEntry.NotAvailableFormatter(name);
         }
 
         [UIAction(nameof(MicAuxFormatter))]
         public string MicAuxFormatter(string name)
         {
             if (ObsMicAuxDevices.Contains(name)) return name;
-            return AudioDeviceDropdownEntry.notAvailableFormatter(name);
+            return AudioDeviceDropdownEntry.NotAvailableFormatter(name);
         }
 
         #endregion
