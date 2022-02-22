@@ -41,7 +41,7 @@ namespace OBSControl.Wrappers
         {
             return endState switch
             {
-                LevelCompletionResults.LevelEndStateType.None => LevelEndState.None,
+                LevelCompletionResults.LevelEndStateType.Incomplete => LevelEndState.None,
                 LevelCompletionResults.LevelEndStateType.Cleared => LevelEndState.Cleared,
                 LevelCompletionResults.LevelEndStateType.Failed => LevelEndState.Failed,
                 _ => LevelEndState.None,

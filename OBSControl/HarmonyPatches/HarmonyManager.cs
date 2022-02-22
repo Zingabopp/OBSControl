@@ -67,7 +67,7 @@ namespace OBSControl.HarmonyPatches
             {
                 patch.RemovePatch();
             }
-            Harmony.UnpatchAll(HarmonyId);
+            Harmony.UnpatchSelf();
         }
         public static HarmonyPatchInfo GetLevelDelayPatch()
         {
