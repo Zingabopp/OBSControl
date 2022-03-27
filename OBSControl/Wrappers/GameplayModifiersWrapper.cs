@@ -22,12 +22,10 @@ namespace OBSControl.Wrappers
         public EnergyType EnergyType => _modifiers.energyType.ToEnergyType();
         public bool BatteryEnergy => _modifiers.energyType == GameplayModifiers.EnergyType.Battery;
         public bool NoFail => _modifiers.noFailOn0Energy && _endEnergy < float.Epsilon;
-        public bool DemoNoFail => _modifiers.demoNoFail;
         public bool InstaFail => _modifiers.instaFail;
         public bool FailOnSaberClash => _modifiers.failOnSaberClash;
         public EnabledObstacleType EnabledObstacleType => _modifiers.enabledObstacleType.ToEnabledObstacleType();
         public bool NoObstacles => _modifiers.enabledObstacleType == GameplayModifiers.EnabledObstacleType.NoObstacles;
-        public bool DemoNoObstacles => _modifiers.demoNoObstacles;
         public bool FastNotes => _modifiers.fastNotes;
         public bool StrictAngles => _modifiers.strictAngles;
         public bool DisappearingArrows => _modifiers.disappearingArrows;

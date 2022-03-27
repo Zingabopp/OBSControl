@@ -36,10 +36,6 @@ namespace OBSControl.Wrappers
                 activeModifiers.Add("GN");
             if (modifiers.BatteryEnergy)
                 activeModifiers.Add("BE");
-            if (modifiers.DemoNoFail)
-                activeModifiers.Add("DNF");
-            if (modifiers.DemoNoObstacles)
-                activeModifiers.Add("DNO");
             if (modifiers.EnabledObstacleType != EnabledObstacleType.All)
             {
                 if (modifiers.EnabledObstacleType == EnabledObstacleType.FullHeightOnly)

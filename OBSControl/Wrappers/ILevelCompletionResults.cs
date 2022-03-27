@@ -19,7 +19,7 @@ namespace OBSControl.Wrappers
 		bool FullCombo { get; }
 		LevelEndState LevelEndStateType { get; }
 		SongEndAction LevelEndAction { get; }
-		int AverageCutScore { get; }
+		float AverageCutScore { get; }
 		int GoodCutsCount { get; }
 		int BadCutsCount { get; }
 		int MissedCount { get; }

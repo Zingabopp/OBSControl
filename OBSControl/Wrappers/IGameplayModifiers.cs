@@ -18,12 +18,10 @@ namespace OBSControl.Wrappers
         bool DisappearingArrows { get; }
         bool NoArrows { get; }
         bool FastNotes { get; }
-        bool DemoNoObstacles { get; }
         EnabledObstacleType EnabledObstacleType { get; }
         bool FailOnSaberClash { get; }
         bool StrictAngles { get; }
         bool InstaFail { get; }
-        bool DemoNoFail { get; }
         bool NoFail { get; }
 		bool NoObstacles { get; }
 		float SongSpeedMul { get; }

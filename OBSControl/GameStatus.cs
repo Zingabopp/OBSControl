@@ -76,11 +76,15 @@ namespace OBSControl
             return maxModifiedScore;
         }
 
-        public static void Setup()
+        public static async Task SetupAsync()
         {
             try
             {
-                MaxScore = ScoreModel.MaxRawScoreForNumberOfNotes(DifficultyBeatmap?.beatmapData.cuttableNotesCount ?? 0);
+                var envSO = GameSetupData?.environmentInfo ?? throw new InvalidOperationException("Could not aquire environment info for game stats setup.");
+                if (DifficultyBeatmap == null)
+                    throw new InvalidOperationException("Could not aquire difficulty beatmap for game stats setup");
+                var beatmapData = await DifficultyBeatmap.GetBeatmapDataAsync(envSO).ConfigureAwait(false);
+                MaxScore = ScoreModel.ComputeMaxMultipliedScoreForBeatmap(beatmapData);
                 Logger.log?.Debug($"MaxScore: {MaxScore}");
             }
 #pragma warning disable CA1031 // Do not catch general exception types

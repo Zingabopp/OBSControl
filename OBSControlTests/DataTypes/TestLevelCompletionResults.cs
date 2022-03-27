@@ -67,7 +67,7 @@ namespace OBSControlTests.DataTypes
 
         public SongEndAction LevelEndAction { get; set; }
 
-        public int AverageCutScore { get; set; }
+        public float AverageCutScore { get; set; }
 
         public int GoodCutsCount { get; set; }
 

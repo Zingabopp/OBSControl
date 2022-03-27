@@ -26,7 +26,7 @@ namespace OBSControl.Wrappers
 
         public int ModifiedScore => _results.modifiedScore;
 
-        public int RawScore => _results.rawScore;
+        public int RawScore => _results.multipliedScore;
 
         public ScoreRank Rank => _results.rank.ToScoreRank();
 
@@ -36,7 +36,7 @@ namespace OBSControl.Wrappers
 
         public SongEndAction LevelEndAction => _results.levelEndAction.ToSongEndAction();
 
-        public int AverageCutScore => _results.averageCutScore;
+        public float AverageCutScore => _results.averageCutScoreForNotesWithFullScoreScoringType;
 
         public int GoodCutsCount => _results.goodCutsCount;
 

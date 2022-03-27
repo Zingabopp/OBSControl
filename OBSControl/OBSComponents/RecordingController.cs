@@ -478,7 +478,12 @@ namespace OBSControl.OBSComponents
                 return BS_Utils.Plugin.LevelData.IsSet && GameStatus.GpModSO != null;
             });
             yield return waitForData;
-            GameStatus.Setup();
+            Task setupTask = GameStatus.SetupAsync();
+            WaitUntil waitForSetup = new WaitUntil(() =>
+            {
+                return setupTask.IsCompleted;
+            });
+
             if (LastLevelData == null)
             {
                 if (GameStatus.DifficultyBeatmap != null)
