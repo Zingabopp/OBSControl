@@ -80,10 +80,11 @@ namespace OBSControl
         {
             try
             {
+                var playerSettings = GameSetupData?.playerSpecificSettings;
                 var envSO = GameSetupData?.environmentInfo ?? throw new InvalidOperationException("Could not aquire environment info for game stats setup.");
                 if (DifficultyBeatmap == null)
                     throw new InvalidOperationException("Could not aquire difficulty beatmap for game stats setup");
-                var beatmapData = await DifficultyBeatmap.GetBeatmapDataAsync(envSO).ConfigureAwait(false);
+                var beatmapData = await DifficultyBeatmap.GetBeatmapDataAsync(envSO, playerSettings).ConfigureAwait(false);
                 MaxScore = ScoreModel.ComputeMaxMultipliedScoreForBeatmap(beatmapData);
                 Logger.log?.Debug($"MaxScore: {MaxScore}");
             }
