@@ -82,125 +82,120 @@ namespace OBSControl.HarmonyPatches
             ref Action beforeSceneSwitchCallback, ref bool practice,
             LevelSelectionNavigationController ___levelSelectionNavigationController)
         {
-            if (WaitingToStart)
-            {
-                Logger.log?.Debug($"StartLevelPatch was waiting to start, starting level.");
-                WaitingToStart = false;
-                return true;
-            }
-            IDifficultyBeatmap difficultyBeatmap = ___levelSelectionNavigationController.selectedDifficultyBeatmap;
-            CancellationToken cancellationToken = CTS.Token;
-            WaitingToStart = true;
-            Logger.log?.Debug("LevelSelectionNavigationController_StartLevel");
-            OBSController? obs = OBSController.instance;
-            if (obs == null || !obs.IsConnected)
-            {
-                Logger.log?.Warn($"Skipping StartLevel sequence, OBS is unavailable.");
-                WaitingToStart = false;
-                return true;
-            }
-            LevelCollectionNavigationController navigationController = AccessNavigationController(ref ___levelSelectionNavigationController);
-            StandardLevelDetailViewController detailViewController = AccessDetailViewController(ref navigationController);
-            StandardLevelDetailView levelView = AccessDetailView(ref detailViewController);
-            Button playButton = levelView.actionButton;
-            PlayButton = playButton;
-            PreviousText = playButton.GetComponentInChildren<TextMeshProUGUI>()?.text;
-            playButton.interactable = false;
-            bool practiceButtonEnabled = levelView.practiceButton.isActiveAndEnabled;
-            levelView.hidePracticeButton = true;
-            bool returnValue = false;
-            try
-            {
-                var handler = LevelStarting;
-                if (handler == null)
-                {
-                    returnValue = true;
-                    return true;
-                }
-                EventHandler<LevelStartingEventArgs>[] invocations = handler.GetInvocationList().Select(d => (EventHandler<LevelStartingEventArgs>)d).ToArray();
-                LevelStartResponse response = LevelStartResponse.None;
-                LevelStartingEventArgs args = new LevelStartingEventArgs(difficultyBeatmap, practice);
-                for (int i = 0; i < invocations.Length; i++)
-                {
-                    try
-                    {
-                        invocations[i].Invoke(__instance, args);
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.log?.Error($"Error invoking handler '{invocations[i]?.Method.Name}': {ex.Message}");
-                        Logger.log?.Debug(ex);
-                    }
-                }
-                response = args.StartResponse;
-                LevelStartEventArgs startEventArgs = new LevelStartEventArgs(args, StartLevel, __instance, difficultyBeatmap,
-                    beforeSceneSwitchCallback, practice, playButton, PreviousText ?? DefaultText);
-                if (response == LevelStartResponse.None)
-                {
-                    Logger.log?.Debug($"No LevelStartResponse, skipping delayed start.");
-                    Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, startEventArgs, nameof(LevelStart));
-                    returnValue = true;
-                    return true;
-                }
-                else
-                {
-                    
-                }
-                if (response == LevelStartResponse.Immediate)
-                {
-                    Logger.log?.Debug("LevelStartResponse is Immediate, skipping delayed start.");
-                    FadeOutPreview();
-                    Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, startEventArgs, nameof(LevelStart));
-                    returnValue = true;
-                    return true;
-                }
-                if (response == LevelStartResponse.Handled)
-                {
-                    Logger.log?.Debug($"LevelStartResponse is handled by {args.ResponseSource}.");
-                    FadeOutPreview();
-                    Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, startEventArgs, nameof(LevelStart));
-                    returnValue = false;
-                    return false;
-                }
-                if (response == LevelStartResponse.Delayed)
-                {
-                    Logger.log?.Info($"Starting delayed level start sequence.");
-                    _ = StartDelayedLevelStart(__instance, startEventArgs, () =>
-                    {
-                        LevelStartEventArgs levelStartInfo = startEventArgs;
-                        StartLevel(levelStartInfo.Coordinator, levelStartInfo.BeforeSceneSwitchCallback, levelStartInfo.Practice);
-                        if (levelStartInfo.PlayButton != null)
-                        {
-                            levelStartInfo.PlayButton.interactable = true;
-                            string? prevText = PreviousText;
-                            if (prevText != null && prevText.Length > 0)
-                            {
-                                levelStartInfo.PlayButton.SetButtonText(PreviousText);
-                                PreviousText = null;
-                            }
-                        }
-                    });
-                    returnValue = false;
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.log?.Error($"Error in StartLevel patch: {ex.Message}");
-                Logger.log?.Debug(ex);
-            }
-            finally
-            {
-                if (returnValue)
-                {
-                    WaitingToStart = false;
-                    playButton.interactable = true;
-                    levelView.hidePracticeButton = !practiceButtonEnabled;
-                }
-            }
-            playButton.interactable = true;
-            levelView.hidePracticeButton = !practiceButtonEnabled;
             return true;
+//             IDifficultyBeatmap difficultyBeatmap = ___levelSelectionNavigationController.selectedDifficultyBeatmap;
+//             CancellationToken cancellationToken = CTS.Token;
+//             WaitingToStart = true;
+//             Logger.log?.Debug("LevelSelectionNavigationController_StartLevel");
+//             OBSController? obs = OBSController.instance;
+//             if (obs == null || !obs.IsConnected)
+//             {
+//                 Logger.log?.Warn($"Skipping StartLevel sequence, OBS is unavailable.");
+//                 WaitingToStart = false;
+//                 return true;
+//             }
+//             LevelCollectionNavigationController navigationController = AccessNavigationController(ref ___levelSelectionNavigationController);
+//             StandardLevelDetailViewController detailViewController = AccessDetailViewController(ref navigationController);
+//             StandardLevelDetailView levelView = AccessDetailView(ref detailViewController);
+//             Button playButton = levelView.actionButton;
+//             PlayButton = playButton;
+//             PreviousText = playButton.GetComponentInChildren<TextMeshProUGUI>()?.text;
+//             playButton.interactable = false;
+//             bool practiceButtonEnabled = levelView.practiceButton.isActiveAndEnabled;
+//             levelView.hidePracticeButton = true;
+//             bool returnValue = false;
+//             try
+//             {
+//                 var handler = LevelStarting;
+//                 if (handler == null)
+//                 {
+//                     returnValue = true;
+//                     return true;
+//                 }
+//                 EventHandler<LevelStartingEventArgs>[] invocations = handler.GetInvocationList().Select(d => (EventHandler<LevelStartingEventArgs>)d).ToArray();
+//                 LevelStartResponse response = LevelStartResponse.None;
+//                 LevelStartingEventArgs args = new LevelStartingEventArgs(difficultyBeatmap, practice);
+//                 for (int i = 0; i < invocations.Length; i++)
+//                 {
+//                     try
+//                     {
+//                         invocations[i].Invoke(__instance, args);
+//                     }
+//                     catch (Exception ex)
+//                     {
+//                         Logger.log?.Error($"Error invoking handler '{invocations[i]?.Method.Name}': {ex.Message}");
+//                         Logger.log?.Debug(ex);
+//                     }
+//                 }
+//                 response = args.StartResponse;
+//                 LevelStartEventArgs startEventArgs = new LevelStartEventArgs(args, StartLevel, __instance, difficultyBeatmap,
+//                     beforeSceneSwitchCallback, practice, playButton, PreviousText ?? DefaultText);
+//                 if (response == LevelStartResponse.None)
+//                 {
+//                     Logger.log?.Debug($"No LevelStartResponse, skipping delayed start.");
+//                     Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, startEventArgs, nameof(LevelStart));
+//                     returnValue = true;
+//                     return true;
+//                 }
+//                 else
+//                 {
+                    
+//                 }
+//                 if (response == LevelStartResponse.Immediate)
+//                 {
+//                     Logger.log?.Debug("LevelStartResponse is Immediate, skipping delayed start.");
+//                     FadeOutPreview();
+//                     Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, startEventArgs, nameof(LevelStart));
+//                     returnValue = true;
+//                     return true;
+//                 }
+//                 if (response == LevelStartResponse.Handled)
+//                 {
+//                     Logger.log?.Debug($"LevelStartResponse is handled by {args.ResponseSource}.");
+//                     FadeOutPreview();
+//                     Utilities.Utilities.RaiseEventSafe(LevelStart, __instance, startEventArgs, nameof(LevelStart));
+//                     returnValue = false;
+//                     return false;
+//                 }
+//                 if (response == LevelStartResponse.Delayed)
+//                 {
+//                     Logger.log?.Info($"Starting delayed level start sequence.");
+//                     _ = StartDelayedLevelStart(__instance, startEventArgs, () =>
+//                     {
+//                         LevelStartEventArgs levelStartInfo = startEventArgs;
+//                         StartLevel(levelStartInfo.Coordinator, levelStartInfo.BeforeSceneSwitchCallback, levelStartInfo.Practice);
+//                         if (levelStartInfo.PlayButton != null)
+//                         {
+//                             levelStartInfo.PlayButton.interactable = true;
+//                             string? prevText = PreviousText;
+//                             if (prevText != null && prevText.Length > 0)
+//                             {
+//                                 levelStartInfo.PlayButton.SetButtonText(PreviousText);
+//                                 PreviousText = null;
+//                             }
+//                         }
+//                     });
+//                     returnValue = false;
+//                     return false;
+//                 }
+//             }
+//             catch (Exception ex)
+//             {
+//                 Logger.log?.Error($"Error in StartLevel patch: {ex.Message}");
+//                 Logger.log?.Debug(ex);
+//             }
+//             finally
+//             {
+//                 if (returnValue)
+//                 {
+//                     WaitingToStart = false;
+//                     playButton.interactable = true;
+//                     levelView.hidePracticeButton = !practiceButtonEnabled;
+//                 }
+//             }
+//             playButton.interactable = true;
+//             levelView.hidePracticeButton = !practiceButtonEnabled;
+//             return true;
         }
 
         private static void FadeOutPreview()
