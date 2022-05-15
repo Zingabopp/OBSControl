@@ -1,4 +1,5 @@
-﻿using OBSWebsocketDotNet;
+﻿using OBSControl.Utilities;
+using OBSWebsocketDotNet;
 using OBSWebsocketDotNet.Types;
 using System;
 using System.Collections.Generic;
@@ -11,36 +12,38 @@ namespace OBSControl.OBSComponents.Actions
 {
     public class StopRecordAction : ObsAction
     {
-        private static readonly object _lock = new object();
-        private static bool WaitingToStop;
-        private static Task? StopRecordingTask;
         public override ControlEventType EventType => ControlEventType.StopRecord;
 
+        public int Timeout { get; set; } = 5000; // TODO: What if transition > 5 seconds?
+        private AsyncEventListenerWithArg<OutputState, OutputState, OutputState> RecordStateListener { get; }
         public StopRecordAction(OBSWebsocket obs)
             : base(obs)
         {
+
+
+            RecordStateListener = new AsyncEventListenerWithArg<OutputState, OutputState, OutputState>((s, state, expectedState) =>
+            {
+                if (state == expectedState)
+                    return new EventListenerResult<OutputState>(state, true);
+                else
+                    return new EventListenerResult<OutputState>(state, false);
+            }, OutputState.Stopped, Timeout);
         }
 
         protected async override Task ActionAsync(CancellationToken cancellationToken)
         {
-            Task? existingStopRecordTask = null;
-            lock(_lock)
-            {
-                if (WaitingToStop)
-                    existingStopRecordTask = StopRecordingTask;
-                else
-                    WaitingToStop = true;
-            }
-
-            bool prevTaskCompleted = existingStopRecordTask?.IsCompleted ?? true;
-            bool isRecording = (await obs.GetRecordingStatus(cancellationToken)) == OutputState.Started;
-            if (!isRecording)
-                return;
-
             try
             {
-                await obs.StopRecording(cancellationToken);
-                await Task.Delay(500, cancellationToken);
+                obs.RecordingStateChanged -= OnRecordingStateChanged;
+                obs.RecordingStateChanged += OnRecordingStateChanged;
+                RecordStateListener.Reset(OutputState.Stopped, cancellationToken);
+                RecordStateListener.StartListening();
+                bool isRecording = (await obs.GetRecordingStatus(cancellationToken)) == OutputState.Started;
+                if (!isRecording)
+                    return;
+                await obs.StopRecording(cancellationToken).ConfigureAwait(false);
+                await RecordStateListener.Task.ConfigureAwait(false);
+                await Task.Delay(500, cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -61,13 +64,19 @@ namespace OBSControl.OBSComponents.Actions
 #pragma warning restore CA1031 // Do not catch general exception types
             finally
             {
-
+                RecordStateListener.TrySetCanceled();
             }
+        }
+
+        private void OnRecordingStateChanged(object sender, OutputStateChangedEventArgs e)
+        {
+            RecordStateListener.OnEvent(this, e.OutputState);
         }
 
         protected override void Cleanup()
         {
-            throw new NotImplementedException();
+            obs.RecordingStateChanged -= OnRecordingStateChanged;
+            RecordStateListener.TrySetCanceled();
         }
     }
 }
