@@ -223,6 +223,7 @@ namespace OBSControl.OBSComponents
                     }
                     finally
                     {
+                        Obs.RecordingStateChanged -= RecordingStoppedListener.OnEvent;
                         RecordingStoppedListener.TrySetCanceled();
                     }
                 }
